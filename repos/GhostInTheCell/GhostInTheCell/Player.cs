@@ -1,15 +1,12 @@
-﻿sing System;
+﻿using System;
 using System.Linq;
-using System.IO;
-using System.Text;
-using System.Collections;
 using System.Collections.Generic;
 
 /**
  * Auto-generated code below aims at helping you parse
  * the standard input according to the problem statement.
  **/
-class Player
+public class Player
 {
     static void Main(string[] args)
     {
@@ -57,7 +54,7 @@ class Player
             // Write an action using Console.WriteLine()
             // To debug: Console.Error.WriteLine("Debug messages...");
             gh.SetEntities(entities);
-            gh.ShowIncome();
+            gh.ShowStats();
 
             MoveList moves = gh.PickMoves();
             moves.PlayMoves();
@@ -136,9 +133,23 @@ public class FactoryLinks
                     int distance = currentDist + adjacent.Distance;
                     if (distance < minDist)
                     {
+                        //When the distances are equivalent pick the one with the longest path
                         minDist = distance;
                         bestNode = adjacent.CreateAtDistance(currentDist);
                         parentNode = currentNode;
+                    }
+                    else if (distance == minDist)
+                    {
+                        Paths[startNode].TryGetValue(currentNode.FactoryId, out List<Node> pathCurrent);
+                        int lengthCurrent = pathCurrent == null ? 0 : pathCurrent.Count;
+                        Paths[startNode].TryGetValue(parentNode.FactoryId, out List<Node> pathPrevious);
+                        int lengthPrevious = pathPrevious == null ? 0 : pathPrevious.Count;
+                        if (lengthCurrent > lengthPrevious)
+                        {
+                            minDist = distance;
+                            bestNode = adjacent.CreateAtDistance(currentDist);
+                            parentNode = currentNode;
+                        }
                     }
                 }
             }
@@ -151,6 +162,10 @@ public class FactoryLinks
             if (currentPath == null)
             {
                 currentPath = new List<Node>();
+            }
+            else
+            {
+                currentPath = new List<Node>(currentPath);
             }
             Paths[startNode].Add(bestNode.FactoryId, currentPath);
             currentPath.Add(bestNode);
@@ -167,10 +182,30 @@ public class FactoryLinks
         return Links[factory];
     }
 
+    //Retrieves direct straight distance
     public int GetDistance(int startId, int endId)
     {
         return GetLinks(startId).Where(l => l.FactoryId == endId).First().Distance + 1;//All commands are issued from this turn which is always turn 1.
     }
+
+    public int GetShortestPathDistance(int startId, int endId)
+    {
+        Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
+        endPoints.TryGetValue(endId, out List<Node> paths);
+
+        /*
+        if(endId == 2){
+            foreach(Node n in paths){
+                Console.Error.WriteLine($"Path: {n.FactoryId}, dist: {n.Distance}");
+            }
+        }
+        Console.Error.WriteLine($"From start {startId} to {endId} path length: {paths.Count}.");
+        */
+
+        return paths.Last().Distance + 1;
+    }
+
+
 
     public int ShortestPath(int startId, int endId)
     {
@@ -218,6 +253,8 @@ public class GameHelper
     private int _gameCounter = 0;
     private int _myIncome = 0;
     private int _enemyIncome = 0;
+    private int _myTroops = 0;
+    private int _enemyTroops = 0;
     public GameHelper(FactoryLinks links)
     {
         _links = links;
@@ -229,11 +266,14 @@ public class GameHelper
         _gameCounter++;
     }
 
-    public void ShowIncome()
+    public void ShowStats()
     {
         List<Entity> factories = _entities.Where(e => e is FactoryEntity).ToList();
+        List<Entity> troops = _entities.Where(e => e is TroopEntity).ToList();
         _enemyIncome = 0;
         _myIncome = 0;
+        _myTroops = 0;
+        _enemyTroops = 0;
         foreach (FactoryEntity factory in factories)
         {
             if (factory.IsProducing())
@@ -247,7 +287,28 @@ public class GameHelper
                     _enemyIncome += factory.ProductionCount;
                 }
             }
+            if (factory.IsFriendly())
+            {
+                _myTroops += factory.CyborgCount;
+            }
+            else if (factory.IsEnemy())
+            {
+                _enemyTroops += factory.CyborgCount;
+            }
         }
+        foreach (TroopEntity troop in troops)
+        {
+            if (troop.IsFriendly())
+            {
+                _myTroops += troop.NumberOfCyborgs;
+            }
+            else if (troop.IsEnemy())
+            {
+                _enemyTroops += troop.NumberOfCyborgs;
+            }
+        }
+
+        Console.Error.WriteLine("Diff: " + (_myTroops - _enemyTroops) + " My Troops: " + _myTroops + " Enemy Troops: " + _enemyTroops);
         Console.Error.WriteLine("Diff: " + (_myIncome - _enemyIncome) + " My Income: " + _myIncome + " Enemy Income: " + _enemyIncome);
     }
 
@@ -268,6 +329,7 @@ public class GameHelper
 
 
         Dictionary<int, int> factoryIdToCyborgsToTakeover = new Dictionary<int, int>();
+        List<MoveOption> multiFactoryTakeoverMoves = new List<MoveOption>();
         foreach (FactoryEntity sourceFactory in friendlyFactories)
         {
             //Console.Error.WriteLine(sourceFactory.ToString());
@@ -279,6 +341,17 @@ public class GameHelper
 
             cyborgsAvailableToSend -= cyborgsToDefend;
             globalCyborgsAvailableToSend -= cyborgsToDefend;
+
+            if (!IsFrontLineFactory(sourceFactory) && sourceFactory.ProductionCount < 3 && (_myIncome < _enemyIncome || _myTroops > _enemyTroops))
+            {
+                globalCyborgsAvailableToSend -= cyborgsAvailableToSend;
+                cyborgsAvailableToSend = 0;
+                if (sourceFactory.CyborgCount > 10)
+                {
+                    moves.AddMove(new Move(sourceFactory.Id));
+                    _myTroops -= 10;
+                }
+            }
 
             Console.Error.WriteLine("Available : " + cyborgsAvailableToSend);
             //As long as there are cyborgs to send let's see if there ary any targets
@@ -299,60 +372,55 @@ public class GameHelper
                     factoryIdToCyborgsToTakeover.TryGetValue(targetFactory.Id, out int cyborgsToTakeover);
                     if (cyborgsToTakeover > 0)
                     {
-                        val += 100;//we already said this was a good target so commit to it.
+                        val += 25;//we already said this was a good target so commit to it.
                         Console.Error.WriteLine("Target: " + targetFactory.Id + " Takeover left: " + cyborgsToTakeover);
                     }
                     else
                     {
-                        cyborgsToTakeover = CalculateCyborgsRequiredToTakeover(sourceFactory, targetFactory);//This should calculate the number of borgs that will be there
-                        Console.Error.WriteLine("Target: " + targetFactory.Id + " Takeover: " + cyborgsToTakeover);
+                        cyborgsToTakeover = CalculateCyborgsRequiredToTakeover(sourceFactory, targetFactory);
+                        if (cyborgsToTakeover > 0)
+                        {
+                            Console.Error.WriteLine("Target: " + targetFactory.Id + " Takeover: " + cyborgsToTakeover);
+                        }
                     }
                     if (cyborgsToTakeover <= 0)
                     {
                         continue;//skip places where we are already on track to take over
                     }
 
-                    if ((sourceFactory.ProductionCount < 3 && cyborgsAvailableToSend >= 10) && _gameCounter > 5)
-                    {
-                        moves.AddMove(new Move(sourceFactory.Id));
-                        cyborgsAvailableToSend -= 10;
-                        globalCyborgsAvailableToSend -= 10;
-                    }
-
-                    if (sourceFactory.ProductionCount == 3 && cyborgsAvailableToSend > 26)
-                    {
-                        foreach (FactoryEntity sourceTargetFactory in friendlyFactories)
-                        {
-                            if (sourceFactory.Id == sourceTargetFactory.Id)
-                            {
-                                continue;//Can't send to self
-                            }
-                            else if (sourceTargetFactory.ProductionCount < 3 && cyborgsAvailableToSend > 26)
-                            {
-                                moves.AddMove(new Move(sourceFactory.Id, sourceTargetFactory.Id, 26));
-                                cyborgsAvailableToSend -= 26;
-                                globalCyborgsAvailableToSend -= 26;
-                            }
-                        }
-                    }
-
-                    int distance = _links.GetDistance(sourceFactory.Id, targetFactory.Id);
+                    int distance = _links.GetShortestPathDistance(sourceFactory.Id, targetFactory.Id);
                     if (distance >= 9)
                     {
                         continue;
                     }
 
+                    if (targetFactory.IsNeutral())
+                    {
+                        var enemyFactories = otherFactories.Where(f => f.IsEnemy()).ToList();
+                        int minDist = 9999;
+                        foreach (FactoryEntity enemy in enemyFactories)
+                        {
+                            int dist = _links.GetDistance(targetFactory.Id, enemy.Id);
+                            if (distance < minDist)
+                            {
+                                minDist = distance;
+                            }
+                        }
+                        val += minDist * 5;
+                    }
 
                     val += cyborgsToTakeover * -1;//factories that take a lot of borgs to take over aren't as good of a choice
-                    val += targetFactory.ProductionCount * 10;//lots of bonus for high yield factories
-                    val += targetFactory.Owner == Owner.Opponent ? targetFactory.ProductionCount * 3 : 0;
-                    val += distance * -5;
+                    val += targetFactory.IsProducing() ? targetFactory.ProductionCount * 10 : 0;//lots of bonus for high yield factories
+                    val += targetFactory.Owner == Owner.Opponent ? targetFactory.ProductionCount * 5 : 0;
+                    val += distance * -10;
 
                     if (val > bestValue)
                     {
                         //If we don't have enough troops for a takeover then it's not the best target
-                        if (cyborgsToTakeover <= globalCyborgsAvailableToSend)
+                        //Need to adjust the multi-source takeover to include synchronization on time or put it into a holding that will only execute if fulfilled
+                        if (cyborgsToTakeover <= globalCyborgsAvailableToSend /*|| (targetFactory.IsNeutral() && !IsFrontLineFactory(targetFactory))*/)
                         {
+                            cyborgsLeftToTakeover = 0;
                             if (cyborgsToTakeover > sourceFactory.CyborgCount)
                             {
                                 cyborgsLeftToTakeover = cyborgsToTakeover - sourceFactory.CyborgCount;
@@ -360,34 +428,53 @@ public class GameHelper
                             }
                             bestValue = val;
                             bestTarget = targetFactory;
-                            cyborgsToSend = Math.Min(cyborgsToTakeover, sourceFactory.CyborgCount);
-                            Console.Error.WriteLine("Value: " + val + " Best Target: " + targetFactory.Id + " to send " + cyborgsToSend);
+                            cyborgsToSend = Math.Min(Math.Min(cyborgsToTakeover, sourceFactory.CyborgCount), cyborgsAvailableToSend);
+                            //Console.Error.WriteLine("Value: " + val + " Best Target: " + targetFactory.Id + " to send " + cyborgsToSend);
                         }
                     }
                 }
                 if (bestTarget != null)
                 {
-                    if (cyborgsLeftToTakeover > 0)
+                    int bestTargetId = _links.ShortestPath(sourceFactory.Id, bestTarget.Id);
+                    if (otherFactories.Where(e => e.Id == bestTargetId && e.IsNeutral() && ((FactoryEntity)e).CyborgCount != 0).Any())
+                    {
+                        bestTargetId = bestTarget.Id;
+                    }
+                    cyborgsAvailableToSend -= cyborgsToSend;
+                    globalCyborgsAvailableToSend -= cyborgsToSend;
+
+                    if (cyborgsLeftToTakeover > 0 || multiFactoryTakeoverMoves.Where(m => m.TargetFactory.Id == bestTarget.Id || m.SourceFactory.Id == sourceFactory.Id).Any())
                     {
                         factoryIdToCyborgsToTakeover[bestTarget.Id] = cyborgsLeftToTakeover;
-                        Console.Error.WriteLine("Leftover to send: " + cyborgsLeftToTakeover);
+                        Console.Error.WriteLine($"Leftover to send: {cyborgsLeftToTakeover} at {bestTarget.Id}");
+                        MoveOption move = new MoveOption(sourceFactory, bestTarget, cyborgsToSend, bestTargetId, cyborgsToDefend);
+                        multiFactoryTakeoverMoves.Add(move);
                     }
                     else
                     {
+                        Console.Error.WriteLine("Best Target Acquired: " + bestTarget.Id + " to send " + cyborgsToSend);
                         factoryIdToCyborgsToTakeover[bestTarget.Id] = 0;
+                        _entities.Add(new TroopEntity(-1, (int)Owner.Me, sourceFactory.Id, bestTarget.Id, cyborgsToSend, _links.GetDistance(sourceFactory.Id, bestTarget.Id)));
+                        Move move = new Move(sourceFactory.Id, bestTargetId, cyborgsToSend);
+                        moves.AddMove(move);
                     }
-                    int bestTargetId = _links.ShortestPath(sourceFactory.Id, bestTarget.Id);
-                    //Console.Error.WriteLine("Best Target Acquired: " + bestTarget.Id + " to send " + cyborgsToSend);
-                    moves.AddMove(new Move(sourceFactory.Id, bestTargetId, cyborgsToSend));
-                    _entities.Add(new TroopEntity(-1, (int)Owner.Me, sourceFactory.Id, bestTarget.Id, cyborgsToSend, _links.GetDistance(sourceFactory.Id, bestTarget.Id)));
-                    cyborgsAvailableToSend -= cyborgsToSend;
-                    globalCyborgsAvailableToSend -= cyborgsToSend;
                 }
                 else
                 {
                     hasTarget = false;//No targets so abort
+
+                    if ((sourceFactory.ProductionCount < 3 && cyborgsAvailableToSend >= 10) && (_myTroops - _enemyTroops) > -10 && _gameCounter > 5)
+                    {
+                        moves.AddMove(new Move(sourceFactory.Id));
+                        cyborgsAvailableToSend -= 10;
+                        globalCyborgsAvailableToSend -= 10;
+                        _myTroops -= 10;
+                        continue;
+                    }
+
                     //If there are no targets then spew out borgs to facilities that need to grow
-                    if (sourceFactory.ProductionCount == 3)
+                    bool isFrontLineFactory = IsFrontLineFactory(sourceFactory);
+                    if (sourceFactory.ProductionCount == 3 && !isFrontLineFactory)
                     {
                         Console.Error.WriteLine("Evacuating 3 production facility");
                         FactoryEntity friendlySourceTarget = null;
@@ -399,7 +486,7 @@ public class GameHelper
                                 continue;
 
                             int friendlyVal = 0;
-                            friendlyVal += _links.GetDistance(sourceFactory.Id, friendlySource.Id) * -5;
+                            friendlyVal += _links.GetShortestPathDistance(sourceFactory.Id, friendlySource.Id) * -5;
                             if (friendlySource.CyborgCount > 20)
                             {
                                 friendlyVal += -100;
@@ -408,9 +495,10 @@ public class GameHelper
                             {
                                 friendlyVal += -200;
                             }
+                            //less points for being close to the enemy
                             foreach (FactoryEntity enemyFactory in enemyFactories)
                             {
-                                friendlyVal += _links.GetDistance(friendlySource.Id, enemyFactory.Id) * -1;
+                                friendlyVal += _links.GetShortestPathDistance(friendlySource.Id, enemyFactory.Id) * -1;
                             }
 
                             if (friendlyVal > bestFriendlyValue)
@@ -421,23 +509,34 @@ public class GameHelper
                         }
                         if (friendlySourceTarget != null)
                         {
+                            Console.Error.WriteLine("Evacuation Target: " + friendlySourceTarget.Id);
                             int shortestId = _links.ShortestPath(sourceFactory.Id, friendlySourceTarget.Id);
-                            moves.AddMove(new Move(sourceFactory.Id, shortestId, sourceFactory.CyborgCount));
-                            cyborgsAvailableToSend -= sourceFactory.CyborgCount;
-                            globalCyborgsAvailableToSend -= sourceFactory.CyborgCount;
+                            moves.AddMove(new Move(sourceFactory.Id, shortestId, cyborgsAvailableToSend));
+                            cyborgsAvailableToSend -= cyborgsAvailableToSend;
+                            globalCyborgsAvailableToSend -= cyborgsAvailableToSend;
                         }
                         else
                         {
                             Console.Error.WriteLine("Could not find any targets!");
                         }
                     }
+                    else
+                    {
+                        //Check if any bombs in play and evacuate
+                        BombEvacuation(moves, sourceFactory);
+                    }
                 }
             }
+        }
 
-            if (_bombCount > 0)
-            {
-                UseBomb(moves);
-            }
+        if (multiFactoryTakeoverMoves.Any())
+        {
+            PlayMultiFactoryTakeoverMoves(moves, multiFactoryTakeoverMoves);
+        }
+
+        if (_bombCount > 0)
+        {
+            UseBomb(moves);
         }
 
         if (!moves.Moves.Any())
@@ -446,14 +545,119 @@ public class GameHelper
             moves.AddMove(new Move());
         }
 
-
         return moves;
+    }
+
+    //Checks for bombs in play and evacuates the source factory
+    public void BombEvacuation(MoveList moves, FactoryEntity sourceFactory)
+    {
+        if (_entities.Where(e => e is BombEntity && e.IsEnemy()).ToList().Any())
+        {
+            List<Entity> friendlyFactories = _entities.Where(e => e is FactoryEntity && e.IsFriendly()).ToList();
+            int minDist = 9999;
+            int minDistNon3 = 9999;
+            FactoryEntity bestNon3ProductionFactory = null;
+            FactoryEntity bestFactory = null;
+            foreach (FactoryLinks.Node n in _links.GetLinks(sourceFactory.Id))
+            {
+                FactoryEntity factory = (FactoryEntity)friendlyFactories.Where(f => f.Id == n.FactoryId).FirstOrDefault();
+                if (factory != null && IsFrontLineFactory(factory))
+                {
+                    if (n.Distance < minDist)
+                    {
+                        minDist = n.Distance;
+                        bestFactory = factory;
+                    }
+                    if (n.Distance < minDistNon3 && factory.ProductionCount < 3)
+                    {
+                        bestNon3ProductionFactory = factory;
+                        minDistNon3 = n.Distance;
+                    }
+                }
+            }
+            if (bestNon3ProductionFactory != null)
+            {
+                Console.Error.WriteLine("Evacuating " + sourceFactory.Id + " to " + bestNon3ProductionFactory.Id);
+                moves.AddMove(new Move(sourceFactory.Id, bestNon3ProductionFactory.Id, sourceFactory.CyborgCount));
+            }
+            else if (bestFactory != null)
+            {
+                Console.Error.WriteLine("Evacuating " + sourceFactory.Id + " to " + bestFactory.Id);
+                moves.AddMove(new Move(sourceFactory.Id, bestFactory.Id, sourceFactory.CyborgCount));
+            }
+            else
+            {
+                Console.Error.WriteLine("No factory found to evacuate to...");
+            }
+        }
+    }
+
+    public void PlayMultiFactoryTakeoverMoves(MoveList moves, List<MoveOption> moveOptions)
+    {
+        //Might need to handle 2 different multi-factory takeovers against more than 1 target
+        bool didPlayMove = false;
+        //CalculateCyborgsRequiredToTakeover
+        List<FactoryEntity> targets = new List<FactoryEntity>();
+        //Find all the targets
+        foreach (MoveOption move in moveOptions)
+        {
+            /*
+            if(!targets.Where(t => t.Id == move.TargetFactory.Id).Any()){
+                targets.Add(move.TargetFactory);
+            }
+            */
+            //Play every move that isn't at the target;
+            if (move.TargetFactory.Id != move.BestTargetId)
+            {
+                Console.Error.WriteLine("Move not on target: " + move.TargetFactory.Id + " adapted: " + move.BestTargetId);
+                moves.AddMove(move.GenerateMove());
+                didPlayMove = true;
+            }
+        }
+        /*
+        foreach(FactoryEntity targetFactory in targets){
+
+            foreach(MoveOption move in moves.Where(m => m.TargetFactory.Id == targetFactory.Id)){
+
+            }
+        }
+        */
+
+
+        //If all moves go to target then play all of them.
+        if (!didPlayMove)
+        {
+            Console.Error.WriteLine("Playing all multifactory target moves.");
+            foreach (MoveOption move in moveOptions)
+            {
+                moves.AddMove(move.GenerateMove());
+            }
+        }
+    }
+
+    public bool IsFrontLineFactory(FactoryEntity factory)
+    {
+        List<FactoryLinks.Node> adjacentFactories = _links.GetLinks(factory.Id);
+        foreach (FactoryLinks.Node n in adjacentFactories)
+        {
+            if (n.Distance < 5 && _entities.Where(e => e.Id == n.FactoryId && e.IsEnemy()).Any())
+            {
+                Console.Error.WriteLine("Factory: " + factory.Id + " is frontline.  Distance: " + n.Distance + " to " + n.FactoryId);
+                return true;
+            }
+        }
+        Console.Error.WriteLine("Factory: " + factory.Id + " is not frontline.");
+        return false;
     }
 
     public int GetCyborgDefense(FactoryEntity sourceFactory)
     {
         int cyborgsToDefend = 0;
         List<Entity> enemyTroops = _entities.Where(e => e is TroopEntity Entity && e.IsEnemy()).ToList();
+        if (sourceFactory.ProductionCount == 0)
+        {
+            return 0;//do not defend 0 production sites..
+        }
 
         //If there aren't any enemy bombs then use a more defensive strategy
         if (!_entities.Where(e => e is BombEntity && e.IsEnemy()).ToList().Any() || sourceFactory.ProductionCount > 1)
@@ -470,7 +674,20 @@ public class GameHelper
                     }
                 }
             }
-            Console.Error.WriteLine("Incoming: " + cyborgsToDefend + " arrival: " + minArrival);
+            List<Entity> enemyFactories = _entities.Where(e => e is FactoryEntity && e.IsEnemy()).ToList();
+            foreach (FactoryEntity enemyFactory in enemyFactories)
+            {
+                int dist = _links.GetShortestPathDistance(sourceFactory.Id, enemyFactory.Id);
+                if (dist <= 2 && dist <= minArrival)
+                {
+                    cyborgsToDefend += enemyFactory.CyborgCount;
+                    minArrival = dist;
+                }
+            }
+            if (cyborgsToDefend != 0)
+            {
+                Console.Error.WriteLine("Source: " + sourceFactory.Id + " Incoming: " + cyborgsToDefend + " arrival: " + minArrival);
+            }
 
             cyborgsToDefend -= minArrival * sourceFactory.ProductionCount;
             cyborgsToDefend = cyborgsToDefend < 0 ? 0 : cyborgsToDefend;
@@ -487,9 +704,12 @@ public class GameHelper
 
         List<Entity> enemyFactories = _entities.Where(e => e is FactoryEntity && e.IsEnemy()).ToList();
 
+        FactoryEntity bestTargetFactory = null;
+        int bestVal = -9999;
         foreach (FactoryEntity targetFactory in enemyFactories)
         {
             bool targetHasTroops = false;
+            int val = 0;
             int troopCount = 0;
             foreach (TroopEntity troop in friendlyTroops)
             {
@@ -504,26 +724,43 @@ public class GameHelper
             }
 
             bool targetHasBomb = bombs.Any() && ((BombEntity)bombs.First()).TargetFactory == targetFactory.Id;
-            if ((targetFactory.ProductionCount == 3 || (targetFactory.ProductionCount == 2 && targetFactory.CyborgCount > 5)) && !targetHasBomb && !targetHasTroops)
+            bool targetLevel2 = targetFactory.ProductionCount == 2 && targetFactory.CyborgCount > 5 && targetFactory.IsProducing();
+            bool targetLevel3 = targetFactory.ProductionCount == 3 && targetFactory.IsProducing();
+            if ((targetLevel3 || targetLevel2) && !targetHasBomb && !targetHasTroops)
             {
-                Console.Error.WriteLine("Bombing: " + targetFactory + " with production: " + targetFactory.ProductionCount);
-                List<Entity> friendlyFactories = _entities.Where(e => e is FactoryEntity && e.IsFriendly()).ToList();
-                FactoryEntity bestSource = null;
-                int minDist = 99999;
-                foreach (FactoryEntity sourceFactory in friendlyFactories)
+                val += targetFactory.CyborgCount;
+                val += targetFactory.ProductionCount * 5;
+                if (val > bestVal)
                 {
-                    int currentDistance = _links.GetDistance(sourceFactory.Id, targetFactory.Id);
-                    if (currentDistance < minDist)
-                    {
-                        minDist = currentDistance;
-                        bestSource = sourceFactory;
-                    }
+                    bestTargetFactory = targetFactory;
                 }
-                moves.AddMove(new Move(bestSource.Id, targetFactory.Id));
-                _entities.Add(new BombEntity(-1, (int)Owner.Me, bestSource.Id, targetFactory.Id, _links.GetDistance(bestSource.Id, targetFactory.Id), -1));
+            }
+        }
+
+        if (bestTargetFactory != null)
+        {
+            Console.Error.WriteLine("Bombing: " + bestTargetFactory.Id + " with production: " + bestTargetFactory.ProductionCount);
+            List<Entity> friendlyFactories = _entities.Where(e => e is FactoryEntity && e.IsFriendly()).ToList();
+            FactoryEntity bestSource = null;
+            int minDist = 99999;
+            foreach (FactoryEntity sourceFactory in friendlyFactories)
+            {
+                int currentDistance = _links.GetDistance(sourceFactory.Id, bestTargetFactory.Id);
+                if (currentDistance < minDist && currentDistance < 10)
+                {
+                    minDist = currentDistance;
+                    bestSource = sourceFactory;
+                }
+            }
+
+            if (bestSource != null)
+            {
+                moves.AddMove(new Move(bestSource.Id, bestTargetFactory.Id));
+                _entities.Add(new BombEntity(-1, (int)Owner.Me, bestSource.Id, bestTargetFactory.Id, _links.GetDistance(bestSource.Id, bestTargetFactory.Id), -1));
                 _bombCount--;
             }
         }
+
     }
 
     //Calculates the number of cyborgs required to takeover a factory
@@ -555,7 +792,7 @@ public class GameHelper
                 }
                 else if (troop.IsEnemy())
                 {
-                    //Console.Error.WriteLine("Enemy troop count: " + troop.NumberOfCyborgs + " arrives: " + troop.TurnsToArrive);
+                    Console.Error.WriteLine("Enemy troop count: " + troop.NumberOfCyborgs + " arrives: " + troop.TurnsToArrive);
                     if (timeToEnemyTroops.ContainsKey(troop.TurnsToArrive))
                     {
                         timeToEnemyTroops[troop.TurnsToArrive] += troop.NumberOfCyborgs;
@@ -567,8 +804,26 @@ public class GameHelper
                 }
             }
         }
+        //Add check for cyborgs sitting in factories that could be sent and assume they will be sent...
+        List<Entity> enemyFactories = _entities.Where(e => e is FactoryEntity && e.IsEnemy() && e.Id != targetFactory.Id).ToList();
+        foreach (FactoryEntity enemyFactory in enemyFactories)
+        {
+            int time = _links.GetShortestPathDistance(targetFactory.Id, enemyFactory.Id);
 
-        int distance = _links.GetDistance(sourceFactory.Id, targetFactory.Id);
+            if (targetFactory.IsEnemy())
+            {
+                if (timeToEnemyTroops.ContainsKey(time))
+                {
+                    timeToEnemyTroops[time] += enemyFactory.CyborgCount;
+                }
+                else
+                {
+                    timeToEnemyTroops[time] = enemyFactory.CyborgCount;
+                }
+            }
+        }
+
+        int distance = _links.GetShortestPathDistance(sourceFactory.Id, targetFactory.Id);
         Owner previousOwnership = targetFactory.Owner;
         List<Entity> friendlyBombs = _entities.Where(e => e is BombEntity && e.IsFriendly()).ToList();
         BombEntity friendlyBomb = null;
@@ -579,7 +834,7 @@ public class GameHelper
             {
                 return 999999;//Don't send troops where a bomb is going to explode after we send troops
             }
-            Console.Error.WriteLine("Bomb: " + friendlyBomb.Id + " Target: " + friendlyBomb.TargetFactory + " Time: " + friendlyBomb.TurnsToArrive);
+            //Console.Error.WriteLine("Bomb: " + friendlyBomb.Id + " Target: " + friendlyBomb.TargetFactory + " Time: " + friendlyBomb.TurnsToArrive);
         }
 
         //Calculate the number of cyborgs in the factory up to the distance of the source factory
@@ -592,7 +847,7 @@ public class GameHelper
             bool isBomb = false;
 
 
-            if (targetFactory.Id == 8)
+            if (targetFactory.Id == 2)
             {
                 //Console.Error.WriteLine("Own: " + previousOwnership + " Borg: " + cyborgsInFactory + " Dist: " + distance);
                 //Console.Error.WriteLine("Friend: " + friendlyCount + " Enemy: " + enemyCount + " Time: " + i);
@@ -608,7 +863,7 @@ public class GameHelper
             switch (previousOwnership)
             {
                 case Owner.Me:
-                    if (targetFactory.IsProducing() && bombCount <= 0)
+                    if ((targetFactory.IsProducing() || targetFactory.TurnsTillProduction - i < 1) && bombCount <= 0)
                     {
                         cyborgsInFactory += targetFactory.ProductionCount;
                     }
@@ -635,7 +890,7 @@ public class GameHelper
                     }
                     break;
                 case Owner.Opponent:
-                    if (targetFactory.IsProducing() && bombCount <= 0)
+                    if ((targetFactory.IsProducing() || targetFactory.TurnsTillProduction - i < 1) && bombCount <= 0)
                     {
                         cyborgsInFactory += targetFactory.ProductionCount;
                     }
@@ -645,7 +900,7 @@ public class GameHelper
                         int cyborgsLost = (int)Math.Floor(cyborgsInFactory / 2.0);
                         cyborgsLost = cyborgsLost < 10 ? Math.Min(10, cyborgsInFactory) : cyborgsLost;
                         cyborgsInFactory -= cyborgsLost;
-                        Console.Error.WriteLine("Target: " + targetFactory.Id + " Current: " + cyborgsInFactory + " Bomb: " + cyborgsLost);
+                        //Console.Error.WriteLine("Target: " + targetFactory.Id + " Current: " + cyborgsInFactory + " Bomb: " + cyborgsLost);
                     }
                     if (cyborgsInFactory < 0)
                     {
@@ -910,11 +1165,24 @@ public class Entity
     }
 }
 
-public class Node
+public class MoveOption
 {
-    public int Id { get; set; }
-    public Node(int id)
+    public FactoryEntity SourceFactory { get; set; }
+    public FactoryEntity TargetFactory { get; set; }
+    public int SendCount { get; set; }
+    public int BestTargetId { get; set; }
+    public int DefendCount { get; set; }
+    public MoveOption(FactoryEntity sourceFactory, FactoryEntity targetFactory, int sendCount, int bestTargetId, int defendCount)
     {
-        Id = id;
+        SourceFactory = sourceFactory;
+        TargetFactory = targetFactory;
+        SendCount = sendCount;
+        BestTargetId = bestTargetId;
+        DefendCount = defendCount;
+    }
+
+    public Move GenerateMove()
+    {
+        return new Move(SourceFactory.Id, BestTargetId, SendCount);
     }
 }
