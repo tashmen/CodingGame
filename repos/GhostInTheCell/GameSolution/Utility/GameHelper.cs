@@ -1,10 +1,11 @@
-﻿using System;
+﻿using GameSolution.Entities;
+using GameSolution.Moves;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using static GameSolution.Constants;
 
-namespace GameSolution
+namespace GameSolution.Utility
 {
     public class GameHelper
     {
@@ -50,11 +51,11 @@ namespace GameSolution
                 }
                 if (factory.IsFriendly())
                 {
-                    _myTroops += factory.CyborgCount;
+                    _myTroops += factory.NumberOfCyborgs;
                 }
                 else if (factory.IsEnemy())
                 {
-                    _enemyTroops += factory.CyborgCount;
+                    _enemyTroops += factory.NumberOfCyborgs;
                 }
             }
             foreach (TroopEntity troop in troops)
@@ -85,7 +86,7 @@ namespace GameSolution
             int globalCyborgsAvailableToSend = 0;
             foreach (FactoryEntity sourceFactory in friendlyFactories)
             {
-                globalCyborgsAvailableToSend += sourceFactory.CyborgCount - GetCyborgDefense(sourceFactory);
+                globalCyborgsAvailableToSend += sourceFactory.NumberOfCyborgs - GetCyborgDefense(sourceFactory);
             }
 
 
@@ -94,7 +95,7 @@ namespace GameSolution
             foreach (FactoryEntity sourceFactory in friendlyFactories)
             {
                 //Console.Error.WriteLine(sourceFactory.ToString());
-                int cyborgsAvailableToSend = sourceFactory.CyborgCount;
+                int cyborgsAvailableToSend = sourceFactory.NumberOfCyborgs;
                 bool hasTarget = true;//Assume a target will be found
                 int cyborgsToDefend = GetCyborgDefense(sourceFactory);
 
@@ -107,7 +108,7 @@ namespace GameSolution
                 {
                     globalCyborgsAvailableToSend -= cyborgsAvailableToSend;
                     cyborgsAvailableToSend = 0;
-                    if (sourceFactory.CyborgCount > 10)
+                    if (sourceFactory.NumberOfCyborgs > 10)
                     {
                         moves.AddMove(new Move(sourceFactory.Id));
                         _myTroops -= 10;
@@ -182,22 +183,22 @@ namespace GameSolution
                             if (cyborgsToTakeover <= globalCyborgsAvailableToSend /*|| (targetFactory.IsNeutral() && !IsFrontLineFactory(targetFactory))*/)
                             {
                                 cyborgsLeftToTakeover = 0;
-                                if (cyborgsToTakeover > sourceFactory.CyborgCount)
+                                if (cyborgsToTakeover > sourceFactory.NumberOfCyborgs)
                                 {
-                                    cyborgsLeftToTakeover = cyborgsToTakeover - sourceFactory.CyborgCount;
+                                    cyborgsLeftToTakeover = cyborgsToTakeover - sourceFactory.NumberOfCyborgs;
                                     Console.Error.WriteLine("Not enough cyborgs at this factory!");
                                 }
                                 bestValue = val;
                                 bestTarget = targetFactory;
-                                cyborgsToSend = Math.Min(Math.Min(cyborgsToTakeover, sourceFactory.CyborgCount), cyborgsAvailableToSend);
+                                cyborgsToSend = Math.Min(Math.Min(cyborgsToTakeover, sourceFactory.NumberOfCyborgs), cyborgsAvailableToSend);
                                 //Console.Error.WriteLine("Value: " + val + " Best Target: " + targetFactory.Id + " to send " + cyborgsToSend);
                             }
                         }
                     }
                     if (bestTarget != null)
                     {
-                        int bestTargetId = _links.ShortestPath(sourceFactory.Id, bestTarget.Id);
-                        if (otherFactories.Where(e => e.Id == bestTargetId && e.IsNeutral() && ((FactoryEntity)e).CyborgCount != 0).Any())
+                        int bestTargetId = _links.GetShortestPath(sourceFactory.Id, bestTarget.Id);
+                        if (otherFactories.Where(e => e.Id == bestTargetId && e.IsNeutral() && ((FactoryEntity)e).NumberOfCyborgs != 0).Any())
                         {
                             bestTargetId = bestTarget.Id;
                         }
@@ -248,7 +249,7 @@ namespace GameSolution
 
                                 int friendlyVal = 0;
                                 friendlyVal += _links.GetShortestPathDistance(sourceFactory.Id, friendlySource.Id) * -5;
-                                if (friendlySource.CyborgCount > 20)
+                                if (friendlySource.NumberOfCyborgs > 20)
                                 {
                                     friendlyVal += -100;
                                 }
@@ -271,7 +272,7 @@ namespace GameSolution
                             if (friendlySourceTarget != null)
                             {
                                 Console.Error.WriteLine("Evacuation Target: " + friendlySourceTarget.Id);
-                                int shortestId = _links.ShortestPath(sourceFactory.Id, friendlySourceTarget.Id);
+                                int shortestId = _links.GetShortestPath(sourceFactory.Id, friendlySourceTarget.Id);
                                 moves.AddMove(new Move(sourceFactory.Id, shortestId, cyborgsAvailableToSend));
                                 cyborgsAvailableToSend -= cyborgsAvailableToSend;
                                 globalCyborgsAvailableToSend -= cyborgsAvailableToSend;
@@ -319,7 +320,7 @@ namespace GameSolution
                 int minDistNon3 = 9999;
                 FactoryEntity bestNon3ProductionFactory = null;
                 FactoryEntity bestFactory = null;
-                foreach (FactoryLinks.Node n in _links.GetLinks(sourceFactory.Id))
+                foreach (Node n in _links.GetLinks(sourceFactory.Id))
                 {
                     FactoryEntity factory = (FactoryEntity)friendlyFactories.Where(f => f.Id == n.FactoryId).FirstOrDefault();
                     if (factory != null && IsFrontLineFactory(factory))
@@ -339,12 +340,12 @@ namespace GameSolution
                 if (bestNon3ProductionFactory != null)
                 {
                     Console.Error.WriteLine("Evacuating " + sourceFactory.Id + " to " + bestNon3ProductionFactory.Id);
-                    moves.AddMove(new Move(sourceFactory.Id, bestNon3ProductionFactory.Id, sourceFactory.CyborgCount));
+                    moves.AddMove(new Move(sourceFactory.Id, bestNon3ProductionFactory.Id, sourceFactory.NumberOfCyborgs));
                 }
                 else if (bestFactory != null)
                 {
                     Console.Error.WriteLine("Evacuating " + sourceFactory.Id + " to " + bestFactory.Id);
-                    moves.AddMove(new Move(sourceFactory.Id, bestFactory.Id, sourceFactory.CyborgCount));
+                    moves.AddMove(new Move(sourceFactory.Id, bestFactory.Id, sourceFactory.NumberOfCyborgs));
                 }
                 else
                 {
@@ -398,8 +399,8 @@ namespace GameSolution
 
         public bool IsFrontLineFactory(FactoryEntity factory)
         {
-            List<FactoryLinks.Node> adjacentFactories = _links.GetLinks(factory.Id);
-            foreach (FactoryLinks.Node n in adjacentFactories)
+            List<Node> adjacentFactories = _links.GetLinks(factory.Id);
+            foreach (Node n in adjacentFactories)
             {
                 if (n.Distance < 5 && _entities.Where(e => e.Id == n.FactoryId && e.IsEnemy()).Any())
                 {
@@ -441,7 +442,7 @@ namespace GameSolution
                     int dist = _links.GetShortestPathDistance(sourceFactory.Id, enemyFactory.Id);
                     if (dist <= 2 && dist <= minArrival)
                     {
-                        cyborgsToDefend += enemyFactory.CyborgCount;
+                        cyborgsToDefend += enemyFactory.NumberOfCyborgs;
                         minArrival = dist;
                     }
                 }
@@ -452,7 +453,7 @@ namespace GameSolution
 
                 cyborgsToDefend -= minArrival * sourceFactory.ProductionCount;
                 cyborgsToDefend = cyborgsToDefend < 0 ? 0 : cyborgsToDefend;
-                cyborgsToDefend = Math.Min(cyborgsToDefend, sourceFactory.CyborgCount);
+                cyborgsToDefend = Math.Min(cyborgsToDefend, sourceFactory.NumberOfCyborgs);
             }
             return cyborgsToDefend;
         }
@@ -479,17 +480,17 @@ namespace GameSolution
                         troopCount += troop.NumberOfCyborgs;
                     }
                 }
-                if (targetFactory.CyborgCount < troopCount)
+                if (targetFactory.NumberOfCyborgs < troopCount)
                 {
                     targetHasTroops = true;
                 }
 
                 bool targetHasBomb = bombs.Any() && ((BombEntity)bombs.First()).TargetFactory == targetFactory.Id;
-                bool targetLevel2 = targetFactory.ProductionCount == 2 && targetFactory.CyborgCount > 5 && targetFactory.IsProducing();
+                bool targetLevel2 = targetFactory.ProductionCount == 2 && targetFactory.NumberOfCyborgs > 5 && targetFactory.IsProducing();
                 bool targetLevel3 = targetFactory.ProductionCount == 3 && targetFactory.IsProducing();
                 if ((targetLevel3 || targetLevel2) && !targetHasBomb && !targetHasTroops)
                 {
-                    val += targetFactory.CyborgCount;
+                    val += targetFactory.NumberOfCyborgs;
                     val += targetFactory.ProductionCount * 5;
                     if (val > bestVal)
                     {
@@ -575,11 +576,11 @@ namespace GameSolution
                 {
                     if (timeToEnemyTroops.ContainsKey(time))
                     {
-                        timeToEnemyTroops[time] += enemyFactory.CyborgCount;
+                        timeToEnemyTroops[time] += enemyFactory.NumberOfCyborgs;
                     }
                     else
                     {
-                        timeToEnemyTroops[time] = enemyFactory.CyborgCount;
+                        timeToEnemyTroops[time] = enemyFactory.NumberOfCyborgs;
                     }
                 }
             }
@@ -599,7 +600,7 @@ namespace GameSolution
             }
 
             //Calculate the number of cyborgs in the factory up to the distance of the source factory
-            int cyborgsInFactory = targetFactory.CyborgCount;
+            int cyborgsInFactory = targetFactory.NumberOfCyborgs;
             int bombCount = 0;
             for (int i = 1; i <= distance; i++)
             {

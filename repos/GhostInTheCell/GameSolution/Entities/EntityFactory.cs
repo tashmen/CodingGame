@@ -1,18 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using static GameSolution.Constants;
 
-namespace GameSolution
+namespace GameSolution.Entities
 {
-    public class EntityTypes
-    {
-        public const string Factory = "FACTORY";
-        public const string Troop = "TROOP";
-        public const string Bomb = "BOMB";
-    }
-
     public class EntityFactory
     {
         public EntityFactory()

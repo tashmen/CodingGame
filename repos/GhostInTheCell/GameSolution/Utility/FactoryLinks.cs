@@ -1,29 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace GameSolution
+namespace GameSolution.Utility
 {
     public class FactoryLinks
     {
-        public class Node
-        {
-            public int FactoryId { get; set; }
-            public int Distance { get; set; }
-            public Node(int factory, int distance)
-            {
-                FactoryId = factory;
-                Distance = distance;
-            }
-
-            public Node CreateAtDistance(int currentDist)
-            {
-                return new Node(FactoryId, currentDist + Distance);
-            }
-        }
-
         Dictionary<int, List<Node>> Links { get; set; }
         Dictionary<int, Dictionary<int, List<Node>>> Paths { get; set; }
         public FactoryLinks()
@@ -31,6 +13,12 @@ namespace GameSolution
             Links = new Dictionary<int, List<Node>>();
         }
 
+        /// <summary>
+        /// Adds a link to the list
+        /// </summary>
+        /// <param name="factory1">First factory id</param>
+        /// <param name="factory2">Second factory id</param>
+        /// <param name="distance">The distance between the two factories</param>
         public void AddLink(int factory1, int factory2, int distance)
         {
             Console.Error.WriteLine(factory1 + " " + factory2 + " " + distance);
@@ -38,6 +26,9 @@ namespace GameSolution
             AddLinkInternal(factory2, factory1, distance);
         }
 
+        /// <summary>
+        /// Calculates all of the shortest paths in the factory links
+        /// </summary>
         public void CalculateShortestPaths()
         {
             Paths = new Dictionary<int, Dictionary<int, List<Node>>>();
@@ -51,6 +42,11 @@ namespace GameSolution
             }
         }
 
+        /// <summary>
+        /// Calculates the shortest paths from the start node to all other nodes
+        /// </summary>
+        /// <param name="startNode">The starting factory id</param>
+        /// <param name="vertexCount">The number of factories</param>
         private void CalculateShortestPathFromStartNode(int startNode, int vertexCount)
         {
             List<Node> minimumSpanningTree = new List<Node>();
@@ -112,25 +108,43 @@ namespace GameSolution
                 }
                 Paths[startNode].Add(bestNode.FactoryId, currentPath);
                 currentPath.Add(bestNode);
+                /*
                 if (startNode == 0)
                 {
                     Console.Error.WriteLine("Parent node: " + parentNode.FactoryId + " distance: " + parentNode.Distance);
                     Console.Error.WriteLine("Shortest Node: " + bestNode.FactoryId + " distance: " + bestNode.Distance);
                 }
+                */
             }
         }
 
-        public List<Node> GetLinks(int factory)
+        /// <summary>
+        /// Retrieves the links that are adjacent to the given factory
+        /// </summary>
+        /// <param name="factory">The factory id</param>
+        /// <returns></returns>
+        public List<Node> GetLinks(int factoryId)
         {
-            return Links[factory];
+            return Links[factoryId];
         }
 
-        //Retrieves direct straight distance
+        /// <summary>
+        /// Retrieves the straight line distance from start to end
+        /// </summary>
+        /// <param name="startId">The starting factory id</param>
+        /// <param name="endId">The ending factory id</param>
+        /// <returns>The distance from start to end</returns>
         public int GetDistance(int startId, int endId)
         {
             return GetLinks(startId).Where(l => l.FactoryId == endId).First().Distance + 1;//All commands are issued from this turn which is always turn 1.
         }
 
+        /// <summary>
+        /// Retrieves the distance following the shortest path from start to end.
+        /// </summary>
+        /// <param name="startId">The starting factory id</param>
+        /// <param name="endId">The ending factory id</param>
+        /// <returns>The distance along the shortest path</returns>
         public int GetShortestPathDistance(int startId, int endId)
         {
             Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
@@ -145,12 +159,17 @@ namespace GameSolution
             Console.Error.WriteLine($"From start {startId} to {endId} path length: {paths.Count}.");
             */
 
-            return paths.Last().Distance + 1;
+            return paths.Last().Distance + 1;//All commands are issued from this turn which is always turn 1.
         }
 
 
-
-        public int ShortestPath(int startId, int endId)
+        /// <summary>
+        /// Retrieves the next factory along the path from start to end
+        /// </summary>
+        /// <param name="startId">The starting factory id</param>
+        /// <param name="endId">The ending factory id</param>
+        /// <returns>The factory id that is first in the path</returns>
+        public int GetShortestPath(int startId, int endId)
         {
             Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
             if (endPoints == null)
@@ -171,6 +190,7 @@ namespace GameSolution
             return shortest;
         }
 
+        //Adds links to the factory links
         private void AddLinkInternal(int startFactory, int destinationFactory, int distance)
         {
             List<Node> factoryLinks = null;
@@ -184,7 +204,6 @@ namespace GameSolution
                 Links[startFactory] = factoryLinks;
             }
             factoryLinks.Add(new Node(destinationFactory, distance));
-
         }
     }
 }

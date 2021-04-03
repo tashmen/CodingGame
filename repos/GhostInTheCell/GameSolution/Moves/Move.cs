@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using static GameSolution.Constants;
 
-namespace GameSolution
+namespace GameSolution.Moves
 {
     public class Move
     {
@@ -57,14 +54,5 @@ namespace GameSolution
             };
             Console.Write(move);
         }
-    }
-
-    public class MoveType
-    {
-        public const string Move = "MOVE";
-        public const string Bomb = "BOMB";
-        public const string Wait = "WAIT";
-        public const string Message = "MSG";
-        public const string Upgrade = "INC";
     }
 }

@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GameSolution
+﻿namespace GameSolution.Entities
 {
     public class FactoryEntity : Entity
     {
-        public int CyborgCount
+        public int NumberOfCyborgs
         {
             get { return Arg2; }
         }

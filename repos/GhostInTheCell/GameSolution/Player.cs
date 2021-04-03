@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using GameSolution;
+using GameSolution.Utility;
+using GameSolution.Entities;
+using GameSolution.Moves;
 
 /**
  * Auto-generated code below aims at helping you parse
@@ -19,9 +21,7 @@ public class Player
         {
             inputs = Console.ReadLine().Split(' ');
             int factory1 = int.Parse(inputs[0]);
-            //Console.Error.WriteLine(factory1);
             int factory2 = int.Parse(inputs[1]);
-            //Console.Error.WriteLine(factory2);
             int distance = int.Parse(inputs[2]);
             links.AddLink(factory1, factory2, distance);
         }
@@ -50,16 +50,12 @@ public class Player
                 entities.Add(ef.CreateEntity(entityType, entityId, arg1, arg2, arg3, arg4, arg5));
             }
 
-            Console.Error.WriteLine(entities.Where(e => e.Id == -1).Count());
-
-            // Write an action using Console.WriteLine()
-            // To debug: Console.Error.WriteLine("Debug messages...");
+            Console.Error.WriteLine($"Found invalid entities: {entities.Where(e => e.Id == -1).Count()}");
             gh.SetEntities(entities);
             gh.ShowStats();
 
             MoveList moves = gh.PickMoves();
             moves.PlayMoves();
-            //Console.WriteLine("WAIT");
         }
     }
 }
