@@ -40,8 +40,7 @@ namespace GameSolution.Moves
             this.message = message;
         }
 
-
-        public void PlayMove()
+        public string GetMove()
         {
             string move = moveType switch
             {
@@ -52,7 +51,12 @@ namespace GameSolution.Moves
                 MoveType.Upgrade => MoveType.Upgrade + " " + source,
                 _ => MoveType.Wait
             };
-            Console.Write(move);
+            return move;
+        }
+
+        public void PlayMove()
+        {
+            Console.Write(GetMove());
         }
     }
 }

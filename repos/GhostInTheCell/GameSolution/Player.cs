@@ -29,14 +29,15 @@ public class Player
         Console.Error.WriteLine(linkCount);
         links.CalculateShortestPaths();
 
-        GameHelper gh = new GameHelper(links);
+        GameState gs = new GameState(links);
+        GameHelper gh = new GameHelper(gs);
+        
         // game loop
         while (true)
         {
             int entityCount = int.Parse(Console.ReadLine()); // the number of entities (e.g. factories and troops)
             List<Entity> entities = new List<Entity>();
             Console.Error.WriteLine(entities.Count);
-            EntityFactory ef = new EntityFactory();
             for (int i = 0; i < entityCount; i++)
             {
                 inputs = Console.ReadLine().Split(' ');
@@ -47,12 +48,12 @@ public class Player
                 int arg3 = int.Parse(inputs[4]);
                 int arg4 = int.Parse(inputs[5]);
                 int arg5 = int.Parse(inputs[6]);
-                entities.Add(ef.CreateEntity(entityType, entityId, arg1, arg2, arg3, arg4, arg5));
+                entities.Add(EntityFactory.CreateEntity(entityType, entityId, arg1, arg2, arg3, arg4, arg5));
             }
 
             Console.Error.WriteLine($"Found invalid entities: {entities.Where(e => e.Id == -1).Count()}");
-            gh.SetEntities(entities);
-            gh.ShowStats();
+            gs.SetEntities(entities);
+            gs.ShowStats();
 
             MoveList moves = gh.PickMoves();
             moves.PlayMoves();

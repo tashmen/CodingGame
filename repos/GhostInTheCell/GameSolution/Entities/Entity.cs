@@ -21,6 +21,16 @@ namespace GameSolution.Entities
             Arg5 = arg5;
         }
 
+        public Entity(Entity entity)
+        {
+            Id = entity.Id;
+            Owner = entity.Owner;
+            Arg2 = entity.Arg2;
+            Arg3 = entity.Arg3;
+            Arg4 = entity.Arg4;
+            Arg5 = entity.Arg5;
+        }
+
         public bool IsFriendly()
         {
             return Owner == Owner.Me;

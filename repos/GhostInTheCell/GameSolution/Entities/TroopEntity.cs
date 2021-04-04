@@ -28,5 +28,10 @@
         {
 
         }
+
+        public TroopEntity(TroopEntity entity) : base(entity)
+        {
+
+        }
     }
 }

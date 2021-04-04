@@ -58,6 +58,7 @@
     <Compile Include="Player.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Entities\TroopEntity.cs" />
+    <Compile Include="Utility\GameState.cs" />
     <Compile Include="Utility\Node.cs" />
   </ItemGroup>
   <ItemGroup>
