@@ -30,7 +30,6 @@ public class Player
         links.CalculateShortestPaths();
 
         GameState gs = new GameState(links);
-        GameHelper gh = new GameHelper(gs);
         
         // game loop
         while (true)
@@ -55,6 +54,7 @@ public class Player
             gs.SetEntities(entities);
             gs.ShowStats();
 
+            GameHelper gh = new GameHelper(gs);
             MoveList moves = gh.PickMoves();
             moves.PlayMoves();
         }

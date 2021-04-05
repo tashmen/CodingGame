@@ -34,6 +34,15 @@ namespace GameSolution.Entities
             get { return Arg4; }
         }
 
+        /// <summary>
+        /// Creates a new Factory Entity
+        /// </summary>
+        /// <param name="id">Unique Identifier</param>
+        /// <param name="arg1">Owner</param>
+        /// <param name="arg2">Number of cyborgs in the factory</param>
+        /// <param name="arg3">Factory Production</param>
+        /// <param name="arg4">Number of turns till production</param>
+        /// <param name="arg5">unused</param>
         public FactoryEntity(int id, int arg1, int arg2, int arg3, int arg4, int arg5)
         : base(id, arg1, arg2, arg3, arg4, arg5)
         {

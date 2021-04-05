@@ -57,7 +57,7 @@ namespace GameSolution.Utility
                     {
                         Move move = new Move(sourceFactory.Id);
                         moves.AddMove(move);
-                        _internalState.PlayFriendlyMove(move);
+                        _internalState.PlayMove(move, Owner.Me);
                     }
                 }
 
@@ -164,7 +164,7 @@ namespace GameSolution.Utility
                             factoryIdToCyborgsToTakeover[bestTarget.Id] = 0;
                             Move move = new Move(sourceFactory.Id, bestTargetId, cyborgsToSend);
                             moves.AddMove(move);
-                            _internalState.PlayFriendlyMove(move);
+                            _internalState.PlayMove(move, Owner.Me);
                         }
                     }
                     else
@@ -177,7 +177,7 @@ namespace GameSolution.Utility
                             moves.AddMove(move);
                             cyborgsAvailableToSend -= 10;
                             globalCyborgsAvailableToSend -= 10;
-                            _internalState.PlayFriendlyMove(move);
+                            _internalState.PlayMove(move, Owner.Me);
                             continue;
                         }
 
@@ -289,7 +289,7 @@ namespace GameSolution.Utility
                     Console.Error.WriteLine("Evacuating " + sourceFactory.Id + " to " + bestNon3ProductionFactory.Id);
                     Move move = new Move(sourceFactory.Id, bestNon3ProductionFactory.Id, sourceFactory.NumberOfCyborgs);
                     moves.AddMove(move);
-                    _internalState.PlayFriendlyMove(move);
+                    _internalState.PlayMove(move, Owner.Me);
                 }
                 else if (bestFactory != null)
                 {
@@ -468,7 +468,7 @@ namespace GameSolution.Utility
                 {
                     Move move = new Move(bestSource.Id, bestTargetFactory.Id);
                     moves.AddMove(move);
-                    _internalState.PlayFriendlyMove(move);
+                    _internalState.PlayMove(move, Owner.Me);
                 }
             }
 

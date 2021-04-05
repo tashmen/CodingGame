@@ -1,4 +1,5 @@
 ﻿using GameSolution.Utility;
+using System.Collections.Generic;
 
 namespace GameSolution.Entities
 {
@@ -17,12 +18,15 @@ namespace GameSolution.Entities
             get { return Arg4; }
         }
 
-        public bool IsFirstTurn(FactoryLinks links)
-        {
-            int dist = links.GetDistance(SourceFactoryId, TargetFactoryId);
-            return dist == TurnsToArrive;
-        }
-
+        /// <summary>
+        /// Creates a new Bomb Entity
+        /// </summary>
+        /// <param name="id">Unique Identifier</param>
+        /// <param name="arg1">Owner</param>
+        /// <param name="arg2">Source Factory Id</param>
+        /// <param name="arg3">Target Factory Id (-1 if enemy)</param>
+        /// <param name="arg4">Number of turns until bomb hits the target (-1 if enemy)</param>
+        /// <param name="arg5">unused</param>
         public BombEntity(int id, int arg1, int arg2, int arg3, int arg4, int arg5)
         : base(id, arg1, arg2, arg3, arg4, arg5)
         {
