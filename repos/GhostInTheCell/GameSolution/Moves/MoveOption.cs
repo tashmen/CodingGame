@@ -8,14 +8,12 @@ namespace GameSolution.Moves
         public FactoryEntity TargetFactory { get; set; }
         public int SendCount { get; set; }
         public int BestTargetId { get; set; }
-        public int DefendCount { get; set; }
-        public MoveOption(FactoryEntity sourceFactory, FactoryEntity targetFactory, int sendCount, int bestTargetId, int defendCount)
+        public MoveOption(FactoryEntity sourceFactory, FactoryEntity targetFactory, int sendCount, int bestTargetId)
         {
             SourceFactory = sourceFactory;
             TargetFactory = targetFactory;
             SendCount = sendCount;
             BestTargetId = bestTargetId;
-            DefendCount = defendCount;
         }
 
         public Move GenerateMove()
