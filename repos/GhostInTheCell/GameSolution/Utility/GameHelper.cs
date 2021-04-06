@@ -38,31 +38,60 @@ namespace GameSolution.Utility
                 globalCyborgsAvailableToSend -= (sourceFactory.NumberOfCyborgs - cyborgsAvailableToSend);
 
                 //Condition for holding onto troops in factory to get to an upgrade
-                if (!IsFrontLineFactory(sourceFactory) && sourceFactory.ProductionCount < 3 && (_internalState.MyIncome < _internalState.EnemyIncome || _internalState.MyTroopsCount > _internalState.EnemyTroopsCount))
+                if (!IsFrontLineFactory(sourceFactory) && sourceFactory.ProductionCount < 3 && (_internalState.MyIncome < _internalState.EnemyIncome || _internalState.MyTroopsCount > (_internalState.EnemyTroopsCount - 5)))
                 {
-                    //Don't send troops out of this factory we want to use it to upgrade
-                    if(sourceFactory.ProductionCount < 2)
+                    List<FactoryEntity> neutralFactories = _internalState.NeutralFactories.Where(e => e.ProductionCount != 0 && e.NumberOfCyborgs != 0).ToList();
+                    int totalCyborgs = 0;
+                    foreach(FactoryEntity neutralFactory in neutralFactories)
                     {
-                        globalCyborgsAvailableToSend -= cyborgsAvailableToSend;
-                        cyborgsAvailableToSend = 0;
-                    }
-                    
-                    if (sourceFactory.NumberOfCyborgs >= 10)
-                    {
-                        //At the final upgrade stage so send the rest onward to wherever
-                        if(sourceFactory.ProductionCount == 2)
+                        int minFriendly = 9999;
+                        int minEnemy = 9999;
+                        foreach (FactoryEntity myFactory in _internalState.MyFactories)
                         {
-                            globalCyborgsAvailableToSend -= 10;
-                            cyborgsAvailableToSend -= 10;
+                            int dist = _internalState.Links.GetShortestPathDistance(neutralFactory.Id, myFactory.Id);
+                            if(dist < minFriendly)
+                            {
+                                minFriendly = dist;
+                            }
+                        }
+                        foreach (FactoryEntity enemyFactory in _internalState.EnemyFactories)
+                        {
+                            int dist = _internalState.Links.GetShortestPathDistance(neutralFactory.Id, enemyFactory.Id);
+                            if (dist < minEnemy)
+                            {
+                                minEnemy = dist;
+                            }
+                        }
+                        if(minFriendly < minEnemy)
+                        {
+                            totalCyborgs += neutralFactory.NumberOfCyborgs;
+                        }
+                    }
+                    if (totalCyborgs < (globalCyborgsAvailableToSend - 10))
+                    {
+                        //Don't send troops out of this factory we want to use it to upgrade; unless we can't wait another turn
+                        if (sourceFactory.ProductionCount < 2 && totalCyborgs < (globalCyborgsAvailableToSend - 20))
+                        {
+                            globalCyborgsAvailableToSend -= cyborgsAvailableToSend;
+                            cyborgsAvailableToSend = 0;
                         }
 
-                        Move move = new Move(sourceFactory.Id);
-                        moves.AddMove(move);
-                        _internalState.PlayMove(move, Owner.Me);
+                        if (sourceFactory.NumberOfCyborgs >= 10)
+                        {
+                            //At the final upgrade stage so send the rest onward to wherever
+                            if (sourceFactory.ProductionCount == 2 || totalCyborgs >= (globalCyborgsAvailableToSend - 20))
+                            {
+                                globalCyborgsAvailableToSend -= 10;
+                                cyborgsAvailableToSend -= 10;
+                            }
+
+                            Move move = new Move(sourceFactory.Id);
+                            moves.AddMove(move);
+                            _internalState.PlayMove(move, Owner.Me);
+                        }
                     }
                 }
 
-                Console.Error.WriteLine("Available : " + cyborgsAvailableToSend);
                 //As long as there are cyborgs to send let's see if there are any targets
                 while (cyborgsAvailableToSend > 0 && hasTarget)
                 {
@@ -118,13 +147,13 @@ namespace GameSolution.Utility
                                     minDist = distance;
                                 }
                             }
-                            val += minDist * 5;
+                            val += minDist * 5;//neutral factories that are farther from the enemy are worth more
                         }
 
                         val += cyborgsToTakeover * -1;//factories that take a lot of borgs to take over aren't as good of a choice
                         val += targetFactory.IsProducing() ? targetFactory.ProductionCount * 10 : 0;//lots of bonus for high yield factories
                         val += targetFactory.Owner == Owner.Opponent ? targetFactory.ProductionCount * 5 : 0;
-                        val += distance * -10;
+                        val += distance * -20;
 
                         if (val > bestValue)
                         {
@@ -156,8 +185,9 @@ namespace GameSolution.Utility
                     {
                         int bestTargetId = _internalState.Links.GetShortestPath(sourceFactory.Id, bestTarget.Id);
                         //If the best target is being sent to a non-friendly factory that has troops then take the long way
-                        if (otherFactories.Where(e => e.Id == bestTargetId && !e.IsFriendly() && ((FactoryEntity)e).NumberOfCyborgs != 0).Any())
+                        if (otherFactories.Where(e => e.Id == bestTargetId && e.IsNeutral() && CalculateCyborgsRequiredToTakeover(sourceFactory, e) != 0).Any())
                         {
+                            Console.Error.WriteLine($"Found a non-friendly factory: {bestTargetId} with troops");
                             bestTargetId = bestTarget.Id;
                         }
                         cyborgsAvailableToSend -= cyborgsToSend;
@@ -297,10 +327,12 @@ namespace GameSolution.Utility
         public int CalculateCyborgsAvailableToSend(FactoryEntity sourceFactory)
         {
             int cyborgsToDefend = GetCyborgDefense(sourceFactory);
-            if (cyborgsToDefend > sourceFactory.NumberOfCyborgs)
-                return 0;
-            else 
-                return sourceFactory.NumberOfCyborgs - cyborgsToDefend;
+            int available = 0;
+            if (cyborgsToDefend < sourceFactory.NumberOfCyborgs)
+                available = sourceFactory.NumberOfCyborgs - cyborgsToDefend;
+
+            Console.Error.WriteLine($"***Source: {sourceFactory.Id} Defense: {cyborgsToDefend} Available: {available}");
+            return available;
         }
 
         //Checks for bombs in play and evacuates the source factory
@@ -382,11 +414,11 @@ namespace GameSolution.Utility
             {
                 if (n.Distance < 5 && _internalState.EnemyFactories.Where(e => e.Id == n.FactoryId).Any())
                 {
-                    Console.Error.WriteLine("Factory: " + factory.Id + " is frontline.  Distance: " + n.Distance + " to " + n.FactoryId);
+                    //Console.Error.WriteLine("Factory: " + factory.Id + " is frontline.  Distance: " + n.Distance + " to " + n.FactoryId);
                     return true;
                 }
             }
-            Console.Error.WriteLine("Factory: " + factory.Id + " is not frontline.");
+            //Console.Error.WriteLine("Factory: " + factory.Id + " is not frontline.");
             return false;
         }
 
@@ -434,11 +466,6 @@ namespace GameSolution.Utility
 
             cyborgsToDefend -= minArrival * sourceFactory.ProductionCount;
             cyborgsToDefend = cyborgsToDefend < 0 ? 0 : cyborgsToDefend;
-
-            if(cyborgsToDefend > 0)
-            {
-                Console.Error.WriteLine("***Source: " + sourceFactory.Id + " Defense required: " + cyborgsToDefend);
-            }
             
             return cyborgsToDefend;
         }
@@ -493,7 +520,7 @@ namespace GameSolution.Utility
                 foreach (FactoryEntity sourceFactory in friendlyFactories)
                 {
                     int currentDistance = _internalState.Links.GetDistance(sourceFactory.Id, bestTargetFactory.Id);
-                    if (currentDistance < minDist && currentDistance < 10)
+                    if (currentDistance < minDist)//Distance can't be limited; just pick the best option...
                     {
                         minDist = currentDistance;
                         bestSource = sourceFactory;
@@ -539,7 +566,7 @@ namespace GameSolution.Utility
                     }
                     else if (troop.IsEnemy())
                     {
-                        Console.Error.WriteLine("Enemy troop count: " + troop.NumberOfCyborgs + " arrives: " + troop.TurnsToArrive);
+                        //Console.Error.WriteLine("Enemy troop count: " + troop.NumberOfCyborgs + " arrives: " + troop.TurnsToArrive);
                         if (timeToEnemyTroops.ContainsKey(troop.TurnsToArrive))
                         {
                             timeToEnemyTroops[troop.TurnsToArrive] += troop.NumberOfCyborgs;
