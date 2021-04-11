@@ -23,11 +23,21 @@ namespace GameSolution.Arrivals
         }
         public BombArrival(List<BombEntity> bombs, Dictionary<int, int> sentBombs, int factoryId, FactoryLinks links)
         {
+            TurnsUntilArrival = new List<int>();
             foreach(BombEntity bomb in bombs)
             {
-                var distance = links.GetDistance(bomb.SourceFactoryId, factoryId);
-
-                TurnsUntilArrival.Add(Math.Max(distance - sentBombs[bomb.Id], 0));
+                if (bomb.IsEnemy())
+                {
+                    if(bomb.SourceFactoryId != factoryId)
+                    {
+                        var distance = links.GetDistance(bomb.SourceFactoryId, factoryId);
+                        TurnsUntilArrival.Add(Math.Max(distance - sentBombs[bomb.Id], 0));
+                    }
+                }
+                else if(bomb.TargetFactoryId == factoryId)
+                {
+                    TurnsUntilArrival.Add(bomb.TurnsToArrive);
+                }
             }
         }
     }

@@ -17,8 +17,18 @@ namespace UnitTest.Utilities
             _links.AddLink(1, 2, 1);
             _links.AddLink(1, 3, 2);
             _links.AddLink(1, 4, 4);
+            _links.AddLink(1, 5, 6);
+            _links.AddLink(1, 6, 8);
             _links.AddLink(2, 3, 1);
             _links.AddLink(2, 4, 2);
+            _links.AddLink(2, 5, 3);
+            _links.AddLink(2, 6, 2);
+            _links.AddLink(3, 4, 1);
+            _links.AddLink(3, 5, 5);
+            _links.AddLink(3, 6, 7);
+            _links.AddLink(4, 5, 5);
+            _links.AddLink(4, 6, 4);
+            _links.AddLink(5, 6, 2);
 
             _state = new GameState(_links);
         }
@@ -44,16 +54,16 @@ namespace UnitTest.Utilities
             {
                 new FactoryEntity(1, (int)Owner.Me, 5, 1, 0, 0),
                 new FactoryEntity(2, (int)Owner.Opponent, 7, 2, 0, 0),
-                new FactoryEntity(10, (int)Owner.Opponent, 0, 0, 0, 0),
-                new FactoryEntity(11, (int)Owner.Opponent, 0, 0, 0, 0),
-                new FactoryEntity(3, (int)Owner.Neutral, 5, 3, 0, 0),
-                new FactoryEntity(7, (int)Owner.Neutral, 5, 3, 0, 0),
-                new TroopEntity(4, (int)Owner.Me, 1, 2, 1, 0),
-                new TroopEntity(5, (int)Owner.Opponent, 2, 1, 2, 0),
-                new TroopEntity(12, (int)Owner.Opponent, 2, 1, 0, 0),
-                new BombEntity(6, (int)Owner.Me, 1, 2, 2, 0),
-                new BombEntity(8, (int)Owner.Opponent, 2, 1, 2, 0),
-                new BombEntity(9, (int)Owner.Opponent, 2, 1, 2, 0),
+                new FactoryEntity(3, (int)Owner.Opponent, 0, 0, 0, 0),
+                new FactoryEntity(4, (int)Owner.Opponent, 0, 0, 0, 0),
+                new FactoryEntity(5, (int)Owner.Neutral, 5, 3, 0, 0),
+                new FactoryEntity(6, (int)Owner.Neutral, 5, 3, 0, 0),
+                new TroopEntity(7, (int)Owner.Me, 1, 2, 1, 0),
+                new TroopEntity(8, (int)Owner.Opponent, 2, 1, 2, 0),
+                new TroopEntity(9, (int)Owner.Opponent, 2, 1, 0, 0),
+                new BombEntity(10, (int)Owner.Me, 1, 2, 2, 0),
+                new BombEntity(11, (int)Owner.Opponent, 2, -1, -1, 0),
+                new BombEntity(12, (int)Owner.Opponent, 2, -1, -1, 0),
             };
 
             _state.SetEntities(entities);
@@ -105,16 +115,16 @@ namespace UnitTest.Utilities
             {
                 new FactoryEntity(1, (int)Owner.Me, 5, 1, 0, 0),
                 new FactoryEntity(2, (int)Owner.Opponent, 7, 2, 0, 0),
-                new FactoryEntity(10, (int)Owner.Opponent, 0, 0, 0, 0),
-                new FactoryEntity(11, (int)Owner.Opponent, 0, 0, 0, 0),
-                new FactoryEntity(3, (int)Owner.Neutral, 5, 3, 0, 0),
-                new FactoryEntity(7, (int)Owner.Neutral, 5, 3, 0, 0),
-                new TroopEntity(4, (int)Owner.Me, 1, 2, 1, 0),
-                new TroopEntity(5, (int)Owner.Opponent, 2, 1, 2, 0),
-                new TroopEntity(12, (int)Owner.Opponent, 2, 1, 0, 0),
-                new BombEntity(6, (int)Owner.Me, 1, 2, 2, 0),
-                new BombEntity(8, (int)Owner.Opponent, 2, -1, -1, 0),
-                new BombEntity(9, (int)Owner.Opponent, 2, -1, -1, 0),
+                new FactoryEntity(3, (int)Owner.Opponent, 0, 0, 0, 0),
+                new FactoryEntity(4, (int)Owner.Opponent, 0, 0, 0, 0),
+                new FactoryEntity(5, (int)Owner.Neutral, 5, 3, 0, 0),
+                new FactoryEntity(6, (int)Owner.Neutral, 5, 3, 0, 0),
+                new TroopEntity(7, (int)Owner.Me, 1, 2, 1, 0),
+                new TroopEntity(8, (int)Owner.Opponent, 2, 1, 2, 0),
+                new TroopEntity(9, (int)Owner.Opponent, 2, 1, 0, 0),
+                new BombEntity(10, (int)Owner.Me, 1, 2, 2, 0),
+                new BombEntity(11, (int)Owner.Opponent, 2, -1, -1, 0),
+                new BombEntity(12, (int)Owner.Opponent, 2, -1, -1, 0),
             };
 
             _state.SetEntities(entities);
@@ -146,16 +156,16 @@ namespace UnitTest.Utilities
             {
                 new FactoryEntity(1, (int)Owner.Me, 5, 1, 0, 0),
                 new FactoryEntity(2, (int)Owner.Opponent, 7, 2, 0, 0),
-                new FactoryEntity(10, (int)Owner.Opponent, 0, 0, 0, 0),
-                new FactoryEntity(11, (int)Owner.Opponent, 0, 0, 0, 0),
-                new FactoryEntity(3, (int)Owner.Neutral, 5, 3, 0, 0),
-                new FactoryEntity(7, (int)Owner.Neutral, 5, 3, 0, 0),
-                new TroopEntity(4, (int)Owner.Me, 1, 2, 1, 0),
-                new TroopEntity(5, (int)Owner.Opponent, 2, 1, 2, 0),
-                new TroopEntity(12, (int)Owner.Opponent, 2, 1, 0, 0),
-                new BombEntity(6, (int)Owner.Me, 1, 2, 2, 0),
-                new BombEntity(8, (int)Owner.Opponent, 2, -1, -1, 0),
-                new BombEntity(9, (int)Owner.Opponent, 2, -1, -1, 0),
+                new FactoryEntity(3, (int)Owner.Opponent, 0, 0, 0, 0),
+                new FactoryEntity(4, (int)Owner.Opponent, 0, 0, 0, 0),
+                new FactoryEntity(5, (int)Owner.Neutral, 5, 3, 0, 0),
+                new FactoryEntity(6, (int)Owner.Neutral, 5, 3, 0, 0),
+                new TroopEntity(7, (int)Owner.Me, 1, 2, 1, 0),
+                new TroopEntity(8, (int)Owner.Opponent, 2, 1, 2, 0),
+                new TroopEntity(9, (int)Owner.Opponent, 2, 1, 0, 0),
+                new BombEntity(10, (int)Owner.Me, 1, 2, 2, 0),
+                new BombEntity(11, (int)Owner.Opponent, 2, -1, -1, 0),
+                new BombEntity(12, (int)Owner.Opponent, 2, -1, -1, 0),
             };
 
             _state.SetEntities(entities.Select(e => EntityFactory.CreateEntity(e)).ToList());
@@ -186,13 +196,13 @@ namespace UnitTest.Utilities
             {
                 new FactoryEntity(1, (int)Owner.Me, 5, 1, 0, 0),
                 new FactoryEntity(2, (int)Owner.Opponent, 7, 2, 0, 0),
-                new FactoryEntity(10, (int)Owner.Opponent, 0, 0, 0, 0),
-                new FactoryEntity(11, (int)Owner.Opponent, 0, 0, 0, 0),
-                new FactoryEntity(3, (int)Owner.Neutral, 5, 3, 0, 0),
-                new FactoryEntity(7, (int)Owner.Neutral, 5, 3, 0, 0),
-                new TroopEntity(4, (int)Owner.Me, 1, 2, 1, 0),
-                new TroopEntity(5, (int)Owner.Opponent, 2, 1, 2, 0),
-                new TroopEntity(12, (int)Owner.Opponent, 2, 1, 0, 0),
+                new FactoryEntity(3, (int)Owner.Opponent, 0, 0, 0, 0),
+                new FactoryEntity(4, (int)Owner.Opponent, 0, 0, 0, 0),
+                new FactoryEntity(5, (int)Owner.Neutral, 5, 3, 0, 0),
+                new FactoryEntity(6, (int)Owner.Neutral, 5, 3, 0, 0),
+                new TroopEntity(7, (int)Owner.Me, 1, 2, 1, 0),
+                new TroopEntity(8, (int)Owner.Opponent, 2, 1, 2, 0),
+                new TroopEntity(9, (int)Owner.Opponent, 2, 1, 0, 0),
             };
 
             _state.SetEntities(entities.Select(e => EntityFactory.CreateEntity(e)).ToList());
