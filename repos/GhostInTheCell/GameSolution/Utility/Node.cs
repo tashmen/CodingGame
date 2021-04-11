@@ -23,7 +23,7 @@ namespace GameSolution.Utility
         /// <returns>A clone of the node with the proper distance</returns>
         public Node CreateAtDistance(int currentDist)
         {
-            return new Node(FactoryId, currentDist + Distance);
+            return new Node(FactoryId, currentDist + Distance + 1);//It takes an additional turn on every hop to re-route troops
         }
     }
 }

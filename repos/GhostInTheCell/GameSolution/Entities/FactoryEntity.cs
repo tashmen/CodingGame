@@ -34,6 +34,8 @@ namespace GameSolution.Entities
             get { return Arg4; }
         }
 
+        public int CyborgsRequiredToDefend { get; set; }
+
         /// <summary>
         /// Creates a new Factory Entity
         /// </summary>

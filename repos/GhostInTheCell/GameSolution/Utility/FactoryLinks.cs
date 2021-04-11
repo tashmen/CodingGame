@@ -72,12 +72,11 @@ namespace GameSolution.Utility
                         int distance = currentDist + adjacent.Distance;
                         if (distance < minDist)
                         {
-                            //When the distances are equivalent pick the one with the longest path
                             minDist = distance;
                             bestNode = adjacent.CreateAtDistance(currentDist);
                             parentNode = currentNode;
                         }
-                        else if (distance == minDist)
+                        else if (distance == minDist)//When the distances are equivalent pick the one with the shortest path
                         {
                             Paths[startNode].TryGetValue(currentNode.FactoryId, out List<Node> pathCurrent);
                             int lengthCurrent = pathCurrent == null ? 0 : pathCurrent.Count;
