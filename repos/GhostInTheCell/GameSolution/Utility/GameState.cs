@@ -53,7 +53,7 @@ namespace GameSolution.Utility
             Entities = state.Entities.Select(e => EntityFactory.CreateEntity(e)).ToList();//Clone the entities as we want to update this
             _bombsSent = new Dictionary<int, int>(state._bombsSent);
             UpdateGameState();
-            CalculateStats();
+            CalculateStats(true);
         }
 
         public void PlayMove(Move move, Owner owner)
@@ -69,10 +69,6 @@ namespace GameSolution.Utility
                     source = Convert.ToInt32(moveArgs[1]);
                     target = Convert.ToInt32(moveArgs[2]);
                     Entities.Add(EntityFactory.CreateEntity(EntityTypes.Bomb, -1, (int)owner, source, target, Links.GetDistance(source, target), 0));
-                    if (owner == Owner.Me)
-                        MyBombCount--;
-                    else EnemyBombCount--;
-                    UpdateGameState();
                     break;
                 case MoveType.Move:
                     source = Convert.ToInt32(moveArgs[1]);
@@ -81,17 +77,15 @@ namespace GameSolution.Utility
                     sourceFactory = Factories.First(e => e.Id == source);
                     sourceFactory.Move(cyborgCount);
                     Entities.Add(EntityFactory.CreateEntity(EntityTypes.Troop, -1, (int)owner, source, target, cyborgCount, Links.GetDistance(source, target)));
-                    UpdateGameState();
                     break;
                 case MoveType.Upgrade:
                     source = Convert.ToInt32(moveArgs[1]);
                     sourceFactory = Factories.First(e => e.Id == source);
                     sourceFactory.Upgrade();
-                    if (owner == Owner.Me)
-                        MyTroopsCount -= 10;
-                    else EnemyTroopsCount -= 10;
                     break;
             }
+            UpdateGameState();
+            CalculateStats();
         }
 
         /// <summary>
@@ -126,7 +120,7 @@ namespace GameSolution.Utility
         /// <summary>
         /// Calculates the various statistics
         /// </summary>
-        private void CalculateStats()
+        private void CalculateStats(bool isCopy = false)
         {
             EnemyIncome = 0;
             MyIncome = 0;
@@ -149,7 +143,7 @@ namespace GameSolution.Utility
                         EnemyBombCount--;
                     }
                 }
-                else
+                else if (!isCopy)//skip incrementing for copies and assume that it was already done
                 {
                     _bombsSent[bomb.Id]++;
                 }

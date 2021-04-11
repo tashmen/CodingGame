@@ -31,7 +31,9 @@ namespace GameSolution.Arrivals
                     if(bomb.SourceFactoryId != factoryId)
                     {
                         var distance = links.GetDistance(bomb.SourceFactoryId, factoryId);
-                        TurnsUntilArrival.Add(Math.Max(distance - sentBombs[bomb.Id], 0));
+                        var time = Math.Max(distance - sentBombs[bomb.Id], 0);
+                        TurnsUntilArrival.Add(time);
+                        //Console.Error.WriteLine($"Bomb Arrival:{factoryId} in {time}");
                     }
                 }
                 else if(bomb.TargetFactoryId == factoryId)
