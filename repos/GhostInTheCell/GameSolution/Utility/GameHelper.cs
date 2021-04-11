@@ -25,7 +25,7 @@ namespace GameSolution.Utility
             List<FactoryEntity> allFactories = _internalState.Factories;
             List<FactoryEntity> friendlyFactories = _internalState.MyFactories;
 
-            int globalCyborgsAvailableToSend = CalculateTotalCyborgsAvailableToSend();
+            int globalCyborgsAvailableToSend =  _internalState.MyTotalCyborgsAvailableToSend;
             Console.Error.WriteLine($"Global cyborgs available:{globalCyborgsAvailableToSend}");
 
             Dictionary<int, int> factoryIdToCyborgsToTakeover = new Dictionary<int, int>();
@@ -328,19 +328,7 @@ namespace GameSolution.Utility
             return moves;
         }
 
-        /// <summary>
-        /// Calculates the total number of cyborgs that can be sent
-        /// </summary>
-        /// <returns>The total number of cyborgs available</returns>
-        public int CalculateTotalCyborgsAvailableToSend()
-        {
-            int cyborgsAvailableToSend = 0;
-            foreach (FactoryEntity sourceFactory in _internalState.MyFactories)
-            {
-                cyborgsAvailableToSend += sourceFactory.NumberOfCyborgs;
-            }
-            return cyborgsAvailableToSend;
-        }
+        
 
         /// <summary>
         /// Calculate the number of cyborgs that can be used to send elsewhere taking defense into consideration
@@ -362,7 +350,8 @@ namespace GameSolution.Utility
         //Checks for bombs in play and evacuates the source factory
         public void BombEvacuation(MoveList moves, FactoryEntity sourceFactory)
         {
-            if (_internalState.EnemyBombs.Any())
+            //Check for enemy bombs that are going to arrive this turn
+            if (_internalState.EnemyBombs.Any() && sourceFactory.BombArrival.TurnsUntilArrival.Contains(1))
             {
                 List<FactoryEntity> friendlyFactories = _internalState.MyFactories;
                 int minDist = 9999;
@@ -565,44 +554,15 @@ namespace GameSolution.Utility
         //Calculates the number of cyborgs required to takeover a factory
         public int CalculateCyborgsRequiredToTakeover(FactoryEntity sourceFactory, FactoryEntity targetFactory)
         {
+            //Console.Error.WriteLine(" Target: " + targetFactory.Id);
+
             int cyborgs = 1;//minimum to takeover is 1
             List<TroopEntity> troops = _internalState.Troops;
 
-            Dictionary<int, int> timeToEnemyTroops = new Dictionary<int, int>();
-            Dictionary<int, int> timeToFriendlyTroops = new Dictionary<int, int>();
-
-            //Console.Error.WriteLine(" Target: " + targetFactory.Id);
-
             //Check the incoming troop count.  This should be expanded to look at troops that are incoming along shortest paths.
-            foreach (TroopEntity troop in troops)
-            {
-                if (troop.TargetFactory == targetFactory.Id)
-                {
-                    if (troop.IsFriendly())
-                    {
-                        if (timeToFriendlyTroops.ContainsKey(troop.TurnsToArrive))
-                        {
-                            timeToFriendlyTroops[troop.TurnsToArrive] += troop.NumberOfCyborgs;
-                        }
-                        else
-                        {
-                            timeToFriendlyTroops[troop.TurnsToArrive] = troop.NumberOfCyborgs;
-                        }
-                    }
-                    else if (troop.IsEnemy())
-                    {
-                        //Console.Error.WriteLine("Enemy troop count: " + troop.NumberOfCyborgs + " arrives: " + troop.TurnsToArrive);
-                        if (timeToEnemyTroops.ContainsKey(troop.TurnsToArrive))
-                        {
-                            timeToEnemyTroops[troop.TurnsToArrive] += troop.NumberOfCyborgs;
-                        }
-                        else
-                        {
-                            timeToEnemyTroops[troop.TurnsToArrive] = troop.NumberOfCyborgs;
-                        }
-                    }
-                }
-            }
+            Dictionary<int, int> timeToEnemyTroops = targetFactory.TroopArrival.myTroopArrival;
+            Dictionary<int, int> timeToFriendlyTroops = targetFactory.TroopArrival.enemyTroopArrival;
+           
             //Add check for cyborgs sitting in factories that could be sent and assume they will be sent...
             List<FactoryEntity> enemyFactories = _internalState.EnemyFactories.Where(e => e.Id != targetFactory.Id).ToList();
             foreach (FactoryEntity enemyFactory in enemyFactories)

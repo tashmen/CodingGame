@@ -1,4 +1,5 @@
-﻿using GameSolution.Utility;
+﻿using GameSolution.Arrivals;
+using GameSolution.Utility;
 using System.Collections.Generic;
 
 namespace GameSolution.Entities

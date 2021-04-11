@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Arrivals\BombArrival.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Entities\BombEntity.cs" />
     <Compile Include="Entities\Entity.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="Entities\TroopEntity.cs" />
     <Compile Include="Utility\GameState.cs" />
     <Compile Include="Utility\Node.cs" />
+    <Compile Include="Arrivals\TroopArrival.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

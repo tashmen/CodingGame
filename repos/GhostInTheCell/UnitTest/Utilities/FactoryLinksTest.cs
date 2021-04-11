@@ -21,11 +21,11 @@ namespace UnitTest.Utilities
         [Fact]
         public void Test_ShortestPath()
         {
-            Assert.Equal(2, _links.GetShortestPath(1, 3));
+            Assert.Equal(3, _links.GetShortestPath(1, 3));
             Assert.Equal(2, _links.GetShortestPath(1, 4));
 
             Assert.Equal(3, _links.GetShortestPathDistance(1, 3));
-            Assert.Equal(4, _links.GetShortestPathDistance(1, 4));
+            Assert.Equal(5, _links.GetShortestPathDistance(1, 4));
         }
 
         [Fact]

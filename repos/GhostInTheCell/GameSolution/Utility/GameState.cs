@@ -1,4 +1,5 @@
-﻿using GameSolution.Entities;
+﻿using GameSolution.Arrivals;
+using GameSolution.Entities;
 using GameSolution.Moves;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ namespace GameSolution.Utility
         public int MyTroopsCount { get; private set; } = 0;
         public int EnemyIncome { get; private set; } = 0;
         public int MyIncome { get; private set; } = 0;
+        public int MyTotalCyborgsAvailableToSend { get; private set; } = 0;
 
         public FactoryLinks Links { get; private set; }
         public List<Entity> Entities { get; private set; }
@@ -33,8 +35,8 @@ namespace GameSolution.Utility
         public List<TroopEntity> MyTroops { get; private set; }
         public List<TroopEntity> EnemyTroops { get; private set; }
 
-        //Track bombs that have been sent
-        private List<int> _bombIdSent = new List<int>();
+        //Track bombs that have been sent along with the number of turns the bomb has been on the board
+        private Dictionary<int, int> _bombsSent = new Dictionary<int, int>();
 
         public GameState(FactoryLinks links)
         {
@@ -43,20 +45,15 @@ namespace GameSolution.Utility
 
         public GameState(GameState state)
         {
-            _bombIdSent = state.CopyBombsSent();
             //Because we are already tracking bombs that have been sent we have to copy over the bomb counts
             MyBombCount = state.MyBombCount;
             EnemyBombCount = state.EnemyBombCount;
             GameCounter = state.GameCounter;
             Links = state.Links;//Shouldn't be modified
             Entities = state.Entities.Select(e => EntityFactory.CreateEntity(e)).ToList();//Clone the entities as we want to update this
+            _bombsSent = new Dictionary<int, int>(state._bombsSent);
             UpdateGameState();
             CalculateStats();
-        }
-
-        public List<int> CopyBombsSent()
-        {
-            return new List<int>(_bombIdSent);
         }
 
         public void PlayMove(Move move, Owner owner)
@@ -135,25 +132,47 @@ namespace GameSolution.Utility
             MyIncome = 0;
             MyTroopsCount = 0;
             EnemyTroopsCount = 0;
+            MyTotalCyborgsAvailableToSend = 0;
+
+            foreach (BombEntity bomb in Bombs)
+            {
+                if (!_bombsSent.ContainsKey(bomb.Id))
+                {
+                    _bombsSent[bomb.Id] = 1;
+                    Console.Error.WriteLine($"Bomb was used {bomb.Id} on target {bomb.TargetFactoryId}.");
+                    if (bomb.IsFriendly())
+                    {
+                        MyBombCount--;
+                    }
+                    else if (bomb.IsEnemy())
+                    {
+                        EnemyBombCount--;
+                    }
+                }
+                else
+                {
+                    _bombsSent[bomb.Id]++;
+                }
+            }
+
             foreach (FactoryEntity factory in Factories)
             {
-                if (factory.IsProducing())
+                factory.BuildArrivals(Troops, Bombs, _bombsSent, Links);
+                if (factory.IsFriendly())
                 {
-                    if (factory.IsFriendly())
+                    if (factory.IsProducing())
                     {
                         MyIncome += factory.ProductionCount;
                     }
-                    else if (factory.IsEnemy())
-                    {
-                        EnemyIncome += factory.ProductionCount;
-                    }
-                }
-                if (factory.IsFriendly())
-                {
+                    MyTotalCyborgsAvailableToSend += factory.NumberOfCyborgs;
                     MyTroopsCount += factory.NumberOfCyborgs;
                 }
                 else if (factory.IsEnemy())
                 {
+                    if (factory.IsProducing())
+                    {
+                        EnemyIncome += factory.ProductionCount;
+                    }
                     EnemyTroopsCount += factory.NumberOfCyborgs;
                 }
             }
@@ -166,22 +185,6 @@ namespace GameSolution.Utility
                 else if (troop.IsEnemy())
                 {
                     EnemyTroopsCount += troop.NumberOfCyborgs;
-                }
-            }
-            foreach (BombEntity bomb in Bombs)
-            {
-                if (!_bombIdSent.Contains(bomb.Id))
-                {
-                    Console.Error.WriteLine($"Bomb was used {bomb.Id} on target {bomb.TargetFactoryId}.");
-                    if (bomb.IsFriendly())
-                    {
-                        MyBombCount--;
-                    }
-                    else if (bomb.IsEnemy())
-                    {
-                        EnemyBombCount--;
-                    }
-                    _bombIdSent.Add(bomb.Id);
                 }
             }
         }

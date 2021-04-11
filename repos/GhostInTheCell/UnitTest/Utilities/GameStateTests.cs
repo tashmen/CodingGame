@@ -98,6 +98,7 @@ namespace UnitTest.Utilities
             Assert.Equal(0, local.MyTroopsCount);
             Assert.Equal(0, local.EnemyTroopsCount);
             Assert.Equal(1, local.GameCounter);
+            Assert.Equal(0, local.MyTotalCyborgsAvailableToSend);
 
 
             entities = new List<Entity>()
@@ -139,6 +140,7 @@ namespace UnitTest.Utilities
             Assert.Equal(3, local.Troops.Count);
             Assert.Single(local.MyTroops);
             Assert.Equal(2, local.EnemyTroops.Count);
+            Assert.Equal(5, local.MyTotalCyborgsAvailableToSend);
 
             entities = new List<Entity>()
             {

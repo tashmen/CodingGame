@@ -158,7 +158,7 @@ namespace GameSolution.Utility
             Console.Error.WriteLine($"From start {startId} to {endId} path length: {paths.Count}.");
             */
 
-            return paths.Last().Distance + 1;//All commands are issued from this turn which is always turn 1.
+            return paths.Last().Distance;//Shortest path distance already takes into account the 1 turn to send a troop
         }
 
 

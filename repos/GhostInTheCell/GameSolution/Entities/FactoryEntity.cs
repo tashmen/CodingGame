@@ -1,4 +1,7 @@
-﻿using System;
+﻿using GameSolution.Arrivals;
+using GameSolution.Utility;
+using System;
+using System.Collections.Generic;
 
 namespace GameSolution.Entities
 {
@@ -36,6 +39,10 @@ namespace GameSolution.Entities
 
         public int CyborgsRequiredToDefend { get; set; }
 
+        public TroopArrival TroopArrival { get; private set; }
+
+        public BombArrival BombArrival { get; private set; }
+
         /// <summary>
         /// Creates a new Factory Entity
         /// </summary>
@@ -70,6 +77,13 @@ namespace GameSolution.Entities
         public bool IsProducing()
         {
             return TurnsTillProduction == 0;
+        }
+
+        public void BuildArrivals(List<TroopEntity> troops, List<BombEntity> bombs, Dictionary<int, int> sentBombs, FactoryLinks links)
+        {
+            TroopArrival = new TroopArrival(troops, Id);
+
+            BombArrival = new BombArrival(bombs, sentBombs, Id, links);
         }
     }
 }

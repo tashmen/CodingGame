@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using GameSolution.Utility;
 using GameSolution.Entities;
 using GameSolution.Moves;
+using System.Diagnostics;
 
 /**
  * Auto-generated code below aims at helping you parse
@@ -34,6 +35,8 @@ public class Player
         // game loop
         while (true)
         {
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
             int entityCount = int.Parse(Console.ReadLine()); // the number of entities (e.g. factories and troops)
             List<Entity> entities = new List<Entity>();
             Console.Error.WriteLine(entities.Count);
@@ -56,6 +59,9 @@ public class Player
 
             GameHelper gh = new GameHelper(gs);
             MoveList moves = gh.PickMoves();
+
+            watch.Stop();
+            moves.AddMove(new Move($"{watch.ElapsedMilliseconds} ms"));
             moves.PlayMoves();
         }
     }
