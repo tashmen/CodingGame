@@ -21,6 +21,14 @@ namespace GameSolution.Arrivals
                 return TurnsUntilArrival.Where(a => a > 0).Any();
             }
         }
+
+        public bool HasIncomingBombNextTurn
+        {
+            get
+            {
+                return TurnsUntilArrival.Contains(1);
+            }
+        }
         public BombArrival(List<BombEntity> bombs, Dictionary<int, int> sentBombs, int factoryId, FactoryLinks links)
         {
             TurnsUntilArrival = new List<int>();

@@ -21,10 +21,11 @@ namespace UnitTest.Utilities
                 new TroopEntity(12, (int)Owner.Opponent, 2, 2, 3, 2),
                 new TroopEntity(12, (int)Owner.Opponent, 2, 3, 3, 2)//not on target
             };
-            var arrivals = new TroopArrival(troops, 2);
-            Assert.Equal(2, arrivals.myTroopArrival[1]);
-            Assert.Equal(2, arrivals.enemyTroopArrival[1]);
-            Assert.Equal(6, arrivals.enemyTroopArrival[2]);
+            var targetFactory = new FactoryEntity(2, 0, 0, 0, 0, 0);
+            var arrivals = new TroopArrival(troops, new List<BombEntity>(), targetFactory);
+            Assert.Equal(2, arrivals.MyTroopArrival[1]);
+            Assert.Equal(2, arrivals.EnemyTroopArrival[1]);
+            Assert.Equal(6, arrivals.EnemyTroopArrival[2]);
         }
     }
 

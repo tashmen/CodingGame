@@ -2,6 +2,7 @@
 using GameSolution.Utility;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GameSolution.Entities
 {
@@ -81,7 +82,7 @@ namespace GameSolution.Entities
 
         public void BuildArrivals(List<TroopEntity> troops, List<BombEntity> bombs, Dictionary<int, int> sentBombs, FactoryLinks links)
         {
-            TroopArrival = new TroopArrival(troops, Id);
+            TroopArrival = new TroopArrival(troops, bombs.Where(b => b.IsFriendly()).ToList(), this);
 
             BombArrival = new BombArrival(bombs, sentBombs, Id, links);
         }

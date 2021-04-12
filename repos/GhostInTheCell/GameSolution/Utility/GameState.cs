@@ -53,7 +53,7 @@ namespace GameSolution.Utility
             Entities = state.Entities.Select(e => EntityFactory.CreateEntity(e)).ToList();//Clone the entities as we want to update this
             _bombsSent = new Dictionary<int, int>(state._bombsSent);
             UpdateGameState();
-            CalculateStats(true);
+            CalculateStats();
         }
 
         public void PlayMove(Move move, Owner owner)
@@ -96,7 +96,7 @@ namespace GameSolution.Utility
         {
             Entities = entites;
             UpdateGameState();
-            CalculateStats();
+            CalculateStats(true);
             GameCounter++;
         }
 
@@ -120,7 +120,7 @@ namespace GameSolution.Utility
         /// <summary>
         /// Calculates the various statistics
         /// </summary>
-        private void CalculateStats(bool isCopy = false)
+        private void CalculateStats(bool advanceBombs = false)
         {
             EnemyIncome = 0;
             MyIncome = 0;
@@ -132,7 +132,7 @@ namespace GameSolution.Utility
             {
                 if (!_bombsSent.ContainsKey(bomb.Id))
                 {
-                    _bombsSent[bomb.Id] = 1;
+                    _bombsSent[bomb.Id] = 1;//By the time bombs are seen they are moving
                     Console.Error.WriteLine($"Bomb was used {bomb.Id} on target {bomb.TargetFactoryId}.");
                     if (bomb.IsFriendly())
                     {
@@ -143,7 +143,7 @@ namespace GameSolution.Utility
                         EnemyBombCount--;
                     }
                 }
-                else if (!isCopy)//skip incrementing for copies and assume that it was already done
+                else if (advanceBombs)//skip incrementing unless we are doing a new turn.
                 {
                     _bombsSent[bomb.Id]++;
                 }
