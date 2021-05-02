@@ -391,7 +391,7 @@ namespace GameSolution.Utility
                 FactoryEntity bestFactory = null;
                 foreach (Node n in _internalState.Links.GetLinks(sourceFactory.Id))
                 {
-                    FactoryEntity factory = friendlyFactories.FirstOrDefault(f => f.Id == n.FactoryId);
+                    FactoryEntity factory = friendlyFactories.FirstOrDefault(f => f.Id == n.Id);
                     if (factory != null)
                     {
                         if (n.Distance < minDist)

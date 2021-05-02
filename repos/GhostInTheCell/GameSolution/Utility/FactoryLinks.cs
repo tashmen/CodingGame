@@ -63,9 +63,9 @@ namespace GameSolution.Utility
                 {
                     currentDist = currentNode.Distance;
                     //Console.Error.WriteLine("Inspecting: " + currentNode.FactoryId + " distance " + currentDist);
-                    foreach (Node adjacent in GetLinks(currentNode.FactoryId))
+                    foreach (Node adjacent in GetLinks(currentNode.Id))
                     {
-                        if (minimumSpanningTree.Where(n => n.FactoryId == adjacent.FactoryId).Any())
+                        if (minimumSpanningTree.Where(n => n.Id == adjacent.Id).Any())
                         {
                             continue;//skip factories already in minimum spanning tree
                         }
@@ -78,9 +78,9 @@ namespace GameSolution.Utility
                         }
                         else if (distance == minDist)//When the distances are equivalent pick the one with the shortest path
                         {
-                            Paths[startNode].TryGetValue(currentNode.FactoryId, out List<Node> pathCurrent);
+                            Paths[startNode].TryGetValue(currentNode.Id, out List<Node> pathCurrent);
                             int lengthCurrent = pathCurrent == null ? 0 : pathCurrent.Count;
-                            Paths[startNode].TryGetValue(parentNode.FactoryId, out List<Node> pathPrevious);
+                            Paths[startNode].TryGetValue(parentNode.Id, out List<Node> pathPrevious);
                             int lengthPrevious = pathPrevious == null ? 0 : pathPrevious.Count;
                             if (lengthCurrent > lengthPrevious)
                             {
@@ -93,9 +93,9 @@ namespace GameSolution.Utility
                 }
                 minimumSpanningTree.Add(bestNode);
                 List<Node> currentPath = null;
-                if (parentNode.FactoryId != startNode)
+                if (parentNode.Id != startNode)
                 {
-                    Paths[startNode].TryGetValue(parentNode.FactoryId, out currentPath);
+                    Paths[startNode].TryGetValue(parentNode.Id, out currentPath);
                 }
                 if (currentPath == null)
                 {
@@ -105,7 +105,7 @@ namespace GameSolution.Utility
                 {
                     currentPath = new List<Node>(currentPath);
                 }
-                Paths[startNode].Add(bestNode.FactoryId, currentPath);
+                Paths[startNode].Add(bestNode.Id, currentPath);
                 currentPath.Add(bestNode);
                 /*
                 if (startNode == 0)
@@ -135,7 +135,7 @@ namespace GameSolution.Utility
         /// <returns>The distance from start to end</returns>
         public int GetDistance(int startId, int endId)
         {
-            return GetLinks(startId).Where(l => l.FactoryId == endId).First().Distance + 1;//All commands are issued from this turn which is always turn 1.
+            return GetLinks(startId).Where(l => l.Id == endId).First().Distance + 1;//All commands are issued from this turn which is always turn 1.
         }
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace GameSolution.Utility
                 return endId;
             }
 
-            int shortest = paths.First().FactoryId;
+            int shortest = paths.First().Id;
             Console.Error.WriteLine("|||Shortest: " + shortest + " from: " + startId + " to: " + endId);
 
             return shortest;
