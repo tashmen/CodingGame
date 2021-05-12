@@ -69,6 +69,11 @@ namespace GameSolution.Utility
                 foreach (Move move in actions)
                 {
                     Cell cell = currentState.board.First(c => c.index == move.targetCellIdx);
+                    Tree tree = currentState.trees.First(t => t.cellIndex == move.sourceCellIdx);
+                    if(tree.size == 1)
+                    {
+                        continue;
+                    }
 
                     GameState afterMove = new GameState(currentState);
                     afterMove.ApplyMove(move);
