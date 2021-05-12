@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Entities\Cell.cs" />
+    <Compile Include="Entities\SunPower.cs" />
     <Compile Include="Entities\Tree.cs" />
     <Compile Include="Moves\Move.cs" />
     <Compile Include="Player.cs" />

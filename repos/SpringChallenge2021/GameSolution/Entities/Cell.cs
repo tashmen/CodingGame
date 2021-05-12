@@ -35,6 +35,11 @@ namespace GameSolution.Entities
             shadowSize = cell.shadowSize;
         }
 
+        public int GetBonusScore()
+        {
+            return (int)Math.Pow(2, richness) - 2;
+        }
+
         public void Reset()
         {
             shadowSize = -1;
