@@ -159,13 +159,23 @@ namespace GameSolution.Utility
             {
                 Tree tree = currentState.trees.First(t => t.cellIndex == move.targetCellIdx);
                 Cell cell = currentState.board.First(c => c.index == move.targetCellIdx);
+
+                int scoreOnCut = currentState.GetTreeCutScore(cell);
+                scoreOnCut -= 1;//take away one point for the sunpower cost
                 
                 GameState afterComplete = new GameState(currentState);
                 afterComplete.ApplyMove(move);
 
                 SunPower sunPower = CalculateSunPowerForGame(afterComplete);
 
-                if(sunPowerWithTree.GetDifference() - countLevel3Tree <= (sunPower.GetDifference() - 4))//Cost to cut down is 4 sun power
+                //If the amount of power gained keeping the tree is greater than the score we receive from cutting then keep the tree.
+                if ((sunPowerWithTree.mySunPower - sunPower.mySunPower) / 3 > scoreOnCut)
+                {
+                    continue;
+                }
+
+
+                if(sunPowerWithTree.GetDifference() - (countLevel3Tree *  <= (sunPower.GetDifference() - 4))//Cost to cut down is 4 sun power
                 {
                     return move;
                 }
