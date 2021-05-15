@@ -33,5 +33,10 @@
             isDormant = true;
             size += 1;
         }
+
+        public override string ToString()
+        {
+            return $"i: {cellIndex} s: {size} me: {isMine} d: {isDormant}";
+        }
     }
 }

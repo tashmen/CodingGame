@@ -76,9 +76,9 @@ namespace GameSolution.Utility
                     }
 
                     GameState afterMove = new GameState(currentState);
-                    afterMove.ApplyMove(move);
+                    afterMove.ApplyMove(move, afterMove.me);
                     afterMove.AdvanceDay();
-                    afterMove.ApplyMove(new Move(Actions.GROW, cell.index));
+                    afterMove.ApplyMove(new Move(Actions.GROW, cell.index), afterMove.me);
                     
                     SunPower sunPower = CalculateSunPowerForGame(afterMove);
 
@@ -105,38 +105,38 @@ namespace GameSolution.Utility
         private int GetCostToUpgradeTrees(GameState state)
         {
             int totalCost = 0;
-            foreach(Cell cell in state.board)
+            foreach(Tree tree in state.trees)
             {
-                if(cell.HasTree() && cell.tree.isMine && cell.tree.size == 2)
+                if(tree.isMine && tree.size == 2)
                 {
-                    while (cell.tree.size < maxTreeSize)
+                    while (tree.size < maxTreeSize)
                     {
-                        totalCost += state.GetCostToGrow(cell);
-                        cell.tree.Grow();
+                        totalCost += state.GetCostToGrow(tree);
+                        tree.Grow();
                     }
                 }
             }
 
-            foreach (Cell cell in state.board)
+            foreach (Tree tree in state.trees)
             {
-                if (cell.HasTree() && cell.tree.isMine && cell.tree.size == 1)
+                if (tree.isMine && tree.size == 1)
                 {
-                    while (cell.tree.size < maxTreeSize)
+                    while (tree.size < maxTreeSize)
                     {
-                        totalCost += state.GetCostToGrow(cell);
-                        cell.tree.Grow();
+                        totalCost += state.GetCostToGrow(tree);
+                        tree.Grow();
                     }
                 }
             }
 
-            foreach (Cell cell in state.board)
+            foreach (Tree tree in state.trees)
             {
-                if (cell.HasTree() && cell.tree.isMine && cell.tree.size == 0)
+                if (tree.isMine && tree.size == 0)
                 {
-                    while (cell.tree.size < maxTreeSize)
+                    while (tree.size < maxTreeSize)
                     {
-                        totalCost += state.GetCostToGrow(cell);
-                        cell.tree.Grow();
+                        totalCost += state.GetCostToGrow(tree);
+                        tree.Grow();
                     }
                 }
             }
@@ -164,7 +164,7 @@ namespace GameSolution.Utility
                 scoreOnCut -= 1;//take away one point for the sunpower cost
                 
                 GameState afterComplete = new GameState(currentState);
-                afterComplete.ApplyMove(move);
+                afterComplete.ApplyMove(move, afterComplete.me);
 
                 SunPower sunPower = CalculateSunPowerForGame(afterComplete);
 
@@ -175,7 +175,7 @@ namespace GameSolution.Utility
                 }
 
 
-                if(sunPowerWithTree.GetDifference() - (countLevel3Tree *  <= (sunPower.GetDifference() - 4))//Cost to cut down is 4 sun power
+                if(sunPowerWithTree.GetDifference() - countLevel3Tree  <= (sunPower.GetDifference() - 4))//Cost to cut down is 4 sun power
                 {
                     return move;
                 }
@@ -223,8 +223,9 @@ namespace GameSolution.Utility
             treeSizeToCount[3] = myTrees.Where(t => t.size == 3).Count();
             foreach (Move move in actions)
             {
-                Tree tree = state.trees.First(t => t.cellIndex == move.targetCellIdx);
                 Cell cell = state.board.First(c => c.index == move.targetCellIdx);
+                Tree tree = cell.tree;
+                
                 int treeSizePoints = Math.Max(maxTurns - state.day - maxTreeSize + tree.size, 0);
                 Console.Error.WriteLine($"treesizepoints: {treeSizePoints}");
                 if (treeSizePoints == 0)
@@ -232,10 +233,10 @@ namespace GameSolution.Utility
                     continue;
                 }
 
-                int cost = state.GetCostToGrow(cell);
+                int cost = state.GetCostToGrow(tree);
 
                 GameState afterMove = new GameState(state);
-                afterMove.ApplyMove(move);
+                afterMove.ApplyMove(move, afterMove.me);
 
                 SunPower sunPower = CalculateSunPowerForGame(afterMove);
 
@@ -262,10 +263,10 @@ namespace GameSolution.Utility
                     Cell growCell = currentState.board.First(c => c.index == growMove.targetCellIdx);
                     if (growCell.tree.size == 2)
                     {
-                        state.ApplyMove(growMove);
+                        state.ApplyMove(growMove, state.me);
                         state.AdvanceDay();
 
-                        int power = state.mySunPowerGenerationToday + currentState.mySun - currentState.GetCostToGrow(growCell);
+                        int power = state.mySunPowerGenerationToday + currentState.me.sun - currentState.GetCostToGrow(growCell.tree);
                         int level3TreeCountOnHighRichness = state.board.Where(c => c.HasTree() && c.tree.size == 3 && (c.richness > 1 || state.nutrients > 3)).Count();
                         Console.Error.WriteLine($"lastTurnPower: {power} treeCount: {level3TreeCountOnHighRichness}");
                         if (power >= (level3TreeCountOnHighRichness) * 4)

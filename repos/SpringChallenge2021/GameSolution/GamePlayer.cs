@@ -5,12 +5,17 @@ using GameSolution.Utility;
 using GameSolution.Entities;
 using GameSolution;
 using GameSolution.Moves;
+using static GameSolution.Constants;
+using System.Diagnostics;
+using GameSolution.Algorithm;
 
-public class Player
+public class GamePlayer
 {
     static void Main(string[] args)
     {
         string[] inputs;
+
+        MonteCarloTreeSearch search = new MonteCarloTreeSearch();
 
         GameState game = new GameState();
 
@@ -36,17 +41,22 @@ public class Player
         // game loop
         while (true)
         {
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+
             game.ResetTrees();
+            game.ResetPlayers();
 
             game.day = int.Parse(Console.ReadLine()); // the game lasts 24 days: 0-23
             game.nutrients = int.Parse(Console.ReadLine()); // the base score you gain from the next COMPLETE action
             inputs = Console.ReadLine().Split(' ');
-            game.mySun = int.Parse(inputs[0]); // your sun points
-            game.myScore = int.Parse(inputs[1]); // your current score
+            game.me.sun = int.Parse(inputs[0]); // your sun points
+            game.me.score = int.Parse(inputs[1]); // your current score
+            game.me.isWaiting = false;
             inputs = Console.ReadLine().Split(' ');
-            game.opponentSun = int.Parse(inputs[0]); // opponent's sun points
-            game.opponentScore = int.Parse(inputs[1]); // opponent's score
-            game.opponentIsWaiting = inputs[2] != "0"; // whether your opponent is asleep until the next day
+            game.opponent.sun = int.Parse(inputs[0]); // opponent's sun points
+            game.opponent.score = int.Parse(inputs[1]); // opponent's score
+            game.opponent.isWaiting = inputs[2] != "0"; // whether your opponent is asleep until the next day
 
             int numberOfTrees = int.Parse(Console.ReadLine()); // the current amount of trees
             for (int i = 0; i < numberOfTrees; i++)
@@ -68,11 +78,45 @@ public class Player
                 string possibleMove = Console.ReadLine();
                 possibleActions.Add(Move.Parse(possibleMove));
             }
+            
+            game.me.possibleMoves = possibleActions;
 
             game.UpdateGameState();
 
+            /*
+            if(game.me.possibleMoves.Count != possibleActions.Count)
+            {
+                Console.Error.WriteLine($"{possibleActions.Where(m => m.type == Actions.SEED).Count()}");
+                Console.Error.WriteLine($"{possibleActions.Where(m => m.type == Actions.WAIT).Count()}");
+                Console.Error.WriteLine($"{possibleActions.Where(m => m.type == Actions.COMPLETE).Count()}");
+                Console.Error.WriteLine($"{possibleActions.Where(m => m.type == Actions.GROW).Count()}");
+
+                Console.Error.WriteLine("Calculated Actions:");
+                Console.Error.WriteLine($"{game.me.possibleMoves.Where(m => m.type == Actions.SEED).Count()}");
+                Console.Error.WriteLine($"{game.me.possibleMoves.Where(m => m.type == Actions.WAIT).Count()}");
+                Console.Error.WriteLine($"{game.me.possibleMoves.Where(m => m.type == Actions.COMPLETE).Count()}");
+                Console.Error.WriteLine($"{game.me.possibleMoves.Where(m => m.type == Actions.GROW).Count()}");
+                throw new Exception($"Possible moves not matching! ");
+            }
+            */
+
             GameHelper gameHelper = new GameHelper(game, possibleActions);
             Move move = gameHelper.GetNextMove();
+
+            int limit = game.day == 0 ? 1000 : 50;
+            
+            if(limit - watch.ElapsedMilliseconds > 20)
+            {
+                search.SetState(game);
+                IMove moveToPlay = search.GetNextMove(watch, limit);
+                MoveSimultaneous moveSimultaneous = moveToPlay as MoveSimultaneous;
+                Console.Error.WriteLine(moveSimultaneous.myMove.ToString());
+                Console.Error.WriteLine(moveSimultaneous.opponentMove.ToString());
+            }
+
+            watch.Stop();
+            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds} / 100");
+
             Console.WriteLine(move);
         }
     }
