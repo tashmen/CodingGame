@@ -19,6 +19,7 @@ namespace GameSolution.Algorithm
 
         public void SetState(IGameState rootState)
         {
+            //If rootnode is not null should we Adjust nodes for next turn?
             rootNode = new Node(rootState);
         }
 
@@ -27,12 +28,10 @@ namespace GameSolution.Algorithm
             int count = 0;
             do
             {
-                IMove move = SelectMoveAtRandom(rootNode);
-                IGameState nextState = rootNode.state.Clone();
-                nextState.ApplyMove(move);
-                Node childNode = new Node(nextState);
-                rootNode.children.Add(childNode);
-                SimulateGame(childNode);
+                Node selectedNode = SelectNodeWithMoves(rootNode);
+                int? winner = SimulateGame(selectedNode, watch, timeLimit);
+                BackPropagate(selectedNode, winner);
+
                 count++;
             }
             while (watch.ElapsedMilliseconds < timeLimit);
@@ -52,12 +51,22 @@ namespace GameSolution.Algorithm
             }
 
             Console.Error.WriteLine($"w: {bestChild.wins} l: {bestChild.loses} d: {bestChild.draws}");
-            //Adjust nodes for next turn?
+            
 
             return bestChild.state.GetMove();
         }
 
-        private int? SimulateGame(Node node)
+        private void BackPropagate(Node selectedNode, int? winner)
+        {
+            Node tempNode = selectedNode.parent;
+            while(tempNode != null)
+            {
+                tempNode.ApplyWinner(winner);
+                tempNode = tempNode.parent;
+            }
+        }
+
+        private int? SimulateGame(Node node, Stopwatch watch, int timeLimit)
         {
             int? winner = node.GetWinner();
             node.ApplyWinner(winner);
@@ -66,28 +75,49 @@ namespace GameSolution.Algorithm
                 return winner;
             }
 
+            if(watch.ElapsedMilliseconds >= timeLimit)
+            {
+                return 0;
+            }
+
             IMove move = SelectMoveAtRandom(node);
             IGameState nextState = node.state.Clone();
             nextState.ApplyMove(move);
-            Node childNode = new Node(nextState);
+            Node childNode = new Node(nextState, node);
             node.children.Add(childNode);
 
-            winner = SimulateGame(childNode);
+            winner = SimulateGame(childNode, watch, timeLimit);
             node.ApplyWinner(winner);
 
             return winner;
         }
 
-        private IMove SelectMoveAtRandom(Node node)
+        private Node SelectNodeWithMoves(Node node)
         {
             Node tempNode = node;
-            while(tempNode.moves.Count == 0)
+            while (tempNode.moves.Count == 0)
             {
-                tempNode = node.children[rand.Next(0, node.children.Count - 1)];
+                tempNode = tempNode.children[rand.Next(0, tempNode.children.Count - 1)];
             }
-            int index = rand.Next(0, tempNode.moves.Count - 1);
-            IMove move = tempNode.moves[index];
-            tempNode.moves.RemoveAt(index);
+
+            return tempNode;
+        }
+
+        private IMove SelectMoveAtRandom(Node node)
+        {
+            IMove move;
+            if (node.moves.Count == 0)//If there are no more moves then pick a random child and play that one
+            {
+                int index = rand.Next(0, node.children.Count - 1);
+                move = node.children[index].state.GetMove();
+            }
+            else
+            {
+                int index = rand.Next(0, node.moves.Count - 1);
+                move = node.moves[index];
+                node.moves.RemoveAt(index);
+            }
+            
 
             return move;
         }
@@ -101,12 +131,14 @@ namespace GameSolution.Algorithm
             public int loses = 0;
             public int draws = 0;
             public int? winner = -8;
+            public Node parent;
 
-            public Node(IGameState state)
+            public Node(IGameState state, Node parent = null)
             {
                 this.state = state;
                 moves = state.GetPossibleMoves();
                 children = new List<Node>();
+                this.parent = parent;
             }
 
             public double GetScore()

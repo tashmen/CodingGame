@@ -44,7 +44,7 @@ public class GamePlayer
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
-            game.ResetTrees();
+            game.RemoveTrees();
             game.ResetPlayers();
 
             game.day = int.Parse(Console.ReadLine()); // the game lasts 24 days: 0-23
@@ -81,7 +81,7 @@ public class GamePlayer
             
             game.me.possibleMoves = possibleActions;
 
-            game.UpdateGameState();
+            game.UpdateGameState(false);
 
             /*
             if(game.me.possibleMoves.Count != possibleActions.Count)
@@ -103,9 +103,9 @@ public class GamePlayer
             GameHelper gameHelper = new GameHelper(game, possibleActions);
             Move move = gameHelper.GetNextMove();
 
-            int limit = game.day == 0 ? 1000 : 50;
+            int limit = game.day == 0 ? 1000 : 100;
             
-            if(limit - watch.ElapsedMilliseconds > 20)
+            if(limit - watch.ElapsedMilliseconds > 10)
             {
                 search.SetState(game);
                 IMove moveToPlay = search.GetNextMove(watch, limit);

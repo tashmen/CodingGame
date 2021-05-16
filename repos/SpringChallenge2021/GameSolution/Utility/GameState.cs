@@ -56,8 +56,8 @@ namespace GameSolution.Utility
         public GameState()
         {
             board = new List<Cell>();
-            me = new Player();
-            opponent = new Player();
+            me = new Player(true);
+            opponent = new Player(false);
             possibleMoveCombinations = new List<IMove>();
         }
 
@@ -70,13 +70,17 @@ namespace GameSolution.Utility
             me = new Player(state.me);
             opponent = new Player(state.opponent);
             possibleMoveCombinations = new List<IMove>();
+            treeSizeKeyToCount = null;
+            movePlayed = null;
 
             BuildCellNeighbors();
             UpdateGameState();
         }
 
-        public void UpdateGameState()
+        public void UpdateGameState(bool updateMyMoves = true)
         {
+            treeSizeKeyToCount = null;
+            treeCache = null;
             possibleMoveCombinations.Clear();
 
             sunDirection = day % sunReset;
@@ -86,19 +90,20 @@ namespace GameSolution.Utility
 
             CalculateShadows();
             CalculateSunGeneration();
-            if(me.possibleMoves.Count == 0)
+
+            if(updateMyMoves)
             {
                 CalculatePossibleMoves(true);
             }
-            if(opponent.possibleMoves.Count == 0)
-            {
-                CalculatePossibleMoves(false);
-            }
+            
+            CalculatePossibleMoves(false);
+            
         }
 
         private void CalculatePossibleMoves(bool isMe)
         {
             Player player = isMe ? me : opponent;
+            player.possibleMoves.Clear();
             player.possibleMoves.Add(new Move(Actions.WAIT));
 
             if (player.isWaiting)
@@ -152,7 +157,6 @@ namespace GameSolution.Utility
             }
 
             //Grow Actions
-            //TODO: this could be optimized by calculating the count once for each tree size
             foreach(Tree tree in trees.Where(t => t.isMine == isMe && t.size != maxTreeSize && !t.isDormant))
             {
                 //Console.Error.WriteLine($"{tree.ToString()} cost: {GetCostToGrow(tree)} sun: {player.sun}");
@@ -317,6 +321,14 @@ namespace GameSolution.Utility
             switch (move.type)
             {
                 case Actions.COMPLETE:
+                    if(player.sun < treeCompleteCost)
+                    {
+                        throw new Exception("Not enough sun!");
+                    }
+                    if (targetCell.tree.isDormant)
+                    {
+                        throw new Exception("Tree is dormant!");
+                    }
                     player.sun -= treeCompleteCost;
                     player.score += GetTreeCutScore(targetCell);
                     targetCell.RemoveTree();
@@ -326,13 +338,31 @@ namespace GameSolution.Utility
                         UpdateGameState();
                     break;
                 case Actions.GROW:
-                    player.sun -= GetCostToGrow(targetCell.tree);
+                    int growCost = GetCostToGrow(targetCell.tree);
+                    if (player.sun < growCost)
+                    {
+                        throw new Exception("Not enough sun!");
+                    }
+                    if (targetCell.tree.isDormant)
+                    {
+                        throw new Exception("Tree is dormant!");
+                    }
+                    player.sun -= growCost;
                     targetCell.tree.Grow();
                     if (updateState)
                         UpdateGameState();
                     break;
                 case Actions.SEED:
-                    player.sun -= GetCostToSeed();
+                    int seedCost = GetCostToSeed(player.isMe);
+                    if (player.sun < seedCost)
+                    {
+                        throw new Exception("Not enough sun");
+                    }
+                    if (sourceCell.tree.isDormant)
+                    {
+                        throw new Exception("Tree is dormant!");
+                    }
+                    player.sun -= seedCost;
                     sourceCell.tree.isDormant = true;
                     targetCell.tree = new Tree(targetCell.index, (int)TreeSize.Seed, true, true);
                     if (updateState)
@@ -354,6 +384,7 @@ namespace GameSolution.Utility
         {
             day++;
             ResetPlayers();
+            ResetTrees();
             UpdateGameState();
 
             me.sun += mySunPowerGenerationToday;
@@ -413,6 +444,15 @@ namespace GameSolution.Utility
 
         public void ResetTrees()
         {
+            foreach(Tree tree in trees)
+            {
+                tree.Reset();
+            }
+        }
+
+        public void RemoveTrees()
+        {
+            treeCache = null;
             foreach (Cell cell in board)
             {
                 cell.RemoveTree();

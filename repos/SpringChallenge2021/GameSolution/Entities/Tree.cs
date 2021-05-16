@@ -27,6 +27,11 @@
             isDormant = tree.isDormant;
             isSpookyShadow = tree.isSpookyShadow;
         }
+        
+        public void Reset()
+        {
+            isDormant = false;
+        }
 
         public void Grow()
         {

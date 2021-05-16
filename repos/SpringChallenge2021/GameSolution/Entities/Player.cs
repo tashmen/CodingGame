@@ -9,13 +9,15 @@ namespace GameSolution.Entities
         public int sun;
         public int score;
         public bool isWaiting;
+        public bool isMe;
 
         //Calculated from the game board
         public List<Move> possibleMoves;
 
-        public Player()
+        public Player(bool isMe)
         {
             possibleMoves = new List<Move>();
+            this.isMe = isMe;
         }
 
         public Player(Player player)
@@ -23,7 +25,8 @@ namespace GameSolution.Entities
             sun = player.sun;
             score = player.score;
             isWaiting = player.isWaiting;
-            possibleMoves = new List<Move>(player.possibleMoves.Select(m => new Move(m)));
+            possibleMoves = new List<Move>();
+            isMe = player.isMe;
         }
 
         public void Reset()

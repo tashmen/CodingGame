@@ -1,8 +1,9 @@
-﻿using static GameSolution.Constants;
+﻿using GameSolution.Algorithm;
+using static GameSolution.Constants;
 
 namespace GameSolution.Moves
 {
-    public class Move
+    public class Move : IMove
     {
         public string type;
         public int targetCellIdx;
