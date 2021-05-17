@@ -1,4 +1,5 @@
-﻿using GameSolution.Moves;
+﻿using GameSolution.Algorithm;
+using GameSolution.Moves;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,11 +14,13 @@ namespace GameSolution.Entities
 
         //Calculated from the game board
         public List<Move> possibleMoves;
+        public Move movePlayed;
 
         public Player(bool isMe)
         {
             possibleMoves = new List<Move>();
             this.isMe = isMe;
+            movePlayed = null;
         }
 
         public Player(Player player)
@@ -27,12 +30,18 @@ namespace GameSolution.Entities
             isWaiting = player.isWaiting;
             possibleMoves = new List<Move>();
             isMe = player.isMe;
+            movePlayed = player.movePlayed;
         }
 
         public void Reset()
         {
             possibleMoves = new List<Move>();
             isWaiting = false;
+        }
+
+        public int GetScore()
+        {
+            return score + sun / 3;
         }
     }
 }

@@ -54,7 +54,6 @@
     <Compile Include="Entities\Tree.cs" />
     <Compile Include="Moves\Move.cs" />
     <Compile Include="GamePlayer.cs" />
-    <Compile Include="Moves\MoveSimultaneous.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Utility\GameHelper.cs" />

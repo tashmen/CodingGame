@@ -47,9 +47,6 @@ namespace GameSolution.Utility
         public int mySunPowerGenerationToday;
         public int opponentSunPowerGenerationToday;
 
-        public List<IMove> possibleMoveCombinations;
-        public IMove movePlayed;
-
         //lazy loaded cache
         private Dictionary<string, int> treeSizeKeyToCount;
 
@@ -58,7 +55,6 @@ namespace GameSolution.Utility
             board = new List<Cell>();
             me = new Player(true);
             opponent = new Player(false);
-            possibleMoveCombinations = new List<IMove>();
         }
 
         public GameState(GameState state)
@@ -69,9 +65,13 @@ namespace GameSolution.Utility
             board = new List<Cell>(state.board.Select(c => new Cell(c)));
             me = new Player(state.me);
             opponent = new Player(state.opponent);
-            possibleMoveCombinations = new List<IMove>();
             treeSizeKeyToCount = null;
-            movePlayed = null;
+
+            if (me.movePlayed != null && opponent.movePlayed != null)
+            {
+                me.movePlayed = null;
+                opponent.movePlayed = null;
+            }
 
             BuildCellNeighbors();
             UpdateGameState();
@@ -81,7 +81,6 @@ namespace GameSolution.Utility
         {
             treeSizeKeyToCount = null;
             treeCache = null;
-            possibleMoveCombinations.Clear();
 
             sunDirection = day % sunReset;
             shadowDirection = sunDirection + sunReset/2 % sunReset;
@@ -192,7 +191,7 @@ namespace GameSolution.Utility
         }
 
         /// <summary>
-        /// Calcualtes the shadows on each cell and spookiness of each tree
+        /// Calculates the shadows on each cell and spookiness of each tree
         /// </summary>
         private void CalculateShadows()
         {
@@ -222,6 +221,10 @@ namespace GameSolution.Utility
                     if (cell.tree.size <= cell.shadowSize)
                     {
                         cell.tree.isSpookyShadow = true;
+                    }
+                    else
+                    {
+                        cell.tree.isSpookyShadow = false;
                     }
                 }
                 //Console.Error.WriteLine(cell);
@@ -281,7 +284,7 @@ namespace GameSolution.Utility
                     {
                         Cell sourceCell = board.First(c => c.index == myMove.sourceCellIdx);
                         sourceCell.tree.isDormant = true;
-                        sourceCell = board.First(c => c.index == myMove.sourceCellIdx);
+                        sourceCell = board.First(c => c.index == opponentMove.sourceCellIdx);
                         sourceCell.tree.isDormant = true;
                     }
                     else
@@ -306,7 +309,15 @@ namespace GameSolution.Utility
                 countComplete++;
             }
             nutrients -= countComplete;
-            UpdateGameState();
+
+            if (me.isWaiting && opponent.isWaiting)
+            {
+                AdvanceDay();
+            }
+            else
+            {
+                UpdateGameState();
+            }
         }
 
         /// <summary>
@@ -372,7 +383,8 @@ namespace GameSolution.Utility
                     player.isWaiting = true;
                     if(me.isWaiting && opponent.isWaiting)
                     {
-                        AdvanceDay();
+                        if(updateState)
+                            AdvanceDay();
                     }
                     break;
                 default:
@@ -459,35 +471,33 @@ namespace GameSolution.Utility
             }
         }
 
-        public List<IMove> GetPossibleMoves()
+        public List<IMove> GetPossibleMoves(bool isMax)
         {
-            if(possibleMoveCombinations.Any())
-            {
-                return possibleMoveCombinations;
-            }
-            else
-            {
-                foreach(Move myMove in me.possibleMoves)
-                {
-                    foreach(Move opponentMove in opponent.possibleMoves)
-                    {
-                        possibleMoveCombinations.Add(new MoveSimultaneous(myMove, opponentMove));
-                    }
-                }
-            }
-            return possibleMoveCombinations;
+            Player player = isMax ? me : opponent;
+            return new List<IMove>(player.possibleMoves);
         }
 
-        public void ApplyMove(IMove move)
+        public void ApplyMove(IMove move, bool isMax)
         {
-            MoveSimultaneous moveSimultaneous = move as MoveSimultaneous;
-            ApplyMoves(moveSimultaneous.myMove, moveSimultaneous.opponentMove);
-            movePlayed = moveSimultaneous;
+            if (isMax && opponent.movePlayed != null)
+            {
+                throw new Exception("Expected opponent's move to be empty");
+            }
+
+            Player player = isMax ? me : opponent;
+            Move movePlayer = move as Move;
+            player.movePlayed = movePlayer;
+
+            if(me.movePlayed != null && opponent.movePlayed != null)
+            {
+                ApplyMoves(me.movePlayed, opponent.movePlayed);
+            }
         }
 
-        public IMove GetMove()
+        public IMove GetMove(bool isMax)
         {
-            return movePlayed;
+            Player player = isMax ? me : opponent;
+            return player.movePlayed;
         }
 
         public IGameState Clone()
@@ -499,15 +509,17 @@ namespace GameSolution.Utility
         {
             if(day == maxTurns)
             {
-                if(me.score > opponent.score)
+                int myScore = me.GetScore();
+                int opponentScore = opponent.GetScore();
+                if (myScore > opponentScore)
                 {
                     return 1;
                 }
-                else if(me.score < opponent.score)
+                else if(myScore < opponentScore)
                 {
                     return -1;
                 }
-                else if(me.score == opponent.score)
+                else if(myScore == opponentScore)
                 {
                     int countMyTrees = trees.Where(t => t.isMine).Count();
                     int countOppTrees = trees.Where(t => !t.isMine).Count();

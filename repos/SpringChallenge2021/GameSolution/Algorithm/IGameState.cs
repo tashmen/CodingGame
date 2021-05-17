@@ -11,20 +11,23 @@ namespace GameSolution.Algorithm
         /// <summary>
         /// Retrieve the possible moves
         /// </summary>
+        /// <param name="isMax">Whether or not to retrieve moves for max</param>
         /// <returns>list of all possible moves</returns>
-        List<IMove> GetPossibleMoves();
+        List<IMove> GetPossibleMoves(bool isMax);
 
         /// <summary>
         /// Applies a move to the game state.  The game state must remember this move so that it can be retrieves with GetMove.
         /// </summary>
+        /// <param name="isMax">Whether or not the move is for max</param>
         /// <param name="move">the move to apply</param>
-        void ApplyMove(IMove move);
+        void ApplyMove(IMove move, bool isMax);
 
         /// <summary>
         /// Retrieves the move that was played to reach this state.
         /// </summary>
+        /// <param name="isMax">Whether or not the move is for max</param>
         /// <returns>The move</returns>
-        IMove GetMove();
+        IMove GetMove(bool isMax);
 
         /// <summary>
         /// Clones the game state

@@ -76,7 +76,8 @@ public class GamePlayer
             for (int i = 0; i < numberOfPossibleMoves; i++)
             {
                 string possibleMove = Console.ReadLine();
-                possibleActions.Add(Move.Parse(possibleMove));
+                Move movePlayer = Move.Parse(possibleMove);
+                possibleActions.Add(movePlayer);
             }
             
             game.me.possibleMoves = possibleActions;
@@ -103,15 +104,14 @@ public class GamePlayer
             GameHelper gameHelper = new GameHelper(game, possibleActions);
             Move move = gameHelper.GetNextMove();
 
-            int limit = game.day == 0 ? 1000 : 100;
+            int limit = game.day == 0 ? 1000 : 90;
             
-            if(limit - watch.ElapsedMilliseconds > 10)
+            if(limit - watch.ElapsedMilliseconds > 20)
             {
                 search.SetState(game);
                 IMove moveToPlay = search.GetNextMove(watch, limit);
-                MoveSimultaneous moveSimultaneous = moveToPlay as MoveSimultaneous;
-                Console.Error.WriteLine(moveSimultaneous.myMove.ToString());
-                Console.Error.WriteLine(moveSimultaneous.opponentMove.ToString());
+                Move movePlayer = moveToPlay as Move;
+                Console.Error.WriteLine(movePlayer.ToString());
             }
 
             watch.Stop();

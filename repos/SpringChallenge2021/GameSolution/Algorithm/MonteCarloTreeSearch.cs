@@ -17,10 +17,10 @@ namespace GameSolution.Algorithm
             rand = new Random();
         }
 
-        public void SetState(IGameState rootState)
+        public void SetState(IGameState rootState, bool isMax = true)
         {
             //If rootnode is not null should we Adjust nodes for next turn?
-            rootNode = new Node(rootState);
+            rootNode = new Node(rootState, isMax);
         }
 
         public IMove GetNextMove(Stopwatch watch, int timeLimit)
@@ -29,7 +29,7 @@ namespace GameSolution.Algorithm
             do
             {
                 Node selectedNode = SelectNodeWithMoves(rootNode);
-                int? winner = SimulateGame(selectedNode, watch, timeLimit);
+                int? winner = SimulateGame(selectedNode, watch, timeLimit, selectedNode.isMax);
                 BackPropagate(selectedNode, winner);
 
                 count++;
@@ -42,18 +42,19 @@ namespace GameSolution.Algorithm
             double bestScore = -1;
             foreach(Node child in rootNode.children)
             {
-                double score = child.GetScore();
+                double score = child.GetScore(rootNode.isMax);
                 if(bestScore < score)
                 {
                     bestChild = child;
                     bestScore = score;
                 }
+                Console.Error.WriteLine($"w: {child.wins} l: {child.loses} d: {child.draws} move: {child.state.GetMove(rootNode.isMax)}");
             }
 
-            Console.Error.WriteLine($"w: {bestChild.wins} l: {bestChild.loses} d: {bestChild.draws}");
-            
 
-            return bestChild.state.GetMove();
+            Console.Error.WriteLine($"Best: w: {bestChild.wins} l: {bestChild.loses} d: {bestChild.draws}");
+
+            return bestChild.state.GetMove(rootNode.isMax);
         }
 
         private void BackPropagate(Node selectedNode, int? winner)
@@ -66,27 +67,29 @@ namespace GameSolution.Algorithm
             }
         }
 
-        private int? SimulateGame(Node node, Stopwatch watch, int timeLimit)
+        private int? SimulateGame(Node node, Stopwatch watch, int timeLimit, bool isMax)
         {
             int? winner = node.GetWinner();
-            node.ApplyWinner(winner);
             if (winner.HasValue)
             {
+                node.ApplyWinner(winner);
                 return winner;
-            }
-
-            if(watch.ElapsedMilliseconds >= timeLimit)
-            {
-                return 0;
             }
 
             IMove move = SelectMoveAtRandom(node);
             IGameState nextState = node.state.Clone();
-            nextState.ApplyMove(move);
-            Node childNode = new Node(nextState, node);
+            nextState.ApplyMove(move, isMax);
+            Node childNode = new Node(nextState, !isMax, node);
             node.children.Add(childNode);
 
-            winner = SimulateGame(childNode, watch, timeLimit);
+            if (watch.ElapsedMilliseconds >= timeLimit)
+            {
+                childNode.ApplyWinner(0);
+                node.ApplyWinner(0);
+                return 0;
+            }
+
+            winner = SimulateGame(childNode, watch, timeLimit, !isMax);
             node.ApplyWinner(winner);
 
             return winner;
@@ -106,10 +109,9 @@ namespace GameSolution.Algorithm
         private IMove SelectMoveAtRandom(Node node)
         {
             IMove move;
-            if (node.moves.Count == 0)//If there are no more moves then pick a random child and play that one
+            if (node.moves.Count == 0)//If there are no more moves then that is a problem...
             {
-                int index = rand.Next(0, node.children.Count - 1);
-                move = node.children[index].state.GetMove();
+                throw new Exception("No moves found!");
             }
             else
             {
@@ -132,18 +134,27 @@ namespace GameSolution.Algorithm
             public int draws = 0;
             public int? winner = -8;
             public Node parent;
+            public bool isMax;
 
-            public Node(IGameState state, Node parent = null)
+            public Node(IGameState state, bool isMax, Node parent = null)
             {
                 this.state = state;
-                moves = state.GetPossibleMoves();
+                moves = state.GetPossibleMoves(isMax);
                 children = new List<Node>();
                 this.parent = parent;
+                this.isMax = isMax;
             }
 
-            public double GetScore()
+            public double GetScore(bool isMax)
             {
-                return (wins + draws * 0.5) / (wins + draws + loses);
+                if (isMax)
+                {
+                    return (wins + draws * 0.5) / (wins + draws + loses);
+                }
+                else
+                {
+                    return (loses + draws * 0.5) / (wins + draws + loses);
+                }
             }
 
             public int? GetWinner()

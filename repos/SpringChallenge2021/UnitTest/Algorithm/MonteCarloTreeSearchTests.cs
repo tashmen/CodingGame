@@ -53,6 +53,7 @@ namespace UnitTest
             game.board.Add(new Cell(3, 1, new List<int>() { 2, -1, -1, -1, 4, 0 }));
             game.board.Add(new Cell(4, 1, new List<int>() { 0, 3, -1, -1, -1, 5 }));
             game.board.Add(new Cell(5, 1, new List<int>() { 6, 0, 4, -1, -1, -1 }));
+            game.board.Add(new Cell(6, 1, new List<int>() { -1, 1, 0, 5, -1, -1 }));
 
             game.BuildCellNeighbors();
 
@@ -65,7 +66,7 @@ namespace UnitTest
             game.me.score = 0;
             game.me.isWaiting = false;
 
-            game.opponent.sun = 2;
+            game.opponent.sun = 60;
             game.opponent.score = 0;
             game.opponent.isWaiting = false;
 
@@ -85,10 +86,9 @@ namespace UnitTest
             watch.Start();
 
             search.SetState(game);
-            IMove moveToPlay = search.GetNextMove(watch, 3000);
-            MoveSimultaneous moveSimultaneous = moveToPlay as MoveSimultaneous;
-            Console.Error.WriteLine(moveSimultaneous.myMove.ToString());
-            Console.Error.WriteLine(moveSimultaneous.opponentMove.ToString());
+            IMove moveToPlay = search.GetNextMove(watch, 30000);
+            Move move = moveToPlay as Move;
+            Console.Error.WriteLine(move.ToString());
 
             watch.Stop();
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
