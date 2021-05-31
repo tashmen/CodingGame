@@ -14,6 +14,7 @@ public class GamePlayer
     static void Main(string[] args)
     {
         string[] inputs;
+        bool isFirstRound = true;
 
         MonteCarloTreeSearch search = new MonteCarloTreeSearch();
 
@@ -81,7 +82,6 @@ public class GamePlayer
             }
             
             game.me.possibleMoves = possibleActions;
-
             game.UpdateGameState(false);
 
             /*
@@ -100,29 +100,28 @@ public class GamePlayer
                 throw new Exception($"Possible moves not matching! ");
             }
             */
-
-            GameHelper gameHelper = new GameHelper(game, possibleActions);
-            Move move = gameHelper.GetNextMove();
-
-            int limit = game.day == 0 ? 1000 : 90;
             
-            if(limit - watch.ElapsedMilliseconds > 20)
+            IGameState gameClone = game.Clone();
+            search.SetState(gameClone);
+
+            IMove move = null;
+
+            //GameHelper gameHelper = new GameHelper(game, possibleActions);
+            //move = gameHelper.GetNextMove();
+
+            int limit = isFirstRound ? 1000 : 95;
+            //if(limit - watch.ElapsedMilliseconds > 20)
             {
-                search.SetState(game);
+                Console.Error.WriteLine($"{watch.ElapsedMilliseconds}ms");
                 IMove moveToPlay = search.GetNextMove(watch, limit);
-                Move movePlayer = moveToPlay as Move;
-                Console.Error.WriteLine(movePlayer.ToString());
+                move = moveToPlay;
             }
 
             watch.Stop();
-            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds} / 100");
+            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds} / {limit}");
 
             Console.WriteLine(move);
+            isFirstRound = false;
         }
-    }
-
-    private static List<T> List<T>()
-    {
-        throw new NotImplementedException();
     }
 }

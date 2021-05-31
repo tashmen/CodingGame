@@ -1,4 +1,6 @@
-﻿using GameSolution.Utility;
+﻿using GameSolution.Entities;
+using GameSolution.Moves;
+using GameSolution.Utility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,14 +22,19 @@ namespace GameSolution.Algorithm
         public void SetState(IGameState rootState, bool isMax = true)
         {
             
-            if (rootNode != null)
+            if (rootNode != null && false)
             {
                 //if we have already started searching then continue to search as we go; 
                 //find the child that matches the new node
                 bool isFound = false;
+                foreach(IMove move in rootNode.moves)
+                {
+                    Expand(rootNode, move, rootNode.isMax);
+                }
                 foreach(Node child in rootNode.children)
                 {
-                    foreach(IMove move in child.moves)
+                    GameState state2 = child.state as GameState;
+                    foreach (IMove move in child.moves)
                     {
                         Expand(child, move, child.isMax);
                     }
