@@ -53,5 +53,10 @@ namespace GameSolution.Entities
                 return false;
             }
         }
+
+        public override string ToString()
+        {
+            return $"sun: {sun}, score: {score}, wait: {isWaiting}, me: {isMe}";
+        }
     }
 }

@@ -17,7 +17,6 @@ namespace GameSolution.Utility
         public Player opponent;
 
         public bool isCopy = false;
-
         
         //Calculated from the trees on the board
         public List<Tree> trees
@@ -77,7 +76,7 @@ namespace GameSolution.Utility
             UpdateGameState();
         }
 
-        public void UpdateGameState(bool updateMyMoves = true)
+        public void UpdateGameState(bool updateMyMoves = true, bool applySun = false)
         {
             treeSizeKeyToCount = null;
             treeCache = null;
@@ -88,7 +87,7 @@ namespace GameSolution.Utility
             //Console.Error.WriteLine($"sundirection: {sunDirection} day: {day}");
 
             CalculateShadows();
-            CalculateSunGeneration();
+            CalculateSunGeneration(applySun);
 
             if(updateMyMoves)
             {
@@ -245,7 +244,7 @@ namespace GameSolution.Utility
             }
         }
 
-        private void CalculateSunGeneration()
+        private void CalculateSunGeneration(bool apply)
         {
             mySunPowerGenerationToday = 0;
             opponentSunPowerGenerationToday = 0;
@@ -262,6 +261,12 @@ namespace GameSolution.Utility
                         opponentSunPowerGenerationToday += tree.size;
                     }
                 }
+            }
+
+            if (apply)
+            {
+                me.sun += mySunPowerGenerationToday;
+                opponent.sun += opponentSunPowerGenerationToday;
             }
 
             //Console.Error.WriteLine($"my sun gen: {mySunPowerGenerationToday}, opp sun gen: {opponentSunPowerGenerationToday}");
@@ -397,10 +402,7 @@ namespace GameSolution.Utility
             day++;
             ResetPlayers();
             ResetTrees();
-            UpdateGameState();
-
-            me.sun += mySunPowerGenerationToday;
-            opponent.sun += opponentSunPowerGenerationToday;
+            UpdateGameState(true, true);
         }
 
         

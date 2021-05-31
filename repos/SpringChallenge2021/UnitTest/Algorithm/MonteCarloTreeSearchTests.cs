@@ -83,8 +83,6 @@ namespace UnitTest
         {
             Random rand = new Random();
             MonteCarloTreeSearch search = new MonteCarloTreeSearch();
-            
-
             do
             {
                 Stopwatch watch = new Stopwatch();
@@ -100,13 +98,6 @@ namespace UnitTest
                 game.ApplyMoves(move, game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)]);
             }
             while (game.day < 24);
-           
-
-            
-            
-            
-
-            
         }
     }
 }

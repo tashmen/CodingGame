@@ -8,6 +8,6 @@ namespace GameSolution.Algorithm
 {
     public interface IMove
     {
-
+        public string ToString();
     }
 }
