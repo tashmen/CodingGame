@@ -1,7 +1,5 @@
-﻿using GameSolution.Algorithm;
-using GameSolution.Moves;
+﻿using GameSolution.Moves;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GameSolution.Entities
 {
@@ -42,6 +40,18 @@ namespace GameSolution.Entities
         public int GetScore()
         {
             return score + sun / 3;
+        }
+
+        public bool Equals(Player player)
+        {
+            if(player.isMe == isMe && player.isWaiting == isWaiting && player.score == score && player.sun == sun)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }

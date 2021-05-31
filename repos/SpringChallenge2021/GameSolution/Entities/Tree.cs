@@ -43,5 +43,17 @@
         {
             return $"i: {cellIndex} s: {size} me: {isMine} d: {isDormant}";
         }
+
+        public bool Equals(Tree tree)
+        {
+            if(tree.cellIndex == cellIndex && tree.isDormant == isDormant && tree.isMine == isMine && tree.size == size)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }

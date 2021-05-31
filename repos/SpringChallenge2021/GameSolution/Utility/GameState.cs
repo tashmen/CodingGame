@@ -375,7 +375,7 @@ namespace GameSolution.Utility
                     }
                     player.sun -= seedCost;
                     sourceCell.tree.isDormant = true;
-                    targetCell.tree = new Tree(targetCell.index, (int)TreeSize.Seed, true, true);
+                    targetCell.tree = new Tree(targetCell.index, (int)TreeSize.Seed, player.isMe, true);
                     if (updateState)
                         UpdateGameState();
                     break;
@@ -536,6 +536,17 @@ namespace GameSolution.Utility
                 }
             }
             return null;
+        }
+
+        public bool Equals(IGameState state)
+        {
+            GameState gameState = state as GameState;
+
+            if(day == gameState.day && nutrients == gameState.nutrients && board.TrueForAll(c => c.Equals(gameState.board.First(cell => cell.index == c.index))) && me.Equals(gameState.me) && opponent.Equals(gameState.opponent))
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

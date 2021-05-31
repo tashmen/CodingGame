@@ -40,5 +40,12 @@ namespace GameSolution.Algorithm
         /// </summary>
         /// <returns>Who won the game</returns>
         int? GetWinner();
+
+        /// <summary>
+        /// Determines if the game state is the same as this one
+        /// </summary>
+        /// <param name="">the state to compare against</param>
+        /// <returns>true if equal</returns>
+        bool Equals(IGameState state);
     }
 }

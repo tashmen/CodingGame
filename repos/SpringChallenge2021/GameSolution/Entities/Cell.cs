@@ -90,7 +90,23 @@ namespace GameSolution.Entities
 
         public override string ToString()
         {
-            return $"i: {index} r: {richness} s:{shadowSize} ts: {tree?.size} spooky:{tree?.isSpookyShadow}";
+            return $"index: {index} rich: {richness} shadow:{shadowSize} tree: {tree?.ToString()}";
+        }
+
+        public bool Equals(Cell cell)
+        {
+            if(cell.index == index && richness == cell.richness)
+            {
+                if(tree == null && cell.tree == null)
+                {
+                    return true;
+                }
+                else if(tree != null && cell.tree != null && tree.Equals(cell.tree))
+                {
+                    return true;
+                }   
+            }
+            return false;
         }
     }
 }

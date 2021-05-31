@@ -66,7 +66,7 @@ namespace UnitTest
             game.me.score = 0;
             game.me.isWaiting = false;
 
-            game.opponent.sun = 60;
+            game.opponent.sun = 2;
             game.opponent.score = 0;
             game.opponent.isWaiting = false;
 
@@ -81,17 +81,32 @@ namespace UnitTest
         [Fact]
         public void SimulationTest()
         {
+            Random rand = new Random();
             MonteCarloTreeSearch search = new MonteCarloTreeSearch();
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
+            
 
-            search.SetState(game);
-            IMove moveToPlay = search.GetNextMove(watch, 30000);
-            Move move = moveToPlay as Move;
-            Console.Error.WriteLine(move.ToString());
+            do
+            {
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
+                search.SetState(game);
+                IMove moveToPlay = search.GetNextMove(watch, 100);
+                Move move = moveToPlay as Move;
+                Console.Error.WriteLine(move.ToString());
 
-            watch.Stop();
-            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+                watch.Stop();
+                Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+
+                game.ApplyMoves(move, game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)]);
+            }
+            while (game.day < 24);
+           
+
+            
+            
+            
+
+            
         }
     }
 }

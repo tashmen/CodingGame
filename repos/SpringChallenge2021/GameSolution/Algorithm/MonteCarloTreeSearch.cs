@@ -19,8 +19,37 @@ namespace GameSolution.Algorithm
 
         public void SetState(IGameState rootState, bool isMax = true)
         {
-            //If rootnode is not null should we Adjust nodes for next turn?
-            rootNode = new Node(rootState, isMax);
+            
+            if (rootNode != null)
+            {
+                //if we have already started searching then continue to search as we go; 
+                //find the child that matches the new node
+                bool isFound = false;
+                foreach(Node child in rootNode.children)
+                {
+                    foreach(IMove move in child.moves)
+                    {
+                        Expand(child, move, child.isMax);
+                    }
+                    foreach(Node child2 in child.children)
+                    {
+                        if (child2.state.Equals(rootState))
+                        {
+                            rootNode = child2;
+                            isFound = true;
+                            break;
+                        }
+                    }
+                }
+                if (!isFound)
+                {
+                    throw new Exception("Could not find the next state in tree!");
+                }
+            }
+            else
+            {
+                rootNode = new Node(rootState.Clone(), isMax);
+            }
         }
 
         public IMove GetNextMove(Stopwatch watch, int timeLimit)
@@ -77,10 +106,7 @@ namespace GameSolution.Algorithm
             }
 
             IMove move = SelectMoveAtRandom(node);
-            IGameState nextState = node.state.Clone();
-            nextState.ApplyMove(move, isMax);
-            Node childNode = new Node(nextState, !isMax, node);
-            node.children.Add(childNode);
+            Node childNode = Expand(node, move, isMax);
 
             if (watch.ElapsedMilliseconds >= timeLimit)
             {
@@ -93,6 +119,16 @@ namespace GameSolution.Algorithm
             node.ApplyWinner(winner);
 
             return winner;
+        }
+
+        private Node Expand(Node node, IMove move, bool isMax)
+        {
+            IGameState nextState = node.state.Clone();
+            nextState.ApplyMove(move, isMax);
+            Node childNode = new Node(nextState, !isMax, node);
+            node.children.Add(childNode);
+
+            return childNode;
         }
 
         private Node SelectNodeWithMoves(Node node)
