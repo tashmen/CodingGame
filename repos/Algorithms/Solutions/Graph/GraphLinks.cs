@@ -201,17 +201,17 @@ namespace Algorithms.Graph
         //Adds links to the node links
         public void AddLinkInternal(int startNode, int endNode, int distance)
         {
-            List<Node> factoryLinks;
+            List<Node> nodeLinks;
             if (Links.ContainsKey(startNode))
             {
-                factoryLinks = Links[startNode];
+                nodeLinks = Links[startNode];
             }
             else
             {
-                factoryLinks = new List<Node>();
-                Links[startNode] = factoryLinks;
+                nodeLinks = new List<Node>();
+                Links[startNode] = nodeLinks;
             }
-            factoryLinks.Add(new Node(endNode, distance));
+            nodeLinks.Add(new Node(endNode, distance));
         }
     }
 }
