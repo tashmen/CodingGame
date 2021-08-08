@@ -3,10 +3,10 @@
     public class Node
     {
         public int Id { get; set; }
-        public int Distance { get; set; }
+        public double Distance { get; set; }
 
         public bool IsExplored { get; set; }
-        public Node(int id, int distance)
+        public Node(int id, double distance)
         {
             Id = id;
             Distance = distance;
@@ -19,7 +19,7 @@
         /// </summary>
         /// <param name="currentDist">The current distance from the starting node</param>
         /// <returns>A clone of the node with the proper distance</returns>
-        public Node CreateAtDistance(int currentDist)
+        public Node CreateAtDistance(double currentDist)
         {
             return new Node(Id, currentDist + Distance);
         }
