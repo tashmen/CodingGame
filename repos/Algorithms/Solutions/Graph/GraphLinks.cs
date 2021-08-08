@@ -13,6 +13,11 @@ namespace Algorithms.Graph
             Links = new Dictionary<int, List<Node>>();
         }
 
+        public bool ContainsLink(int id1, int id2)
+        {
+            return Links.ContainsKey(id1) && Links[id1].Where(n => n.Id == id2).Any();
+        }
+
         /// <summary>
         /// Adds a link to the list
         /// </summary>
@@ -21,7 +26,7 @@ namespace Algorithms.Graph
         /// <param name="distance">The distance between the two nodes</param>
         public void AddLink(int id1, int id2, int distance)
         {
-            Console.Error.WriteLine(id1 + " " + id2 + " " + distance);
+            //Console.Error.WriteLine(id1 + " " + id2 + " " + distance);
             AddLinkInternal(id1, id2, distance);
             AddLinkInternal(id2, id1, distance);
         }
@@ -44,8 +49,19 @@ namespace Algorithms.Graph
 
             foreach (int vertex in vertices)
             {
-                CalculateShortestPathFromStartNode(vertex, vertexCount);
+                CalculateShortestPathFromStartNode(vertex, vertexCount, 9999999);
             }
+        }
+
+        /// <summary>
+        /// Calculates the shortest paths from a start node
+        /// </summary>
+        /// <param name="startNode">id of the start node</param>
+        /// <param name="maxDistance">the fartheset distance to travel</param>
+        public void CalculateShortestPathsFromStartNode(int startNode, int maxDistance)
+        {
+            Paths = new Dictionary<int, Dictionary<int, List<Node>>>();
+            CalculateShortestPathFromStartNode(startNode, Links.Keys.Count, maxDistance);
         }
 
         /// <summary>
@@ -53,7 +69,8 @@ namespace Algorithms.Graph
         /// </summary>
         /// <param name="startNode">The starting id</param>
         /// <param name="vertexCount">The number of nodes</param>
-        private void CalculateShortestPathFromStartNode(int startNode, int vertexCount)
+        /// <param name="maxDistance">the farthest distance to travel</param>
+        private void CalculateShortestPathFromStartNode(int startNode, int vertexCount, int maxDistance)
         {
             List<Node> minimumSpanningTree = new List<Node>();
             //Console.Error.WriteLine("Starting with " + startNode);
@@ -71,8 +88,9 @@ namespace Algorithms.Graph
                     //Console.Error.WriteLine("Inspecting: " + currentNode.FactoryId + " distance " + currentDist);
                     foreach (Node adjacent in GetLinks(currentNode.Id))
                     {
-                        if (minimumSpanningTree.Where(n => n.Id == adjacent.Id).Any())
+                        if (adjacent.IsExplored || minimumSpanningTree.Where(n => n.Id == adjacent.Id).Any())
                         {
+                            adjacent.IsExplored = true;
                             continue;//skip nodes already in minimum spanning tree
                         }
                         int distance = currentDist + adjacent.Distance;
@@ -124,17 +142,24 @@ namespace Algorithms.Graph
                     Console.Error.WriteLine("Shortest Node: " + bestNode.FactoryId + " distance: " + bestNode.Distance);
                 }
                 */
+                if (minDist >= maxDistance)
+                    return;
             }
         }
 
         /// <summary>
-        /// Retrieves the links that are adjacent to the given factory
+        /// Retrieves the links that are adjacent to the given node
         /// </summary>
         /// <param name="id">The node id</param>
         /// <returns></returns>
         public List<Node> GetLinks(int id)
         {
             return Links[id];
+        }
+
+        public Dictionary<int, List<Node>> GetPaths(int startId)
+        {
+            return Paths[startId];
         }
 
         /// <summary>
@@ -157,7 +182,7 @@ namespace Algorithms.Graph
         public int GetShortestPathDistance(int startId, int endId)
         {
             Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
-            if(endPoints == null)
+            if (endPoints == null)
             {
                 return 99999;
             }
@@ -183,13 +208,13 @@ namespace Algorithms.Graph
             if (endPoints == null)
             {
                 Console.Error.WriteLine("|||Start not found: " + startId);
-                return endId;
+                throw new InvalidOperationException();
             }
             endPoints.TryGetValue(endId, out List<Node> paths);
             if (paths == null)
             {
                 Console.Error.WriteLine("|||End not found: " + endId + " start: " + startId);
-                return endId;
+                throw new InvalidOperationException();
             }
 
             int shortest = paths.First().Id;
