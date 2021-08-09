@@ -48,8 +48,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Graph\Graph.cs" />
     <Compile Include="Graph\GraphLinks.cs" />
-    <Compile Include="Graph\Node.cs" />
+    <Compile Include="Graph\INode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
