@@ -1,7 +1,7 @@
 ﻿using Algorithms.Graph;
 using Xunit;
 
-namespace UnitTest.Utilities
+namespace UnitTest
 {
     public class GraphLinksTests
     {

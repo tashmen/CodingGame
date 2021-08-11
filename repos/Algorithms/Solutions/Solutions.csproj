@@ -51,6 +51,9 @@
     <Compile Include="Graph\Graph.cs" />
     <Compile Include="Graph\GraphLinks.cs" />
     <Compile Include="Graph\INode.cs" />
+    <Compile Include="MonteCarloTreeSearch\IGameState.cs" />
+    <Compile Include="MonteCarloTreeSearch\IMove.cs" />
+    <Compile Include="MonteCarloTreeSearch\MonteCarloTreeSearch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
