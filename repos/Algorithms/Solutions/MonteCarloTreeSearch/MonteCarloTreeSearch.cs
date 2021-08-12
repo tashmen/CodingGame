@@ -114,7 +114,7 @@ namespace Algorithm
                     bestChild = child;
                     bestScore = score;
                 }
-                Console.Error.WriteLine($"w: {child.wins} l: {child.loses} d: {child.draws} move: {child.state.GetMove(rootNode.isMax)} score: {score}");
+                Console.Error.WriteLine($"w: {child.wins} l: {child.loses} d: {child.draws} move: {child.state.GetMove(rootNode.isMax)} score: {score} isMax: {rootNode.isMax}");
             }
 
 

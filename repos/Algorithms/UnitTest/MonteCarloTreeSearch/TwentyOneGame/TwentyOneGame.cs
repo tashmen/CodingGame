@@ -37,7 +37,7 @@ namespace UnitTest.TwentyOneGame
         public bool Equals(IGameState state)
         {
             GameState s = state as GameState;
-            return Total == s.Total;
+            return Total == s.Total && LastMoveBy == s.LastMoveBy && LastMove.Equals(LastMove);
         }
 
         public IMove GetMove(bool isMax)
@@ -102,6 +102,11 @@ namespace UnitTest.TwentyOneGame
         public override string ToString()
         {
             return "Move: " + Count.ToString();
+        }
+
+        public bool Equals(Move m)
+        {
+            return m.Count == Count;
         }
     }
 }

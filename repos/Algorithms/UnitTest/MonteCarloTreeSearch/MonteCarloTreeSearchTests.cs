@@ -28,7 +28,7 @@ namespace UnitTest
                 watch.Start();
                 search.SetState(state, isMax);
 
-                IMove move = search.GetNextMove(watch, 10000, 10000);
+                IMove move = search.GetNextMove(watch, 100, 10);
                 state.ApplyMove(move, isMax);
                 //isMax = !isMax;
                 watch.Stop();
