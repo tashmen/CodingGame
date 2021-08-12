@@ -1,4 +1,4 @@
-﻿namespace Algorithm.MonteCarloTreeSearch
+﻿namespace Algorithm
 {
     public interface IMove
     {

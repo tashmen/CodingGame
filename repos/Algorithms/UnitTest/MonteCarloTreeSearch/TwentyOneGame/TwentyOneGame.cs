@@ -1,16 +1,15 @@
-﻿using Algorithm.MonteCarloTreeSearch;
+﻿using Algorithm;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using UnitTest.Fixtures;
-using Xunit;
-using Xunit.Abstractions;
 
-namespace UnitTest
+namespace UnitTest.TwentyOneGame
 {
+    /// <summary>
+    /// In this game players are trying to reach the value 21 the count starts at 0 and each turn a player can pick a number between 1-3 to add to the total.
+    /// </summary>
     public class GameState : IGameState
     {
-        int Total;
+        public int Total;
         Move LastMove;
         bool? LastMoveBy;
 
@@ -21,6 +20,8 @@ namespace UnitTest
         public void ApplyMove(IMove move, bool isMax)
         {
             Move m = move as Move;
+            if (m.Count > 3 || m.Count <= 0)
+                throw new Exception("Invalid move: " + move.ToString());
             Total += m.Count;
             LastMove = m;
             LastMoveBy = isMax;
@@ -44,8 +45,12 @@ namespace UnitTest
             return LastMove;
         }
 
-        public List<IMove> GetPossibleMoves(bool isMax)
+        public IList<IMove> GetPossibleMoves(bool isMax)
         {
+            if (GetWinner().HasValue)
+            {
+                return new List<IMove>();
+            }
             return new List<IMove>()
             {
                 new Move(1),
@@ -56,9 +61,9 @@ namespace UnitTest
 
         public int? GetWinner()
         {
-            if(Total >= 21)
+            if (Total >= 21)
             {
-                if(Total == 21)
+                if (Total == 21)
                 {
                     if (LastMoveBy.HasValue)
                     {
@@ -98,48 +103,5 @@ namespace UnitTest
         {
             return "Move: " + Count.ToString();
         }
-    }
-
-    public class TwentyOneMonteCarloTreeSearch
-    {
-        MonteCarloTreeSearch search = new MonteCarloTreeSearch();
-        GameState state = new GameState();
-        public TwentyOneMonteCarloTreeSearch(ITestOutputHelper output)
-        {
-            var converter = new TestOutputFixture(output);
-            Console.SetError(converter);
-        }
-        
-        [Fact]
-        public void Test_Play_Game()
-        {
-            bool isMax = true;
-            do
-            {
-                Stopwatch watch = new Stopwatch();
-                watch.Start();
-                search.SetState(state, isMax);
-
-                IMove move = search.GetNextMove(watch, 1000);
-                state.ApplyMove(move, isMax);
-                isMax = !isMax;
-                watch.Stop();
-
-                Console.Error.WriteLine(" ");
-
-                Console.Error.WriteLine(move.ToString());
-                Console.Error.WriteLine(state.ToString());
-                Console.Error.WriteLine("isMax: " + isMax);
-
-                Console.Error.WriteLine(" ");
-                Console.Error.WriteLine(" ");
-
-
-            } while (!state.GetWinner().HasValue);
-
-            Console.Error.WriteLine("Winner: " + state.GetWinner().Value);
-            
-        }
-        
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Algorithm.MonteCarloTreeSearch
+namespace Algorithm
 {
     public interface IGameState
     {
@@ -9,7 +9,7 @@ namespace Algorithm.MonteCarloTreeSearch
         /// </summary>
         /// <param name="isMax">Whether or not to retrieve moves for max</param>
         /// <returns>list of all possible moves</returns>
-        List<IMove> GetPossibleMoves(bool isMax);
+        IList<IMove> GetPossibleMoves(bool isMax);
 
         /// <summary>
         /// Applies a move to the game state.  The game state must remember this move so that it can be retrieves with GetMove.

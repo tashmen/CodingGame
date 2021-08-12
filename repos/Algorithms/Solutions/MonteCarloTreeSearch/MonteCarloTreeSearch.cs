@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Algorithm.MonteCarloTreeSearch
+namespace Algorithm
 {
     public class MonteCarloTreeSearch
     {
@@ -14,29 +14,37 @@ namespace Algorithm.MonteCarloTreeSearch
         }
 
         public void SetState(IGameState rootState, bool isMax = true)
-        {
-            
-            if (rootNode != null && false)
+        {   
+            if (rootNode != null)
             {
-                //if we have already started searching then continue to search as we go; 
+                //if we have already started searching then continue to search as we go if possible; the search will scan two layers to see if only one move was played or if 2 moves were played to get back to the original players turn.
+
                 //find the child that matches the new node
                 bool isFound = false;
+                //Expand any moves left in the root node (if any)
                 foreach(IMove move in rootNode.moves)
                 {
-                    Expand(rootNode, move, rootNode.isMax);
+                    Expand(rootNode, move);
                 }
+                //Begin scanning the children
                 foreach(Node child in rootNode.children)
-                {
-                    IGameState state2 = child.state as IGameState;
+                {   
+                    if (child.state.Equals(rootState))
+                    {
+                        rootNode = child;
+                        isFound = true;
+                        break;
+                    }
+
                     foreach (IMove move in child.moves)
                     {
-                        Expand(child, move, child.isMax);
+                        Expand(child, move);
                     }
-                    foreach(Node child2 in child.children)
+                    foreach (Node descendent in child.children)
                     {
-                        if (child2.state.Equals(rootState))
+                        if(descendent.state.Equals(rootState))
                         {
-                            rootNode = child2;
+                            rootNode = descendent;
                             isFound = true;
                             break;
                         }
@@ -44,7 +52,8 @@ namespace Algorithm.MonteCarloTreeSearch
                 }
                 if (!isFound)
                 {
-                    throw new Exception("Could not find the next state in tree!");
+                    Console.Error.WriteLine("Could not find the next state in tree!  Starting over...");
+                    rootNode = new Node(rootState.Clone(), isMax);
                 }
             }
             else
@@ -58,17 +67,38 @@ namespace Algorithm.MonteCarloTreeSearch
         /// </summary>
         /// <param name="watch">timer</param>
         /// <param name="timeLimit">The amount of time to give to the search in milliseconds</param>
+        /// <param name="numRollouts">The number of roll outs to play per expansion</param>
         /// <returns></returns>
-        public IMove GetNextMove(Stopwatch watch, int timeLimit)
+        public IMove GetNextMove(Stopwatch watch, int timeLimit, int numRollouts = 1, double? exploration = null)
         {
+            if(exploration == null)
+            {
+                exploration = Math.Sqrt(2);
+            }
             int count = 0;
             do
             {
-                Node selectedNode = SelectNodeWithMoves(rootNode);
-                int? winner = SimulateGame(selectedNode, watch, timeLimit, selectedNode.isMax);
-                BackPropagate(selectedNode, winner);
-
-                count++;
+                Node selectedNode = SelectNodeWithUnplayedMoves(rootNode, exploration.Value);
+                if(selectedNode == null)
+                {
+                    break;
+                }
+                IMove move = SelectMoveAtRandom(selectedNode);
+                Node childNode = Expand(selectedNode, move);
+                int? winner = childNode.GetWinner();
+                if (winner.HasValue)
+                {
+                    BackPropagate(childNode, winner);
+                }
+                else
+                {
+                    for(int i = 0; i<numRollouts; i++)
+                    {
+                        winner = SimulateGame(childNode.state.Clone(), watch, timeLimit, childNode.isMax);
+                        BackPropagate(childNode, winner);
+                        count++;
+                    }
+                }
             }
             while (watch.ElapsedMilliseconds < timeLimit);
             Console.Error.WriteLine($"Played {count} games!");
@@ -84,7 +114,7 @@ namespace Algorithm.MonteCarloTreeSearch
                     bestChild = child;
                     bestScore = score;
                 }
-                Console.Error.WriteLine($"w: {child.wins} l: {child.loses} d: {child.draws} move: {child.state.GetMove(rootNode.isMax)}");
+                Console.Error.WriteLine($"w: {child.wins} l: {child.loses} d: {child.draws} move: {child.state.GetMove(rootNode.isMax)} score: {score}");
             }
 
 
@@ -95,6 +125,7 @@ namespace Algorithm.MonteCarloTreeSearch
 
         private void BackPropagate(Node selectedNode, int? winner)
         {
+            selectedNode.ApplyWinner(winner);
             Node tempNode = selectedNode.parent;
             while(tempNode != null)
             {
@@ -103,50 +134,79 @@ namespace Algorithm.MonteCarloTreeSearch
             }
         }
 
-        private int? SimulateGame(Node node, Stopwatch watch, int timeLimit, bool isMax)
+        private int? SimulateGame(IGameState state, Stopwatch watch, int timeLimit, bool isMax)
         {
-            int? winner = node.GetWinner();
+            int? winner = state.GetWinner();
             if (winner.HasValue)
             {
-                node.ApplyWinner(winner);
                 return winner;
             }
 
-            IMove move = SelectMoveAtRandom(node);
-            Node childNode = Expand(node, move, isMax);
+            IMove move = SelectMoveAtRandom(state, isMax);
+            state.ApplyMove(move, isMax);
 
             if (watch.ElapsedMilliseconds >= timeLimit)
             {
-                childNode.ApplyWinner(0);
-                node.ApplyWinner(0);
                 return 0;
             }
 
-            winner = SimulateGame(childNode, watch, timeLimit, !isMax);
-            node.ApplyWinner(winner);
+            winner = SimulateGame(state, watch, timeLimit, !isMax);
 
             return winner;
         }
 
-        private Node Expand(Node node, IMove move, bool isMax)
+        private Node Expand(Node node, IMove move)
         {
             IGameState nextState = node.state.Clone();
-            nextState.ApplyMove(move, isMax);
-            Node childNode = new Node(nextState, !isMax, node);
+            nextState.ApplyMove(move, node.isMax);
+            Node childNode = new Node(nextState, !node.isMax, node);
             node.children.Add(childNode);
 
             return childNode;
         }
 
-        private Node SelectNodeWithMoves(Node node)
+        private Node SelectNodeWithUnplayedMoves(Node node, double exploration)
         {
-            Node tempNode = node;
-            while (tempNode.moves.Count == 0)
+            Queue<Node> queue = new Queue<Node>();
+            queue.Enqueue(node);
+
+            Node tempNode;
+            Node bestNode = null;
+            double maxValue = -1;
+            while (queue.Count > 0)
             {
-                tempNode = tempNode.children[rand.Next(0, tempNode.children.Count)];
+                tempNode = queue.Dequeue();
+                if (tempNode.moves.Count == 0)
+                {
+                    foreach (Node child in tempNode.children)
+                    {
+                        queue.Enqueue(child);
+                    }
+                }
+                else if(tempNode.parent != null)
+                {
+                    double wins = tempNode.isMax ? tempNode.wins : tempNode.loses;
+                    double nodeTotal = tempNode.TotalPlays();
+                    double parentTotal = tempNode.parent.TotalPlays();
+
+                    double value = wins / nodeTotal + exploration * Math.Sqrt(Math.Log(parentTotal / nodeTotal));
+                    if(value > maxValue)
+                    {
+                        maxValue = value;
+                        bestNode = tempNode;
+                    }
+                }
+                else return tempNode;
             }
 
-            return tempNode;
+            return bestNode;
+        }
+
+        private IMove SelectMoveAtRandom(IGameState state, bool isMax)
+        {
+            IList<IMove> moves = state.GetPossibleMoves(isMax);
+            int index = rand.Next(0, moves.Count);
+            return moves[index];
         }
 
         private IMove SelectMoveAtRandom(Node node)
@@ -163,19 +223,17 @@ namespace Algorithm.MonteCarloTreeSearch
                 node.moves.RemoveAt(index);
             }
             
-
             return move;
         }
 
         internal class Node
         {
             public IGameState state;
-            public List<IMove> moves;
+            public IList<IMove> moves;
             public List<Node> children;
             public int wins = 0;
             public int loses = 0;
             public int draws = 0;
-            public int? winner = -8;
             public Node parent;
             public bool isMax;
 
@@ -200,14 +258,14 @@ namespace Algorithm.MonteCarloTreeSearch
                 }
             }
 
+            public int TotalPlays()
+            {
+                return wins + loses + draws;
+            }
+
             public int? GetWinner()
             {
-                if (winner == -8)
-                {
-                    winner = state.GetWinner();
-                }
-
-                return winner;
+                return state.GetWinner();
             }
 
             public void ApplyWinner(int? winner)
