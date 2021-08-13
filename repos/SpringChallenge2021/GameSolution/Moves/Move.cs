@@ -1,5 +1,4 @@
-﻿using GameSolution.Algorithm;
-using GameSolution.Entities;
+﻿using Algorithms;
 using static GameSolution.Constants;
 
 namespace GameSolution.Moves

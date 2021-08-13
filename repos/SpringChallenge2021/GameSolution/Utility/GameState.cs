@@ -1,4 +1,4 @@
-﻿using GameSolution.Algorithm;
+﻿using Algorithms;
 using GameSolution.Entities;
 using GameSolution.Moves;
 using System;
@@ -100,8 +100,15 @@ namespace GameSolution.Utility
 
         private void CalculatePossibleMoves(bool isMe)
         {
+            
             Player player = isMe ? me : opponent;
             player.possibleMoves.Clear();
+
+            if (day == 24)
+            {
+                return;
+            }
+
             player.possibleMoves.Add(new Move(Actions.WAIT));
 
             if (player.isWaiting)
@@ -323,6 +330,10 @@ namespace GameSolution.Utility
             {
                 UpdateGameState();
             }
+
+            //Reset moves for the turn
+            me.movePlayed = null;
+            opponent.movePlayed = null;
         }
 
         /// <summary>
@@ -473,7 +484,7 @@ namespace GameSolution.Utility
             }
         }
 
-        public List<IMove> GetPossibleMoves(bool isMax)
+        public IList<IMove> GetPossibleMoves(bool isMax)
         {
             Player player = isMax ? me : opponent;
             return new List<IMove>(player.possibleMoves);
@@ -509,7 +520,7 @@ namespace GameSolution.Utility
 
         public int? GetWinner()
         {
-            if(day == maxTurns)
+            if (day == maxTurns)
             {
                 int myScore = me.GetScore();
                 int opponentScore = opponent.GetScore();
@@ -517,11 +528,11 @@ namespace GameSolution.Utility
                 {
                     return 1;
                 }
-                else if(myScore < opponentScore)
+                else if (myScore < opponentScore)
                 {
                     return -1;
                 }
-                else if(myScore == opponentScore)
+                else if (myScore == opponentScore)
                 {
                     int countMyTrees = trees.Where(t => t.isMine).Count();
                     int countOppTrees = trees.Where(t => !t.isMine).Count();
@@ -537,6 +548,8 @@ namespace GameSolution.Utility
                     else return 0;
                 }
             }
+            else if (day > maxTurns)
+                throw new Exception("day advanced too far");
             return null;
         }
 
@@ -549,6 +562,16 @@ namespace GameSolution.Utility
                 return true;
             }
             return false;
+        }
+
+        public double Evaluate(bool isMax)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string ToString()
+        {
+            return "n: " + nutrients + "\n" + board.ToString() + "\n" + me.ToString() + "\n" + opponent.ToString();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using GameSolution.Algorithm;
+﻿using Algorithms;
 using GameSolution.Entities;
 using GameSolution.Moves;
 using GameSolution.Utility;
@@ -13,7 +13,7 @@ using Xunit.Abstractions;
 
 namespace UnitTest
 {
-    
+
 
     public class MonteCarloTreeSearchTests
     {
@@ -98,6 +98,9 @@ namespace UnitTest
                 game.ApplyMoves(move, game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)]);
             }
             while (game.day < 24);
+
+            Console.Error.WriteLine(game.ToString());
+            Assert.Equal(1, game.GetWinner());
         }
     }
 }

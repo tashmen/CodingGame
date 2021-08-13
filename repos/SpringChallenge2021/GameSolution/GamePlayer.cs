@@ -3,11 +3,9 @@ using System.Linq;
 using System.Collections.Generic;
 using GameSolution.Utility;
 using GameSolution.Entities;
-using GameSolution;
 using GameSolution.Moves;
-using static GameSolution.Constants;
 using System.Diagnostics;
-using GameSolution.Algorithm;
+using Algorithms;
 
 public class GamePlayer
 {

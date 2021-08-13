@@ -45,9 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Algorithm\IGameState.cs" />
-    <Compile Include="Algorithm\IMove.cs" />
-    <Compile Include="Algorithm\MonteCarloTreeSearch.cs" />
+    <Compile Include="Algorithm\Combined.cs" />
     <Compile Include="Entities\Cell.cs" />
     <Compile Include="Entities\Player.cs" />
     <Compile Include="Entities\SunPower.cs" />
