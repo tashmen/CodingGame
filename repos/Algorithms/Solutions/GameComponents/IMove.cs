@@ -1,4 +1,4 @@
-﻿namespace Algorithm
+﻿namespace Algorithms
 {
     public interface IMove
     {

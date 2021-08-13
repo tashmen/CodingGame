@@ -1,4 +1,4 @@
-﻿using Algorithm;
+﻿using Algorithms;
 using System;
 using System.Collections.Generic;
 
@@ -38,6 +38,22 @@ namespace UnitTest.TwentyOneGame
         {
             GameState s = state as GameState;
             return Total == s.Total && LastMoveBy == s.LastMoveBy && LastMove.Equals(LastMove);
+        }
+
+        public double Evaluate(bool isMax)
+        {
+            if(Total % 4 == 1)
+            {
+                if (isMax)
+                    return -1;
+                else return 1;
+            }
+            else
+            {
+                if (isMax)
+                    return 1;
+                else return -1;
+            }
         }
 
         public IMove GetMove(bool isMax)

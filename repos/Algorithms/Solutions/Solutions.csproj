@@ -48,12 +48,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Algorithms\TreeAlgorithm.cs" />
+    <Compile Include="Algorithms\Trees\GameTreeNode.cs" />
     <Compile Include="Graph\Graph.cs" />
     <Compile Include="Graph\GraphLinks.cs" />
     <Compile Include="Graph\INode.cs" />
-    <Compile Include="MonteCarloTreeSearch\IGameState.cs" />
-    <Compile Include="MonteCarloTreeSearch\IMove.cs" />
-    <Compile Include="MonteCarloTreeSearch\MonteCarloTreeSearch.cs" />
+    <Compile Include="Algorithms\Minimax.cs" />
+    <Compile Include="GameComponents\IGameState.cs" />
+    <Compile Include="GameComponents\IMove.cs" />
+    <Compile Include="Algorithms\MonteCarloTreeSearch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

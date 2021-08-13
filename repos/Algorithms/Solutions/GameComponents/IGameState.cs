@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Algorithm
+namespace Algorithms
 {
     public interface IGameState
     {
@@ -43,5 +43,12 @@ namespace Algorithm
         /// <param name="">the state to compare against</param>
         /// <returns>true if equal</returns>
         bool Equals(IGameState state);
+
+        /// <summary>
+        /// Evaluates the current game board closer to 1 is max wins closer to -1 is min wins
+        /// </summary>
+        /// <param name="isMax">true if it is max's turn else false</param>
+        /// <returns>A number between [-1, 1]</returns>
+        double Evaluate(bool isMax);
     }
 }
