@@ -14,7 +14,7 @@ public class GamePlayer
         string[] inputs;
         bool isFirstRound = true;
 
-        MonteCarloTreeSearch search = new MonteCarloTreeSearch();
+        Minimax search = new Minimax();
 
         GameState game = new GameState();
 
@@ -40,13 +40,16 @@ public class GamePlayer
         // game loop
         while (true)
         {
+            //Note: loop appears to start when we read the first item...
+            game.day = int.Parse(Console.ReadLine()); // the game lasts 24 days: 0-23
+
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
             game.RemoveTrees();
             game.ResetPlayers();
 
-            game.day = int.Parse(Console.ReadLine()); // the game lasts 24 days: 0-23
+            
             game.nutrients = int.Parse(Console.ReadLine()); // the base score you gain from the next COMPLETE action
             inputs = Console.ReadLine().Split(' ');
             game.me.sun = int.Parse(inputs[0]); // your sun points
@@ -78,10 +81,12 @@ public class GamePlayer
                 Move movePlayer = Move.Parse(possibleMove);
                 possibleActions.Add(movePlayer);
             }
-            
+
+            Console.Error.WriteLine($"After parsing: {watch.ElapsedMilliseconds}ms");
+
             game.me.possibleMoves = possibleActions;
             game.UpdateGameState(false);
-
+            Console.Error.WriteLine($"After updating gamestate: {watch.ElapsedMilliseconds}ms");
             /*
             if(game.me.possibleMoves.Count != possibleActions.Count)
             {
@@ -98,9 +103,8 @@ public class GamePlayer
                 throw new Exception($"Possible moves not matching! ");
             }
             */
-            
-            IGameState gameClone = game.Clone();
-            search.SetState(gameClone);
+
+            search.SetState(game, true, false);
 
             IMove move = null;
 
@@ -110,7 +114,7 @@ public class GamePlayer
             int limit = isFirstRound ? 1000 : 95;
             //if(limit - watch.ElapsedMilliseconds > 20)
             {
-                Console.Error.WriteLine($"{watch.ElapsedMilliseconds}ms");
+                Console.Error.WriteLine($"Before search: {watch.ElapsedMilliseconds}ms");
                 IMove moveToPlay = search.GetNextMove(watch, limit);
                 move = moveToPlay;
             }
@@ -118,8 +122,9 @@ public class GamePlayer
             watch.Stop();
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds} / {limit}");
 
-            Console.WriteLine(move);
+
             isFirstRound = false;
+            Console.WriteLine(move);
         }
     }
 }

@@ -6,7 +6,7 @@ using UnitTest.TwentyOneGame;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace UnitTest
+namespace UnitTest.Algorithms
 {
     public class MonteCarloTreeSearchTests
     {

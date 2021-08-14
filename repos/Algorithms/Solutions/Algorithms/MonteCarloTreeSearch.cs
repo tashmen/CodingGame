@@ -32,6 +32,7 @@ namespace Algorithms
                 GameTreeNode selectedNode = SelectNodeWithUnplayedMoves(RootNode, exploration.Value);
                 if(selectedNode == null)
                 {
+                    Console.Error.WriteLine("Found no more moves!");
                     break;
                 }
                 IMove move = SelectMoveAtRandom(selectedNode);
@@ -43,9 +44,10 @@ namespace Algorithms
                 }
                 else
                 {
-                    for(int i = 0; i<numRollouts; i++)
+                    var clonedState = childNode.state.Clone();
+                    for (int i = 0; i<numRollouts; i++)
                     {
-                        winner = SimulateGame(childNode.state.Clone(), watch, timeLimit, childNode.isMax);
+                        winner = SimulateGame(clonedState, watch, timeLimit, childNode.isMax);
                         BackPropagate(childNode, winner);
                         count++;
                     }

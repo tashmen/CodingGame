@@ -566,7 +566,11 @@ namespace GameSolution.Utility
 
         public double Evaluate(bool isMax)
         {
-            throw new NotImplementedException();
+            SunPower power = GameHelper.CalculateSunPowerForGame(this);
+            double denominator = power.mySunPower + power.oppSunPower;
+            if(denominator != 0)
+                return power.GetDifference() / denominator;
+            return 0;
         }
 
         public override string ToString()

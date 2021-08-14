@@ -15,7 +15,7 @@ namespace UnitTest
 {
 
 
-    public class MonteCarloTreeSearchTests
+    public class MinimaxTests
     {
         private class Converter : TextWriter
         {
@@ -40,7 +40,7 @@ namespace UnitTest
 
         private readonly GameState game;
 
-        public MonteCarloTreeSearchTests(ITestOutputHelper output)
+        public MinimaxTests(ITestOutputHelper output)
         {
             var converter = new Converter(output);
             Console.SetError(converter);
@@ -82,13 +82,13 @@ namespace UnitTest
         public void SimulationTest()
         {
             Random rand = new Random();
-            MonteCarloTreeSearch search = new MonteCarloTreeSearch();
+            Minimax search = new Minimax();
             do
             {
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
                 search.SetState(game);
-                IMove moveToPlay = search.GetNextMove(watch, 100, 20);
+                IMove moveToPlay = search.GetNextMove(watch, 100);
                 Move move = moveToPlay as Move;
                 Console.Error.WriteLine(move.ToString());
 

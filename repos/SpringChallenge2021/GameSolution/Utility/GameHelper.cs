@@ -183,10 +183,12 @@ namespace GameSolution.Utility
             return null;
         }
 
-        private SunPower CalculateSunPowerForGame(GameState state)
+        public static SunPower CalculateSunPowerForGame(GameState state)
         {
             SunPower power = new SunPower();
             SunPower powerTo0 = new SunPower();
+
+            int startingDay = state.day;
 
             for (int i = 0; i < sunReset; i++)
             {
@@ -204,7 +206,7 @@ namespace GameSolution.Utility
                 power.oppSunPower += state.opponentSunPowerGenerationToday;
             }
 
-            int cycles = (maxTurns - currentState.day) / sunReset;
+            int cycles = (maxTurns - startingDay) / sunReset;
             power.mySunPower = powerTo0.mySunPower + cycles * power.mySunPower;
             power.oppSunPower = powerTo0.oppSunPower + cycles * power.oppSunPower;
 

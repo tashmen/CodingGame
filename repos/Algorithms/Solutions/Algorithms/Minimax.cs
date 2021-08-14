@@ -13,12 +13,17 @@ namespace Algorithms
             IMove bestMove = null;
             foreach (IMove move in RootNode.moves)
             {
+                
                 GameTreeNode child = Expand(RootNode, move);
                 double currentVal = RunMinimax(child, depth, -999999, 999999, watch, timeLimit);
                 if ((RootNode.isMax && currentVal > val) || (!RootNode.isMax && currentVal < val))
                 {
                     bestMove = move;
                     val = currentVal;
+                }
+                if (watch.ElapsedMilliseconds >= timeLimit)
+                {
+                    break;
                 }
             }
 

@@ -15,7 +15,7 @@ namespace UnitTest
 {
 
 
-    public class MonteCarloTreeSearchTests
+    public class GameStateTests
     {
         private class Converter : TextWriter
         {
@@ -40,7 +40,7 @@ namespace UnitTest
 
         private readonly GameState game;
 
-        public MonteCarloTreeSearchTests(ITestOutputHelper output)
+        public GameStateTests(ITestOutputHelper output)
         {
             var converter = new Converter(output);
             Console.SetError(converter);
@@ -79,28 +79,17 @@ namespace UnitTest
 
 
         [Fact]
-        public void SimulationTest()
+        public void RunManyClones()
         {
-            Random rand = new Random();
-            MonteCarloTreeSearch search = new MonteCarloTreeSearch();
-            do
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            for(int i = 0; i<100; i++)
             {
-                Stopwatch watch = new Stopwatch();
-                watch.Start();
-                search.SetState(game);
-                IMove moveToPlay = search.GetNextMove(watch, 100, 20);
-                Move move = moveToPlay as Move;
-                Console.Error.WriteLine(move.ToString());
-
-                watch.Stop();
-                Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-
-                game.ApplyMoves(move, game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)]);
+                var clone = game.Clone();
             }
-            while (game.day < 24);
+            watch.Stop();
 
-            Console.Error.WriteLine(game.ToString());
-            Assert.Equal(1, game.GetWinner());
+            Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds/100}");
         }
     }
 }

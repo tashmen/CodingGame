@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <Folder Include="Entities\" />
-    <Folder Include="Utilities\" />
   </ItemGroup>
 
 </Project>

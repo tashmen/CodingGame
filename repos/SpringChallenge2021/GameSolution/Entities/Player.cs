@@ -33,6 +33,7 @@ namespace GameSolution.Entities
 
         public void Reset()
         {
+            movePlayed = null;
             possibleMoves = new List<Move>();
             isWaiting = false;
         }
@@ -56,7 +57,8 @@ namespace GameSolution.Entities
 
         public override string ToString()
         {
-            return $"sun: {sun}, score: {score}, wait: {isWaiting}, me: {isMe}";
+            string strMove = movePlayed != null ? movePlayed.ToString() : "";
+            return $"sun: {sun}, score: {score}, wait: {isWaiting}, me: {isMe} \n {strMove}";
         }
     }
 }

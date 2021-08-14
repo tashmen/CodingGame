@@ -10,9 +10,9 @@ namespace Algorithms
     public class TreeAlgorithm
     {
         protected GameTreeNode RootNode { get; private set; }
-        public void SetState(IGameState rootState, bool isMax = true)
+        public void SetState(IGameState rootState, bool isMax = true, bool findState = true)
         {
-            if (RootNode != null)
+            if (RootNode != null && findState)
             {
                 //if we have already started searching then continue to search as we go if possible; the search will scan two layers to see if only one move was played or if 2 moves were played to get back to the original players turn.
 
@@ -51,6 +51,10 @@ namespace Algorithms
                 {
                     Console.Error.WriteLine("Could not find the next state in tree!  Starting over...");
                     RootNode = new GameTreeNode(rootState.Clone(), isMax);
+                }
+                else
+                {
+                    RootNode.parent = null;
                 }
             }
             else

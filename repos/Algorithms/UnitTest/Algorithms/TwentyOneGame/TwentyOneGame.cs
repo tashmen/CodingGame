@@ -79,6 +79,8 @@ namespace UnitTest.TwentyOneGame
         {
             if (Total >= 21)
             {
+                if (Total >= 24)
+                    throw new Exception("over 24");
                 if (Total == 21)
                 {
                     if (LastMoveBy.HasValue)
