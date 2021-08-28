@@ -111,25 +111,14 @@ namespace UnitTest
 
 
         [Fact]
-        public void RunManyClonesOverOneGame()
+        public void RunManyClonesOverOneRandomGame()
         {
             Random rand = new Random();
-            MonteCarloTreeSearch search = new MonteCarloTreeSearch();
             Stopwatch watch = new Stopwatch();
             double totalClonesTested = 0;
             do
             {
-                Stopwatch gameWatch = new Stopwatch();
-                gameWatch.Start();
-                search.SetState(game);
-                IMove moveToPlay = search.GetNextMove(gameWatch, 100, 20);
-                Move move = moveToPlay as Move;
-                Console.Error.WriteLine(move.ToString());
-
-                gameWatch.Stop();
-                game.ApplyMoves(move, game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)]);
-
-
+                game.ApplyMoves(game.me.possibleMoves[rand.Next(0, game.me.possibleMoves.Count - 1)], game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)]);
                 
                 watch.Start();
                 double numberOfClones = 10000.0;

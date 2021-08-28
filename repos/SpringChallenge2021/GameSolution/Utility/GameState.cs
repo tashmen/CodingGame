@@ -64,7 +64,7 @@ namespace GameSolution.Utility
         public int opponentSunPowerGenerationToday;
 
         //lazy loaded cache
-        private Dictionary<string, int> treeSizeKeyToCount;
+        private Dictionary<int, int> treeSizeKeyToCount;
         public int BoardSize { get; private set; }
 
         public GameState(int boardSize = 37)
@@ -107,6 +107,7 @@ namespace GameSolution.Utility
 
             //Console.Error.WriteLine($"sundirection: {sunDirection} day: {day}");
 
+            GetCacheTreeSize();
             BuildTreeCache();
             
             CalculateShadows();
@@ -117,7 +118,6 @@ namespace GameSolution.Utility
                 CalculatePossibleMoves(true);
             }
             CalculatePossibleMoves(false);
-            
         }
 
         private void CalculatePossibleMoves(bool isMe)
@@ -149,30 +149,29 @@ namespace GameSolution.Utility
                     for (int i = 0; i < sunReset; i++)
                     {
                         Cell current = cell;
+                        int index = current.GetCellNeighbor(i);
+                        if (index == -1)
+                        {
+                            continue;
+                        }
                         for (int tSize = 0; tSize < tree.size; tSize++)
                         {
-                            int index = current.GetCellNeighbor(i);
-                            if (index == -1)
-                            {
-                                break;
-                            }
-                            current = board[index];
-                            
+                            current = board[index];   
                             AddSeedAction(player, current, cell);
                             
 
                             if(tree.size > 1)
                             {
                                 Cell tempCurrent = current;
-                                for(int tempTSize = tSize+1; tempTSize < tree.size; tempTSize++)
+                                int cellIndex = tempCurrent.GetCellNeighbor((i + 1) % sunReset);
+                                if (cellIndex == -1)
                                 {
-                                    int cellIndex = tempCurrent.GetCellNeighbor((i + 1) % sunReset);
-                                    if (cellIndex == -1)
-                                    {
-                                        break;
-                                    }
-                                    tempCurrent = board[cellIndex];
-                                    
+                                    continue;
+                                }
+
+                                for(int tempTSize = tSize+1; tempTSize < tree.size; tempTSize++)
+                                {                                    
+                                    tempCurrent = board[cellIndex];   
                                     AddSeedAction(player, tempCurrent, cell);
                                 }
                             }
@@ -416,11 +415,11 @@ namespace GameSolution.Utility
         }
 
         
-        private Dictionary<string, int> GetCacheTreeSize()
+        private Dictionary<int, int> GetCacheTreeSize()
         {
             if (treeSizeKeyToCount == null)
             {
-                treeSizeKeyToCount = new Dictionary<string, int>();
+                treeSizeKeyToCount = new Dictionary<int, int>(10);
                 for(int i = 0; i<=(int)TreeSize.Large; i++)
                 {
                     treeSizeKeyToCount[GetCacheTreeSizeKey(i, true)] = TreeEnumeration.Count(t => t.size == i && t.isMine == true);
@@ -431,13 +430,15 @@ namespace GameSolution.Utility
             return treeSizeKeyToCount;
         }
 
-        private string GetCacheTreeSizeKey(int size, bool isMe)
+        private int GetCacheTreeSizeKey(int size, bool isMe)
         {
-            return $"{size}|{isMe}";
+            if (isMe)
+                return size + 1;
+            else return (size + 1) * 10;
         }
         public int GetCostToSeed(bool isMe = true)
         {
-            string key = GetCacheTreeSizeKey((int)TreeSize.Seed, isMe);
+            int key = GetCacheTreeSizeKey((int)TreeSize.Seed, isMe);
             return GetCacheTreeSize()[key];
         }
 
@@ -449,7 +450,7 @@ namespace GameSolution.Utility
         };
         public int GetCostToGrow(Tree tree)
         {
-            string key = GetCacheTreeSizeKey(tree.size + 1, tree.isMine);
+            int key = GetCacheTreeSizeKey(tree.size + 1, tree.isMine);
             return GetCacheTreeSize()[key] + treeSizeToCost[tree.size + 1];
         }
 
