@@ -121,7 +121,7 @@ namespace UnitTest
                 game.ApplyMoves(game.me.possibleMoves[rand.Next(0, game.me.possibleMoves.Count - 1)], game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)]);
                 
                 watch.Start();
-                double numberOfClones = 10000.0;
+                double numberOfClones = 100000.0;
                 totalClonesTested += numberOfClones;
                 for (int i = 0; i < numberOfClones; i++)
                 {
@@ -150,6 +150,22 @@ namespace UnitTest
             watch.Stop();
 
             Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds / numberOfClones}");
+        }
+
+
+        [Fact]
+        public void RunManyGameUpdates()
+        {
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            double numberOfUpdates = 100000.0;
+            for (int i = 0; i < numberOfUpdates; i++)
+            {
+                game.UpdateGameState();
+            }
+            watch.Stop();
+
+            Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds / numberOfUpdates}");
         }
     }
 }

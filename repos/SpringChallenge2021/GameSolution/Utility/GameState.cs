@@ -64,7 +64,7 @@ namespace GameSolution.Utility
         public int opponentSunPowerGenerationToday;
 
         //lazy loaded cache
-        private Dictionary<int, int> treeSizeKeyToCount;
+        private List<int> treeSizeKeyToCount;
         public int BoardSize { get; private set; }
 
         public GameState(int boardSize = 37)
@@ -418,15 +418,15 @@ namespace GameSolution.Utility
         }
 
         
-        private Dictionary<int, int> GetCacheTreeSize()
+        private List<int> GetCacheTreeSize()
         {
             if (treeSizeKeyToCount == null)
             {
-                treeSizeKeyToCount = new Dictionary<int, int>(10);
+                treeSizeKeyToCount = new List<int>(8);
                 for(int i = 0; i<=(int)TreeSize.Large; i++)
                 {
-                    treeSizeKeyToCount[GetCacheTreeSizeKey(i, true)] = TreeEnumeration.Count(t => t.size == i && t.isMine == true);
-                    treeSizeKeyToCount[GetCacheTreeSizeKey(i, false)] = TreeEnumeration.Count(t => t.size == i && t.isMine == false);
+                    treeSizeKeyToCount.Add(TreeEnumeration.Count(t => t.size == i && t.isMine == true));
+                    treeSizeKeyToCount.Add(TreeEnumeration.Count(t => t.size == i && t.isMine == false));
                 }
             }
 
@@ -436,8 +436,8 @@ namespace GameSolution.Utility
         private int GetCacheTreeSizeKey(int size, bool isMe)
         {
             if (isMe)
-                return size + 1;
-            else return (size + 1) * 10;
+                return size*2;
+            else return size* 2 + 1;
         }
         public int GetCostToSeed(bool isMe = true)
         {
