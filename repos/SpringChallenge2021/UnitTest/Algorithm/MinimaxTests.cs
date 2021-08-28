@@ -93,7 +93,7 @@ namespace UnitTest
                 watch.Stop();
                 Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
 
-                game.ApplyMoves(move, game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)]);
+                game.ApplyMoves(move, game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)]);
             }
             while (game.day < 24);
 

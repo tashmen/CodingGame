@@ -23,31 +23,7 @@ namespace GameSolution.Utility
         { 
             get
             {
-                BuildTreeCache();
                 return treeCache;
-            }
-        }
-
-        private void BuildTreeCache()
-        {
-            if (treeCache == null)
-            {
-                treeCache = new List<Tree>(board.Count);
-                myActiveTrees = new List<Tree>(board.Count);
-                opponentActiveTrees = new List<Tree>(board.Count);
-                foreach (Cell cell in board)
-                {
-                    if (cell.HasTree)
-                    {
-                        treeCache.Add(cell.tree);
-                        if(!cell.tree.isDormant)
-                        {
-                            if (cell.tree.isMine)
-                                myActiveTrees.Add(cell.tree);
-                            else opponentActiveTrees.Add(cell.tree);
-                        }
-                    }
-                }
             }
         }
 
@@ -73,6 +49,9 @@ namespace GameSolution.Utility
             board = new List<Cell>(boardSize);
             me = new Player(true);
             opponent = new Player(false);
+            treeCache = new List<Tree>(boardSize);
+            myActiveTrees = new List<Tree>(boardSize);
+            opponentActiveTrees = new List<Tree>(boardSize);
         }
 
         public GameState(GameState state)
@@ -81,18 +60,77 @@ namespace GameSolution.Utility
             day = state.day;
             nutrients = state.nutrients;
             board = new List<Cell>(state.BoardSize);
+            treeCache = new List<Tree>(state.BoardSize);
+            myActiveTrees = new List<Tree>(state.BoardSize);
+            opponentActiveTrees = new List<Tree>(state.BoardSize);
             foreach (Cell cell in state.board)
             {
-                board.Insert(cell.index, new Cell(cell));
+                Cell newCell = new Cell(cell);
+                board.Insert(cell.index, newCell);
+                if (cell.HasTree)
+                {
+                    AddTree(newCell.tree, false);
+                }
             }
             
             me = new Player(state.me);
             opponent = new Player(state.opponent);
 
             treeSizeKeyToCount = state.treeSizeKeyToCount;
-            treeCache = null;
+        }
 
-            BuildTreeCache();
+        public void AddTree(Tree tree, bool addToCell = true)
+        {
+            if (addToCell)
+            {
+                Cell cell = board[tree.cellIndex];
+                cell.AddTree(tree);
+            }
+            
+            treeCache.Add(tree);
+            if (!tree.isDormant)
+            {
+                if (tree.isMine)
+                {
+                    myActiveTrees.Add(tree);
+                }
+                else
+                {
+                    opponentActiveTrees.Add(tree);
+                }
+            }
+        }
+
+        public void RemoveTree(Cell cell)
+        {
+            treeCache.Remove(cell.tree);
+            if (!cell.tree.isDormant)
+            {
+                if (cell.tree.isMine)
+                {
+                    myActiveTrees.Remove(cell.tree);
+                }
+                else
+                {
+                    opponentActiveTrees.Remove(cell.tree);
+                }
+            }
+            cell.RemoveTree();
+        }
+
+        public void UpdateTree(Tree tree)
+        {
+            if (tree.isDormant)
+            {
+                if (tree.isMine)
+                {
+                    myActiveTrees.Remove(tree);
+                }
+                else
+                {
+                    opponentActiveTrees.Remove(tree);
+                }
+            }
         }
 
         public Tree GetTree(int cellIndex)
@@ -103,7 +141,6 @@ namespace GameSolution.Utility
         public void UpdateGameState(bool updateMyMoves = true, bool applySun = false)
         {
             treeSizeKeyToCount = null;
-            treeCache = null;
 
             sunDirection = day % sunReset;
             shadowDirection = sunDirection + halfSunReset % sunReset;
@@ -111,8 +148,7 @@ namespace GameSolution.Utility
             //Console.Error.WriteLine($"sundirection: {sunDirection} day: {day}");
 
             GetCacheTreeSize();
-            BuildTreeCache();
-
+            
             CalculateShadows();
             CalculateSunGeneration(applySun);
 
@@ -397,8 +433,10 @@ namespace GameSolution.Utility
                     {
                         Cell sourceCell = board[myMove.sourceCellIdx];
                         sourceCell.tree.isDormant = true;
+                        UpdateTree(sourceCell.tree);
                         sourceCell = board[opponentMove.sourceCellIdx];
                         sourceCell.tree.isDormant = true;
+                        UpdateTree(sourceCell.tree);
                     }
                     else
                     {
@@ -459,7 +497,7 @@ namespace GameSolution.Utility
                     }
                     player.sun -= treeCompleteCost;
                     player.score += GetTreeCutScore(targetCell);
-                    targetCell.RemoveTree();
+                    RemoveTree(targetCell);
                     if(updateNutrients)
                         nutrients--;
                     if(updateState)
@@ -477,6 +515,7 @@ namespace GameSolution.Utility
                     }
                     player.sun -= growCost;
                     targetCell.tree.Grow();
+                    UpdateTree(targetCell.tree);
                     if (updateState)
                         UpdateGameState();
                     break;
@@ -492,7 +531,8 @@ namespace GameSolution.Utility
                     }
                     player.sun -= seedCost;
                     sourceCell.tree.isDormant = true;
-                    targetCell.AddTree(new Tree(targetCell.index, (int)TreeSize.Seed, player.isMe, true));
+                    UpdateTree(sourceCell.tree);
+                    AddTree(new Tree(targetCell.index, (int)TreeSize.Seed, player.isMe, true));
                     if (updateState)
                         UpdateGameState();
                     break;
@@ -529,12 +569,32 @@ namespace GameSolution.Utility
         {
             if (treeSizeKeyToCount == null)
             {
-                treeSizeKeyToCount = new List<int>(8);
-                for(int i = 0; i<=(int)TreeSize.Large; i++)
+                List<int> myTreeCount = new List<int>(4) { 0, 0, 0, 0 };
+                List<int> oppTreeCount = new List<int>(4) { 0, 0, 0, 0 };
+                foreach (Tree tree in TreeEnumeration)
                 {
-                    treeSizeKeyToCount.Add(TreeEnumeration.Count(t => t.size == i && t.isMine == true));
-                    treeSizeKeyToCount.Add(TreeEnumeration.Count(t => t.size == i && t.isMine == false));
+                    for (int i = 0; i<=(int)TreeSize.Large; i++)
+                    {
+                        if(tree.size == i)
+                        {
+                            if (tree.isMine)
+                            {
+                                myTreeCount[i]++;
+                            }
+                            else
+                            {
+                                oppTreeCount[i]++;
+                            }
+                        }
+                    }
                 }
+                treeSizeKeyToCount = new List<int>(8);
+                for (int i = 0; i <= (int)TreeSize.Large; i++)
+                {
+                    treeSizeKeyToCount.Add(myTreeCount[i]);
+                    treeSizeKeyToCount.Add(oppTreeCount[i]);
+                }
+
             }
 
             return treeSizeKeyToCount;
@@ -580,6 +640,17 @@ namespace GameSolution.Utility
         {
             foreach(Tree tree in TreeEnumeration)
             {
+                if (tree.isDormant)
+                {
+                    if (tree.isMine)
+                    {
+                        myActiveTrees.Add(tree);
+                    }
+                    else
+                    {
+                        opponentActiveTrees.Add(tree);
+                    }
+                }
                 tree.Reset();
             }
         }
@@ -587,6 +658,8 @@ namespace GameSolution.Utility
         public void RemoveTrees()
         {
             treeCache = null;
+            myActiveTrees = null;
+            opponentActiveTrees = null;
             foreach (Cell cell in board)
             {
                 cell.RemoveTree();

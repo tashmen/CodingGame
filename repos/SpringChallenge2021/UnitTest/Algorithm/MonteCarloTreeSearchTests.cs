@@ -102,10 +102,10 @@ namespace UnitTest
             game.opponent.score = 0;
             game.opponent.isWaiting = false;
 
-            game.board[29].AddTree(new Tree(29, 1, true, false));
-            game.board[23].AddTree(new Tree(23, 1, true, false));
-            game.board[20].AddTree(new Tree(20, 1, false, false));
-            game.board[32].AddTree(new Tree(32, 1, false, false));
+            game.AddTree(new Tree(29, 1, true, false));
+            game.AddTree(new Tree(23, 1, true, false));
+            game.AddTree(new Tree(20, 1, false, false));
+            game.AddTree(new Tree(32, 1, false, false));
 
             game.UpdateGameState();
         }
@@ -174,7 +174,7 @@ namespace UnitTest
 
                 watch.Stop();
                 Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-                Move opponentMove = game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)];
+                Move opponentMove = game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)];
                 Console.Error.WriteLine($"MCTS: {move.ToString()}, Random: {opponentMove.ToString()}");
                 game.ApplyMoves(move, opponentMove);
             }

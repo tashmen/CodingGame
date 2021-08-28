@@ -38,7 +38,7 @@ namespace UnitTest
             }
         }
 
-        private readonly GameState game;
+        private GameState game;
 
         public GameStateTests(ITestOutputHelper output)
         {
@@ -102,8 +102,10 @@ namespace UnitTest
             game.opponent.score = 0;
             game.opponent.isWaiting = false;
 
-            game.board[4].AddTree(new Tree(4, 1, true, false));
-            game.board[1].AddTree(new Tree(1, 1, false, false));
+            game.AddTree(new Tree(29, 1, true, false));
+            game.AddTree(new Tree(23, 1, true, false));
+            game.AddTree(new Tree(20, 1, false, false));
+            game.AddTree(new Tree(32, 1, false, false));
 
             game.UpdateGameState();
         }
@@ -118,8 +120,7 @@ namespace UnitTest
             double totalClonesTested = 0;
             do
             {
-                game.ApplyMoves(game.me.possibleMoves[rand.Next(0, game.me.possibleMoves.Count - 1)], game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)]);
-                
+                game.ApplyMoves(game.me.possibleMoves[rand.Next(0, game.me.possibleMoves.Count)], game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)]);
                 watch.Start();
                 double numberOfClones = 100000.0;
                 totalClonesTested += numberOfClones;
@@ -131,10 +132,30 @@ namespace UnitTest
             }
             while (game.day < 24);
 
-
-           
-
             Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds/ totalClonesTested}");
+        }
+
+        [Fact]
+        public void RunManyApplyMovesRandomly()
+        {
+            Random rand = new Random();
+            Stopwatch watch = new Stopwatch();
+            double totalMovesPlayed = 0;
+            GameState clone = game.Clone() as GameState;
+            watch.Start();
+            for (int i = 0; i < 50000; i++)
+            {
+                game.ApplyMoves(game.me.possibleMoves[rand.Next(0, game.me.possibleMoves.Count)], game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)]);
+                totalMovesPlayed += 2;
+
+                if(game.day == 24)
+                {
+                    game = clone.Clone() as GameState;
+                }
+            }
+            watch.Stop();
+
+            Console.Error.WriteLine($"Elapsed ms per move: {watch.ElapsedMilliseconds / totalMovesPlayed}");
         }
 
         [Fact]

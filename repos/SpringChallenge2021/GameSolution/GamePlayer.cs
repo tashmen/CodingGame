@@ -68,8 +68,7 @@ public class GamePlayer
                 bool isMine = inputs[2] != "0"; // 1 if this is your tree
                 bool isDormant = inputs[3] != "0"; // 1 if this tree is dormant
                 Tree tree = new Tree(cellIndex, size, isMine, isDormant);
-                Cell cell = game.board[tree.cellIndex];
-                cell.AddTree(tree);
+                game.AddTree(tree);
             }
 
             List<Move> possibleActions = new List<Move>();
