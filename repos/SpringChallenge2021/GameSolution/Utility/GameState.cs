@@ -146,34 +146,37 @@ namespace GameSolution.Utility
             int costToSeed = GetCostToSeed(isMe);
             if (player.sun >= costToSeed && costToSeed < 1)
             {
-                foreach(Tree tree in activeTrees.Where(t => t.size > 0))
+                foreach(Tree tree in activeTrees.Where(t => t.size > 1))//do not seed with size 1 trees
                 {
                     Cell cell = board[tree.cellIndex];
                     for (int i = 0; i < sunReset; i++)
                     {
                         Cell current = cell;
-                        int index = current.GetCellNeighbor(i);
-                        if (index == -1)
-                        {
-                            continue;
-                        }
+                        
                         for (int tSize = 0; tSize < tree.size; tSize++)
                         {
-                            current = board[index];   
-                            AddSeedAction(player, current, cell);
+                            int index = current.GetCellNeighbor(i);
+                            if (index == -1)
+                            {
+                                break;
+                            }
+                            current = board[index];  
+                            
+                            //Remove all seeds that are in straight lines
+                            //AddSeedAction(player, current, cell);
                             
 
                             if(tree.size > 1)
                             {
                                 Cell tempCurrent = current;
-                                int cellIndex = tempCurrent.GetCellNeighbor((i + 1) % sunReset);
-                                if (cellIndex == -1)
-                                {
-                                    continue;
-                                }
 
                                 for(int tempTSize = tSize+1; tempTSize < tree.size; tempTSize++)
-                                {                                    
+                                {
+                                    int cellIndex = tempCurrent.GetCellNeighbor((i + 1) % sunReset);
+                                    if (cellIndex == -1)
+                                    {
+                                        break;
+                                    }
                                     tempCurrent = board[cellIndex];   
                                     AddSeedAction(player, tempCurrent, cell);
                                 }
@@ -184,7 +187,7 @@ namespace GameSolution.Utility
             }
 
             //Complete Actions
-            if(player.sun >= treeCompleteCost)
+            if(player.sun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(isMe, (int)TreeSize.Large) > 4))
             {
                 foreach(Tree tree in activeTrees.Where(t => t.size == maxTreeSize))
                 {
@@ -442,6 +445,12 @@ namespace GameSolution.Utility
         public int GetCostToSeed(bool isMe = true)
         {
             int key = GetCacheTreeSizeKey((int)TreeSize.Seed, isMe);
+            return GetCacheTreeSize()[key];
+        }
+
+        public int GetNumberOfTrees(bool isMe, int size)
+        {
+            int key = GetCacheTreeSizeKey(size, isMe);
             return GetCacheTreeSize()[key];
         }
 
