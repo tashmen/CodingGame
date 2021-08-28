@@ -89,7 +89,10 @@ namespace GameSolution.Utility
             me = new Player(state.me);
             opponent = new Player(state.opponent);
 
-            UpdateGameState();
+            treeSizeKeyToCount = state.treeSizeKeyToCount;
+            treeCache = null;
+
+            BuildTreeCache();
         }
 
         public Tree GetTree(int cellIndex)
@@ -109,7 +112,7 @@ namespace GameSolution.Utility
 
             GetCacheTreeSize();
             BuildTreeCache();
-            
+
             CalculateShadows();
             CalculateSunGeneration(applySun);
 

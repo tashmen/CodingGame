@@ -25,6 +25,7 @@
             size = tree.size;
             isMine = tree.isMine;
             isDormant = tree.isDormant;
+            isSpookyShadow = tree.isSpookyShadow;
         }
         
         public void Reset()

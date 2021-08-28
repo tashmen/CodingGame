@@ -28,6 +28,7 @@ namespace GameSolution.Entities
             index = cell.index;
             richness = cell.richness;
             neighbours = cell.neighbours;
+            shadowSize = cell.shadowSize;
             
             if (cell.HasTree)
             {

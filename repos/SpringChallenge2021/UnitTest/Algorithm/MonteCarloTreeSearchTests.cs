@@ -93,7 +93,7 @@ namespace UnitTest
             game.ResetPlayers();
 
             game.day = 1;
-            game.nutrients = 10;
+            game.nutrients = 20;
             game.me.sun = 2;
             game.me.score = 0;
             game.me.isWaiting = false;
@@ -102,8 +102,10 @@ namespace UnitTest
             game.opponent.score = 0;
             game.opponent.isWaiting = false;
 
-            game.board[4].AddTree(new Tree(4, 1, true, false));
-            game.board[1].AddTree(new Tree(1, 1, false, false));
+            game.board[29].AddTree(new Tree(29, 1, true, false));
+            game.board[23].AddTree(new Tree(23, 1, true, false));
+            game.board[20].AddTree(new Tree(20, 1, false, false));
+            game.board[32].AddTree(new Tree(32, 1, false, false));
 
             game.UpdateGameState();
         }
@@ -113,7 +115,6 @@ namespace UnitTest
         [Fact]
         public void StrongOpponentSimulationTest()
         {
-            Random rand = new Random();
             MonteCarloTreeSearch search = new MonteCarloTreeSearch();
             do
             {

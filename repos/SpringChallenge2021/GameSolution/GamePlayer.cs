@@ -83,8 +83,8 @@ public class GamePlayer
 
             //Console.Error.WriteLine($"After parsing: {watch.ElapsedMilliseconds}ms");
 
-            game.me.possibleMoves = possibleActions;
-            game.UpdateGameState(false);
+            //game.me.possibleMoves = possibleActions;
+            game.UpdateGameState(true);
             //Console.Error.WriteLine($"After updating gamestate: {watch.ElapsedMilliseconds}ms");
             /*
             if(game.me.possibleMoves.Count != possibleActions.Count)
@@ -105,7 +105,7 @@ public class GamePlayer
 
             search.SetState(game, true, false);
 
-            IMove move = null;
+            IMove move;
 
             //GameHelper gameHelper = new GameHelper(game, possibleActions);
             //move = gameHelper.GetNextMove();

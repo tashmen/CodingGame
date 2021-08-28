@@ -11,7 +11,7 @@ namespace GameSolution.Entities
         public bool isMe;
 
         //Calculated from the game board
-        public List<Move> possibleMoves;
+        public List<Move> possibleMoves { get; set; }
         public Move movePlayedForCurrentTurn;
         public Move movePlayedLastTurn;
 
@@ -28,8 +28,9 @@ namespace GameSolution.Entities
             sun = player.sun;
             score = player.score;
             isWaiting = player.isWaiting;
-            possibleMoves = new List<Move>();
             isMe = player.isMe;
+
+            possibleMoves = new List<Move>(player.possibleMoves);
             movePlayedForCurrentTurn = player.movePlayedForCurrentTurn;
             movePlayedLastTurn = player.movePlayedLastTurn;
         }
