@@ -12,13 +12,15 @@ namespace GameSolution.Entities
 
         //Calculated from the game board
         public List<Move> possibleMoves;
-        public Move movePlayed;
+        public Move movePlayedForCurrentTurn;
+        public Move movePlayedLastTurn;
 
         public Player(bool isMe)
         {
             possibleMoves = new List<Move>();
             this.isMe = isMe;
-            movePlayed = null;
+            movePlayedForCurrentTurn = null;
+            movePlayedLastTurn = null;
         }
 
         public Player(Player player)
@@ -28,14 +30,20 @@ namespace GameSolution.Entities
             isWaiting = player.isWaiting;
             possibleMoves = new List<Move>();
             isMe = player.isMe;
-            movePlayed = player.movePlayed;
+            movePlayedForCurrentTurn = player.movePlayedForCurrentTurn;
+            movePlayedLastTurn = player.movePlayedLastTurn;
         }
 
         public void Reset()
         {
-            movePlayed = null;
             possibleMoves = new List<Move>();
             isWaiting = false;
+        }
+
+        public void ResetMoves()
+        {
+            movePlayedLastTurn = movePlayedForCurrentTurn;
+            movePlayedForCurrentTurn = null;
         }
 
         public int GetScore()
@@ -45,7 +53,7 @@ namespace GameSolution.Entities
 
         public bool Equals(Player player)
         {
-            if(player.isMe == isMe && player.isWaiting == isWaiting && player.score == score && player.sun == sun)
+            if (player.isMe == isMe && player.isWaiting == isWaiting && player.score == score && player.sun == sun && (player.movePlayedForCurrentTurn == movePlayedForCurrentTurn || (player.movePlayedForCurrentTurn != null && player.movePlayedForCurrentTurn.Equals(movePlayedForCurrentTurn))))
             {
                 return true;
             }
@@ -57,7 +65,7 @@ namespace GameSolution.Entities
 
         public override string ToString()
         {
-            string strMove = movePlayed != null ? movePlayed.ToString() : "";
+            string strMove = movePlayedLastTurn != null ? movePlayedLastTurn.ToString() : "";
             return $"sun: {sun}, score: {score}, wait: {isWaiting}, me: {isMe} \n {strMove}";
         }
     }

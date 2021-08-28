@@ -47,15 +47,13 @@ namespace UnitTest
 
             game = new GameState();
 
-            game.board.Add(new Cell(0, 2, new List<int>() { 1, 2, 3, 4, 5, 6 }));
-            game.board.Add(new Cell(1, 1, new List<int>() { -1, -1, 2, 0, 6, -1 }));
-            game.board.Add(new Cell(2, 1, new List<int>() { -1, -1, -1, 3, 0, 1 }));
-            game.board.Add(new Cell(3, 1, new List<int>() { 2, -1, -1, -1, 4, 0 }));
-            game.board.Add(new Cell(4, 1, new List<int>() { 0, 3, -1, -1, -1, 5 }));
-            game.board.Add(new Cell(5, 1, new List<int>() { 6, 0, 4, -1, -1, -1 }));
-            game.board.Add(new Cell(6, 1, new List<int>() { -1, 1, 0, 5, -1, -1 }));
-
-            game.BuildCellNeighbors();
+            game.board.Insert(0, new Cell(0, 2, new List<int>() { 1, 2, 3, 4, 5, 6 }));
+            game.board.Insert(1, new Cell(1, 1, new List<int>() { -1, -1, 2, 0, 6, -1 }));
+            game.board.Insert(2, new Cell(2, 1, new List<int>() { -1, -1, -1, 3, 0, 1 }));
+            game.board.Insert(3, new Cell(3, 1, new List<int>() { 2, -1, -1, -1, 4, 0 }));
+            game.board.Insert(4, new Cell(4, 1, new List<int>() { 0, 3, -1, -1, -1, 5 }));
+            game.board.Insert(5, new Cell(5, 1, new List<int>() { 6, 0, 4, -1, -1, -1 }));
+            game.board.Insert(6, new Cell(6, 1, new List<int>() { -1, 1, 0, 5, -1, -1 }));
 
             game.ResetTrees();
             game.ResetPlayers();
@@ -70,8 +68,8 @@ namespace UnitTest
             game.opponent.score = 0;
             game.opponent.isWaiting = false;
 
-            game.board.First(c => c.index == 4).AddTree(new Tree(4, 1, true, false));
-            game.board.First(c => c.index == 1).AddTree(new Tree(1, 1, false, false));
+            game.board[4].AddTree(new Tree(4, 1, true, false));
+            game.board[1].AddTree(new Tree(1, 1, false, false));
 
             game.UpdateGameState();
         }
@@ -79,7 +77,46 @@ namespace UnitTest
 
 
         [Fact]
-        public void SimulationTest()
+        public void StrongOpponentSimulationTest()
+        {
+            Random rand = new Random();
+            MonteCarloTreeSearch search = new MonteCarloTreeSearch();
+            do
+            {
+                Move myMove;
+                if (!game.me.isWaiting)
+                {
+                    GameState clonedState = game.Clone() as GameState;
+                    GameHelper gameHelper = new GameHelper(clonedState, clonedState.me.possibleMoves);
+                    myMove = gameHelper.GetNextMove();
+                }
+                else
+                {
+                    myMove = game.GetMove(true) as Move;
+                }
+                game.ApplyMove(myMove, true);
+
+
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
+                search.SetState(game, false);
+                IMove moveToPlay = search.GetNextMove(watch, 95, 20);
+                Move move = moveToPlay as Move;
+
+                game.ApplyMove(move, false);
+
+                watch.Stop();
+                Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+                Console.Error.WriteLine($"MCTS: {move.ToString()}, Strong: {myMove.ToString()}");
+                Console.Error.WriteLine(game.ToString());
+            }
+            while (game.day < 24);
+
+            Console.Error.WriteLine(game.ToString());
+            Assert.Equal(-1, game.GetWinner());
+        }
+        [Fact]
+        public void RandomSimulationTest()
         {
             Random rand = new Random();
             MonteCarloTreeSearch search = new MonteCarloTreeSearch();
@@ -88,14 +125,15 @@ namespace UnitTest
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
                 search.SetState(game);
-                IMove moveToPlay = search.GetNextMove(watch, 100, 20);
+                IMove moveToPlay = search.GetNextMove(watch, 95, 20);
                 Move move = moveToPlay as Move;
                 Console.Error.WriteLine(move.ToString());
 
                 watch.Stop();
                 Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-
-                game.ApplyMoves(move, game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)]);
+                Move opponentMove = game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count - 1)];
+                Console.Error.WriteLine($"MCTS: {move.ToString()}, Random: {opponentMove.ToString()}");
+                game.ApplyMoves(move, opponentMove);
             }
             while (game.day < 24);
 

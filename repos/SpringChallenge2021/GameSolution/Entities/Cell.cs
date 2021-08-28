@@ -8,9 +8,9 @@ namespace GameSolution.Entities
         public int index;
         public int richness;
         public List<int> neighbours;
-        public Tree tree;
-        
-        private Dictionary<int, Cell> sunDirectionToCellNeighbour;
+        public Tree tree { get; private set; }
+
+        public bool HasTree { get; private set; }
 
         //Calculated value that must be reset!
         public int shadowSize { get; private set; }
@@ -27,12 +27,13 @@ namespace GameSolution.Entities
         {
             index = cell.index;
             richness = cell.richness;
-            neighbours = new List<int>(cell.neighbours);
-            if (cell.HasTree())
+            neighbours = cell.neighbours;
+            
+            if (cell.HasTree)
             {
                 tree = new Tree(cell.tree);
+                HasTree = cell.HasTree;
             }
-            shadowSize = cell.shadowSize;
         }
 
         public int GetBonusScore()
@@ -48,21 +49,20 @@ namespace GameSolution.Entities
         public void SetShadowSize(int size)
         {
             shadowSize = Math.Max(shadowSize, size);
-        }
-
-        public void SetCellNeighbors(Dictionary<int, Cell> neighbours)
-        {
-            sunDirectionToCellNeighbour = neighbours;
+            if (HasTree)
+            {
+                tree.isSpookyShadow = tree.size <= shadowSize;
+            }
         }
 
         /// <summary>
-        /// Retrieves the cell neighbor or null if one doesn't exist
+        /// Retrieves the cell neighbor index or -1 if one doesn't exist
         /// </summary>
         /// <param name="sunDirection">the direction of the sun</param>
         /// <returns>The cell in the direction of the sun from this cell</returns>
-        public Cell GetCellNeighbor(int sunDirection)
+        public int GetCellNeighbor(int sunDirection)
         {
-            return sunDirectionToCellNeighbour[sunDirection];
+            return neighbours[sunDirection];
         }
 
         public bool IsCorner()
@@ -75,17 +75,15 @@ namespace GameSolution.Entities
             if (tree.cellIndex == index)
             {
                 this.tree = tree;
+                HasTree = true;
             }
+            
         }
 
         public void RemoveTree()
         {
             this.tree = null;
-        }
-
-        public bool HasTree()
-        {
-            return tree != null;
+            HasTree = false;
         }
 
         public override string ToString()

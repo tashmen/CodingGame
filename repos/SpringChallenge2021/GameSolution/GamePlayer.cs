@@ -14,7 +14,8 @@ public class GamePlayer
         string[] inputs;
         bool isFirstRound = true;
 
-        Minimax search = new Minimax();
+        //Minimax search = new Minimax();
+        MonteCarloTreeSearch search = new MonteCarloTreeSearch();
 
         GameState game = new GameState();
 
@@ -32,10 +33,8 @@ public class GamePlayer
             int neigh5 = int.Parse(inputs[7]);
             List<int> neighs = new List<int>(){ neigh0, neigh1, neigh2, neigh3, neigh4, neigh5 };
             Cell cell = new Cell(index, richness, neighs);
-            game.board.Add(cell);
+            game.board.Insert(cell.index, cell);
         }
-
-        game.BuildCellNeighbors();
 
         // game loop
         while (true)
@@ -69,7 +68,7 @@ public class GamePlayer
                 bool isMine = inputs[2] != "0"; // 1 if this is your tree
                 bool isDormant = inputs[3] != "0"; // 1 if this tree is dormant
                 Tree tree = new Tree(cellIndex, size, isMine, isDormant);
-                Cell cell = game.board.First(c => c.index == tree.cellIndex);
+                Cell cell = game.board[tree.cellIndex];
                 cell.AddTree(tree);
             }
 
@@ -82,11 +81,11 @@ public class GamePlayer
                 possibleActions.Add(movePlayer);
             }
 
-            Console.Error.WriteLine($"After parsing: {watch.ElapsedMilliseconds}ms");
+            //Console.Error.WriteLine($"After parsing: {watch.ElapsedMilliseconds}ms");
 
             game.me.possibleMoves = possibleActions;
             game.UpdateGameState(false);
-            Console.Error.WriteLine($"After updating gamestate: {watch.ElapsedMilliseconds}ms");
+            //Console.Error.WriteLine($"After updating gamestate: {watch.ElapsedMilliseconds}ms");
             /*
             if(game.me.possibleMoves.Count != possibleActions.Count)
             {
@@ -115,7 +114,7 @@ public class GamePlayer
             //if(limit - watch.ElapsedMilliseconds > 20)
             {
                 Console.Error.WriteLine($"Before search: {watch.ElapsedMilliseconds}ms");
-                IMove moveToPlay = search.GetNextMove(watch, limit);
+                IMove moveToPlay = search.GetNextMove(watch, limit, 20);
                 move = moveToPlay;
             }
 

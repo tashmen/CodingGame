@@ -33,6 +33,11 @@ namespace GameSolution.Moves
         {
         }
 
+        public bool Equals(Move move)
+        {
+            return move != null && move.type == type && move.targetCellIdx == targetCellIdx && move.sourceCellIdx == sourceCellIdx;
+        }
+
         public override string ToString()
         {
             if (type == Actions.WAIT)

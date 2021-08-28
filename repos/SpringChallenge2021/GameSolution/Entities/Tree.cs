@@ -25,12 +25,12 @@
             size = tree.size;
             isMine = tree.isMine;
             isDormant = tree.isDormant;
-            isSpookyShadow = tree.isSpookyShadow;
         }
         
         public void Reset()
         {
             isDormant = false;
+            isSpookyShadow = false;
         }
 
         public void Grow()

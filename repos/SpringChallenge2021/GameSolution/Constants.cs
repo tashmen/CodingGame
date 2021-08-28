@@ -5,6 +5,7 @@
         public const int maxTurns = 24;
         public const int maxTreeSize = 3;
         public const int sunReset = 6;
+        public const int halfSunReset = sunReset / 2;
         public const int treeCompleteCost = 4;
 
         public enum Richness
