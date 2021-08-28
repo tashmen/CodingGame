@@ -45,7 +45,7 @@ namespace GameSolution.Utility
 
             if (bestAction == null)
             {
-                return possibleActions.First(a => a.type == Actions.WAIT);
+                return new Move(Actions.WAIT);
             }
 
             return bestAction;

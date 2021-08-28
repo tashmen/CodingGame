@@ -103,19 +103,21 @@ public class GamePlayer
             }
             */
 
-            search.SetState(game, true, false);
+            
 
             IMove move;
-
-            //GameHelper gameHelper = new GameHelper(game, possibleActions);
-            //move = gameHelper.GetNextMove();
-
             int limit = isFirstRound ? 1000 : 95;
-            //if(limit - watch.ElapsedMilliseconds > 20)
+            if (game.day > 5 && game.day < 21)
             {
                 Console.Error.WriteLine($"Before search: {watch.ElapsedMilliseconds}ms");
-                IMove moveToPlay = search.GetNextMove(watch, limit, 20);
+                search.SetState(game, true, true);
+                IMove moveToPlay = search.GetNextMove(watch, limit, 50);
                 move = moveToPlay;
+            }
+            else
+            {
+                GameHelper gameHelper = new GameHelper(game, possibleActions);
+                move = gameHelper.GetNextMove();
             }
 
             watch.Stop();

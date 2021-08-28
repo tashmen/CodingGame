@@ -44,9 +44,9 @@ namespace Algorithms
                 }
                 else
                 {
-                    var clonedState = childNode.state.Clone();
                     for (int i = 0; i<numRollouts; i++)
                     {
+                        var clonedState = childNode.state.Clone();
                         winner = SimulateGame(clonedState, watch, timeLimit, childNode.isMax);
                         BackPropagate(childNode, winner);
                         count++;
@@ -100,7 +100,7 @@ namespace Algorithms
 
             if (watch.ElapsedMilliseconds >= timeLimit)
             {
-                return 0;
+                return null;
             }
 
             winner = SimulateGame(state, watch, timeLimit, !isMax);

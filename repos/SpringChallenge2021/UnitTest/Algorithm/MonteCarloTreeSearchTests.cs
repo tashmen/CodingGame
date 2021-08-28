@@ -116,6 +116,12 @@ namespace UnitTest
         public void StrongOpponentSimulationTest()
         {
             MonteCarloTreeSearch search = new MonteCarloTreeSearch();
+            //Setup a second game so that both players can play as max
+            GameState game2 = game.Clone() as GameState;
+            foreach (Tree tree in game2.TreeEnumeration)//Invert tree ownership
+            {
+                tree.isMine = !tree.isMine;
+            }
             do
             {
                 Move myMove;
@@ -129,16 +135,18 @@ namespace UnitTest
                 {
                     myMove = game.GetMove(true) as Move;
                 }
-                game.ApplyMove(myMove, true);
-
 
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
-                search.SetState(game, false);
-                IMove moveToPlay = search.GetNextMove(watch, 95, 20);
+                search.SetState(game2, true);
+                IMove moveToPlay = search.GetNextMove(watch, 95, 50);
                 Move move = moveToPlay as Move;
 
+                game.ApplyMove(myMove, true);
                 game.ApplyMove(move, false);
+
+                game2.ApplyMove(move, true);
+                game2.ApplyMove(myMove, false);
 
                 watch.Stop();
                 Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");

@@ -46,19 +46,22 @@ namespace Algorithms.Trees
 
         public void ApplyWinner(int? winner)
         {
-            switch (winner)
+            if (winner.HasValue)
             {
-                case 1:
-                    wins++;
-                    break;
-                case 0:
-                    draws++;
-                    break;
-                case -1:
-                    loses++;
-                    break;
-                default:
-                    break;
+                switch (winner.Value)
+                {
+                    case 1:
+                        wins++;
+                        break;
+                    case 0:
+                        draws++;
+                        break;
+                    case -1:
+                        loses++;
+                        break;
+                    default:
+                        break;
+                }
             }
         }
 

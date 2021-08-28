@@ -118,13 +118,14 @@ namespace GameSolution.Utility
 
             if(updateMyMoves)
             {
-                CalculatePossibleMoves(true);
+                CalculatePossibleMovesSlim(true);
             }
-            CalculatePossibleMoves(false);
+            CalculateAllLegalMoves(false);
         }
 
-        private void CalculatePossibleMoves(bool isMe)
+        private void CalculateAllLegalMoves(bool isMe)
         {
+
             Player player = isMe ? me : opponent;
             player.possibleMoves.Clear();
 
@@ -137,6 +138,91 @@ namespace GameSolution.Utility
 
             if (player.isWaiting)
             {
+                return;
+            }
+
+            IEnumerable<Tree> activeTrees = isMe ? myActiveTrees : opponentActiveTrees;
+
+            //Seed Actions
+            int costToSeed = GetCostToSeed(isMe);
+            if (player.sun >= costToSeed && costToSeed < 1)
+            {
+                foreach (Tree tree in activeTrees.Where(t => t.size > 0))
+                {
+                    Cell cell = board[tree.cellIndex];
+                    for (int i = 0; i < sunReset; i++)
+                    {
+                        Cell current = cell;
+
+                        for (int tSize = 0; tSize < tree.size; tSize++)
+                        {
+                            int index = current.GetCellNeighbor(i);
+                            if (index == -1)
+                            {
+                                break;
+                            }
+                            current = board[index];
+
+                            AddSeedAction(player, current, cell);
+
+
+                            if (tree.size > 1)
+                            {
+                                Cell tempCurrent = current;
+
+                                for (int tempTSize = tSize + 1; tempTSize < tree.size; tempTSize++)
+                                {
+                                    int cellIndex = tempCurrent.GetCellNeighbor((i + 1) % sunReset);
+                                    if (cellIndex == -1)
+                                    {
+                                        break;
+                                    }
+                                    tempCurrent = board[cellIndex];
+                                    AddSeedAction(player, tempCurrent, cell);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            //Complete Actions
+            if (player.sun >= treeCompleteCost)
+            {
+                foreach (Tree tree in activeTrees.Where(t => t.size == maxTreeSize))
+                {
+                    player.possibleMoves.Add(new Move(Actions.COMPLETE, tree.cellIndex));
+                }
+            }
+
+            //Grow Actions
+            foreach (Tree tree in activeTrees.Where(t => t.size != maxTreeSize))
+            {
+                //Console.Error.WriteLine($"{tree.ToString()} cost: {GetCostToGrow(tree)} sun: {player.sun}");
+                if (player.sun >= GetCostToGrow(tree))
+                {
+                    player.possibleMoves.Add(new Move(Actions.GROW, tree.cellIndex));
+                }
+            }
+        }
+
+        private void CalculatePossibleMovesSlim(bool isMe)
+        {
+
+            Player player = isMe ? me : opponent;
+            Player playerOpp = isMe ? opponent : me;
+            player.possibleMoves.Clear();
+
+            if (day == 24)
+            {
+                return;
+            }
+
+            
+
+            if (player.isWaiting)
+            {
+                player.possibleMoves.Add(new Move(Actions.WAIT));
                 return;
             }
 
@@ -187,7 +273,20 @@ namespace GameSolution.Utility
             }
 
             //Complete Actions
-            if(player.sun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(isMe, (int)TreeSize.Large) > 4))
+            int size3TreeToCut = 4;
+            if(day > 14)
+            {
+                size3TreeToCut--;
+            }
+            if(day > 18)
+            {
+                size3TreeToCut--;
+            }
+            if(day > 20)
+            {
+                size3TreeToCut--;
+            }
+            if(player.sun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(isMe, (int)TreeSize.Large) > 4 || player.score < playerOpp.score))
             {
                 foreach(Tree tree in activeTrees.Where(t => t.size == maxTreeSize))
                 {
@@ -203,6 +302,11 @@ namespace GameSolution.Utility
                 {
                     player.possibleMoves.Add(new Move(Actions.GROW, tree.cellIndex));
                 }
+            }
+
+            if(player.possibleMoves.Count == 0 || player.sun < 8)
+            {
+                player.possibleMoves.Add(new Move(Actions.WAIT));
             }
         }
 
