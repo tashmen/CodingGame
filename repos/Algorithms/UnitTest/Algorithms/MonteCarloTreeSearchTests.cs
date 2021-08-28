@@ -71,6 +71,21 @@ namespace UnitTest.Algorithms
             Assert.Equal(1, state.GetWinner().Value);
             
         }
-        
+
+        [Fact]
+        public void RunManyClones()
+        {
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            double numberOfClones = 1000000.0;
+            for (int i = 0; i < numberOfClones; i++)
+            {
+                var clone = state.Clone();
+            }
+            watch.Stop();
+
+            Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds / numberOfClones}");
+        }
+
     }
 }
