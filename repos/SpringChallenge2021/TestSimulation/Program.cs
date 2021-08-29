@@ -13,24 +13,29 @@ namespace TestSimulation
         public static GameState game;
         static void Main(string[] args)
         {
-            BuildGame();
-            Random rand = new Random();
-            MonteCarloTreeSearch search = new MonteCarloTreeSearch(false);
-            do
+            try
             {
-                Stopwatch watch = new Stopwatch();
-                watch.Start();
-                search.SetState(game);
-                IMove moveToPlay = search.GetNextMove(watch, 95, 20, 20);
-                Move move = moveToPlay as Move;
-                watch.Stop();
+                BuildGame();
+                Random rand = new Random();
+                MonteCarloTreeSearch search = new MonteCarloTreeSearch(false);
+                do
+                {
+                    Stopwatch watch = new Stopwatch();
+                    watch.Start();
+                    search.SetState(game);
+                    IMove moveToPlay = search.GetNextMove(watch, 95, 20, 20);
+                    Move move = moveToPlay as Move;
+                    watch.Stop();
 
-                Move opponentMove = game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)];
-                game.ApplyMoves(move, opponentMove);
+                    Move opponentMove = game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)];
+                    game.ApplyMoves(move, opponentMove);
+                }
+                while (game.day < 24);
             }
-            while (game.day < 24);
-
-            Console.ReadKey();
+            catch(Exception e)
+            {
+                Console.ReadKey();
+            }
         }
 
         static void BuildGame()
