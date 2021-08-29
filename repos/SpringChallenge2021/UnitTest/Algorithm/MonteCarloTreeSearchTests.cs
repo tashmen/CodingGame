@@ -120,7 +120,7 @@ namespace UnitTest
             GameState game2 = game.Clone() as GameState;
             foreach (Tree tree in game2.TreeEnumeration)//Invert tree ownership
             {
-                tree.isMine = !tree.isMine;
+                tree.ChangeOwnership();
             }
             do
             {
@@ -154,6 +154,8 @@ namespace UnitTest
                 Console.Error.WriteLine(game.ToString());
             }
             while (game.day < 24);
+
+            GameState.PrintCounters();
 
             Console.Error.WriteLine(game.ToString());
             Assert.Equal(-1, game.GetWinner());

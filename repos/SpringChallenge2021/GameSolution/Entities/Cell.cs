@@ -5,9 +5,10 @@ namespace GameSolution.Entities
 {
     public class Cell
     {
-        public int index;
-        public int richness;
-        public List<int> neighbours;
+        private CellConstantData data;
+        public int index { get { return data.index; } }
+        public int richness { get { return data.richness; } }
+        public List<int> neighbours { get { return data.neighbours; } }
         public Tree tree { get; private set; }
 
         public bool HasTree { get; private set; }
@@ -17,17 +18,13 @@ namespace GameSolution.Entities
 
         public Cell(int index, int richness, List<int> neighbours)
         {
-            this.index = index;
-            this.richness = richness;
-            this.neighbours = neighbours;
+            data = new CellConstantData(index, richness, neighbours);
             Reset();
         }
 
         public Cell(Cell cell)
         {
-            index = cell.index;
-            richness = cell.richness;
-            neighbours = cell.neighbours;
+            data = cell.data;
             shadowSize = cell.shadowSize;
             
             if (cell.HasTree)
@@ -52,7 +49,7 @@ namespace GameSolution.Entities
             shadowSize = Math.Max(shadowSize, size);
             if (HasTree)
             {
-                tree.isSpookyShadow = tree.size <= shadowSize;
+                tree.UpdateSpookyShadow(shadowSize);
             }
         }
 
@@ -106,6 +103,20 @@ namespace GameSolution.Entities
                 }   
             }
             return false;
+        }
+    }
+
+    public class CellConstantData
+    {
+        public int index { get; private set; }
+        public int richness { get; private set; }
+        public List<int> neighbours { get; private set; }
+
+        public CellConstantData(int index, int richness, List<int> neighbours)
+        {
+            this.index = index;
+            this.richness = richness;
+            this.neighbours = neighbours;
         }
     }
 }

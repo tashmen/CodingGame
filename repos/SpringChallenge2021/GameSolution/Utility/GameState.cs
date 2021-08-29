@@ -10,6 +10,16 @@ namespace GameSolution.Utility
 {
     public class GameState : IGameState
     {
+        public static Dictionary<string, int> counters = new Dictionary<string, int>() { {"UpdateGameState", 0 }, { "ApplyMoves", 0 }, { "GetCacheTreeSizeKey", 0 }, { "GetWinner", 0 }, { "Equals", 0 }, { "ToString", 0 }, { "Clone", 0 } };
+
+        public static void PrintCounters()
+        {
+            foreach (string key in GameState.counters.Keys)
+            {
+                Console.Error.WriteLine($"{key}, {GameState.counters[key]}");
+            }
+        }
+
         public int day;
         public int nutrients;
         public List<Cell> board;
@@ -56,6 +66,7 @@ namespace GameSolution.Utility
 
         public GameState(GameState state)
         {
+            counters["Clone"] += 1;
             isCopy = true;
             day = state.day;
             nutrients = state.nutrients;
@@ -66,7 +77,7 @@ namespace GameSolution.Utility
             foreach (Cell cell in state.board)
             {
                 Cell newCell = new Cell(cell);
-                board.Insert(cell.index, newCell);
+                board.Add(newCell);
                 if (cell.HasTree)
                 {
                     AddTree(newCell.tree, false);
@@ -140,6 +151,7 @@ namespace GameSolution.Utility
 
         public void UpdateGameState(bool updateMyMoves = true, bool applySun = false)
         {
+            counters["UpdateGameState"] += 1;
             treeSizeKeyToCount = null;
 
             sunDirection = day % sunReset;
@@ -416,16 +428,17 @@ namespace GameSolution.Utility
         /// <param name="opponentMove">The move my opponent is making</param>
         public void ApplyMoves(Move myMove, Move opponentMove)
         {
+            counters["ApplyMoves"] += 1;
             switch (myMove.type)
             {
                 case Actions.SEED:
                     if(opponentMove.type == Actions.SEED && myMove.targetCellIdx == opponentMove.targetCellIdx)
                     {
                         Cell sourceCell = board[myMove.sourceCellIdx];
-                        sourceCell.tree.isDormant = true;
+                        sourceCell.tree.SetDormant(true);
                         UpdateTree(sourceCell.tree);
                         sourceCell = board[opponentMove.sourceCellIdx];
-                        sourceCell.tree.isDormant = true;
+                        sourceCell.tree.SetDormant(true);
                         UpdateTree(sourceCell.tree);
                     }
                     else
@@ -520,7 +533,7 @@ namespace GameSolution.Utility
                         throw new Exception("Tree is dormant!");
                     }
                     player.sun -= seedCost;
-                    sourceCell.tree.isDormant = true;
+                    sourceCell.tree.SetDormant(true);
                     UpdateTree(sourceCell.tree);
                     AddTree(new Tree(targetCell.index, (int)TreeSize.Seed, player.isMe, true));
                     if (updateState)
@@ -592,6 +605,7 @@ namespace GameSolution.Utility
 
         private int GetCacheTreeSizeKey(int size, bool isMe)
         {
+            counters["GetCacheTreeSizeKey"] += 1;
             if (isMe)
                 return size*2;
             else return size* 2 + 1;
@@ -694,6 +708,7 @@ namespace GameSolution.Utility
 
         public int? GetWinner()
         {
+            counters["GetWinner"] += 1;
             if (day == maxTurns)
             {
                 int myScore = me.GetScore();
@@ -729,6 +744,7 @@ namespace GameSolution.Utility
 
         public bool Equals(IGameState state)
         {
+            counters["Equals"] += 1;
             GameState gameState = state as GameState;
 
             if(day == gameState.day && nutrients == gameState.nutrients && board.ToList().TrueForAll(c => c.Equals(gameState.board[c.index])) && me.Equals(gameState.me) && opponent.Equals(gameState.opponent))
@@ -749,6 +765,7 @@ namespace GameSolution.Utility
 
         public override string ToString()
         {
+            counters["ToString"] += 1;
             return "n: " + nutrients + "\n" + string.Join("\n", board.Select(c => c.ToString())) + "\n" + me.ToString() + "\n" + opponent.ToString();
         }
     }
