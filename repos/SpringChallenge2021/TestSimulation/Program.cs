@@ -5,46 +5,36 @@ using GameSolution.Utility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Xunit;
-using Xunit.Abstractions;
 
-namespace UnitTest
+namespace TestSimulation
 {
-
-
-    public class GameStateTests
+    class Program
     {
-        private class Converter : TextWriter
+        public static GameState game;
+        static void Main(string[] args)
         {
-            ITestOutputHelper _output;
-            public Converter(ITestOutputHelper output)
+            BuildGame();
+            Random rand = new Random();
+            MonteCarloTreeSearch search = new MonteCarloTreeSearch(false);
+            do
             {
-                _output = output;
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
+                search.SetState(game);
+                IMove moveToPlay = search.GetNextMove(watch, 95, 20, 20);
+                Move move = moveToPlay as Move;
+                watch.Stop();
+
+                Move opponentMove = game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)];
+                game.ApplyMoves(move, opponentMove);
             }
-            public override Encoding Encoding
-            {
-                get { return Encoding.UTF8; }
-            }
-            public override void WriteLine(string message)
-            {
-                _output.WriteLine(message);
-            }
-            public override void WriteLine(string format, params object[] args)
-            {
-                _output.WriteLine(format, args);
-            }
+            while (game.day < 24);
+
+            Console.ReadKey();
         }
 
-        private GameState game;
-
-        public GameStateTests(ITestOutputHelper output)
+        static void BuildGame()
         {
-            var converter = new Converter(output);
-            Console.SetError(converter);
-
             game = new GameState();
 
             game.board.Insert(0, new Cell(0, 3, new int[] { 1, 2, 3, 4, 5, 6 }));
@@ -93,7 +83,7 @@ namespace UnitTest
             game.ResetPlayers();
 
             game.day = 1;
-            game.nutrients = 10;
+            game.nutrients = 20;
             game.me.sun = 2;
             game.me.score = 0;
             game.me.isWaiting = false;
@@ -108,85 +98,6 @@ namespace UnitTest
             game.AddTree(new Tree(32, 1, false, false));
 
             game.UpdateGameState();
-        }
-
-
-
-        [Fact]
-        public void RunManyClonesOverOneRandomGame()
-        {
-            Random rand = new Random();
-            Stopwatch watch = new Stopwatch();
-            double totalClonesTested = 0;
-            do
-            {
-                game.ApplyMoves(game.me.possibleMoves[rand.Next(0, game.me.possibleMoves.Count)], game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)]);
-                watch.Start();
-                double numberOfClones = 100000.0;
-                totalClonesTested += numberOfClones;
-                for (int i = 0; i < numberOfClones; i++)
-                {
-                    var clone = game.Clone();
-                }
-                watch.Stop();
-            }
-            while (game.day < 24);
-
-            Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds/ totalClonesTested}");
-        }
-
-        [Fact]
-        public void RunManyApplyMovesRandomly()
-        {
-            Random rand = new Random();
-            Stopwatch watch = new Stopwatch();
-            double totalMovesPlayed = 0;
-            GameState clone = game.Clone() as GameState;
-            watch.Start();
-            for (int i = 0; i < 50000; i++)
-            {
-                game.ApplyMoves(game.me.possibleMoves[rand.Next(0, game.me.possibleMoves.Count)], game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)]);
-                totalMovesPlayed += 2;
-
-                if(game.day == 24)
-                {
-                    game = clone.Clone() as GameState;
-                }
-            }
-            watch.Stop();
-
-            Console.Error.WriteLine($"Elapsed ms per move: {watch.ElapsedMilliseconds / totalMovesPlayed}");
-        }
-
-        [Fact]
-        public void RunManyClones()
-        {
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            double numberOfClones = 100000.0;
-            for (int i = 0; i < numberOfClones; i++)
-            {
-                var clone = game.Clone();
-            }
-            watch.Stop();
-
-            Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds / numberOfClones}");
-        }
-
-
-        [Fact]
-        public void RunManyGameUpdates()
-        {
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            double numberOfUpdates = 100000.0;
-            for (int i = 0; i < numberOfUpdates; i++)
-            {
-                game.UpdateGameState();
-            }
-            watch.Stop();
-
-            Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds / numberOfUpdates}");
         }
     }
 }

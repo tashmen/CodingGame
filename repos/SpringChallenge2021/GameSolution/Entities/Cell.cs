@@ -5,10 +5,9 @@ namespace GameSolution.Entities
 {
     public class Cell
     {
-        private CellConstantData data;
-        public int index { get { return data.index; } }
-        public int richness { get { return data.richness; } }
-        public List<int> neighbours { get { return data.neighbours; } }
+        public int index { get; private set; }
+        public int richness { get; private set; }
+        public int[] neighbours { get; private set; }
         public Tree tree { get; private set; }
 
         public bool HasTree { get; private set; }
@@ -16,15 +15,19 @@ namespace GameSolution.Entities
         //Calculated value that must be reset!
         public int shadowSize { get; private set; }
 
-        public Cell(int index, int richness, List<int> neighbours)
+        public Cell(int index, int richness, int[] neighbours)
         {
-            data = new CellConstantData(index, richness, neighbours);
+            this.index = index;
+            this.richness = richness;
+            this.neighbours = neighbours;
             Reset();
         }
 
         public Cell(Cell cell)
         {
-            data = cell.data;
+            index = cell.index;
+            richness = cell.richness;
+            neighbours = cell.neighbours;
             shadowSize = cell.shadowSize;
             
             if (cell.HasTree)
@@ -46,10 +49,13 @@ namespace GameSolution.Entities
 
         public void SetShadowSize(int size)
         {
-            shadowSize = Math.Max(shadowSize, size);
-            if (HasTree)
+            if(size > shadowSize)
             {
-                tree.UpdateSpookyShadow(shadowSize);
+                shadowSize = size;
+                if (HasTree)
+                {
+                    tree.UpdateSpookyShadow(shadowSize);
+                }
             }
         }
 
@@ -103,20 +109,6 @@ namespace GameSolution.Entities
                 }   
             }
             return false;
-        }
-    }
-
-    public class CellConstantData
-    {
-        public int index { get; private set; }
-        public int richness { get; private set; }
-        public List<int> neighbours { get; private set; }
-
-        public CellConstantData(int index, int richness, List<int> neighbours)
-        {
-            this.index = index;
-            this.richness = richness;
-            this.neighbours = neighbours;
         }
     }
 }

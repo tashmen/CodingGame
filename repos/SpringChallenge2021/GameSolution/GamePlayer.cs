@@ -15,7 +15,7 @@ public class GamePlayer
         bool isFirstRound = true;
 
         //Minimax search = new Minimax();
-        MonteCarloTreeSearch search = new MonteCarloTreeSearch();
+        MonteCarloTreeSearch search = new MonteCarloTreeSearch(false);
 
         GameState game = new GameState();
 
@@ -31,7 +31,7 @@ public class GamePlayer
             int neigh3 = int.Parse(inputs[5]);
             int neigh4 = int.Parse(inputs[6]);
             int neigh5 = int.Parse(inputs[7]);
-            List<int> neighs = new List<int>(){ neigh0, neigh1, neigh2, neigh3, neigh4, neigh5 };
+            int[] neighs = new int[]{ neigh0, neigh1, neigh2, neigh3, neigh4, neigh5 };
             Cell cell = new Cell(index, richness, neighs);
             game.board.Insert(cell.index, cell);
         }
@@ -110,7 +110,7 @@ public class GamePlayer
             {
                 Console.Error.WriteLine($"Before search: {watch.ElapsedMilliseconds}ms");
                 search.SetState(game, true, true);
-                IMove moveToPlay = search.GetNextMove(watch, limit, 20);
+                IMove moveToPlay = search.GetNextMove(watch, limit, 20, 20);
                 move = moveToPlay;
             }
             else

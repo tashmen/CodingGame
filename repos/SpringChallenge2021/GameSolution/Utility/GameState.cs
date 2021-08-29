@@ -10,23 +10,11 @@ namespace GameSolution.Utility
 {
     public class GameState : IGameState
     {
-        public static Dictionary<string, int> counters = new Dictionary<string, int>() { {"UpdateGameState", 0 }, { "ApplyMoves", 0 }, { "GetCacheTreeSizeKey", 0 }, { "GetWinner", 0 }, { "Equals", 0 }, { "ToString", 0 }, { "Clone", 0 } };
-
-        public static void PrintCounters()
-        {
-            foreach (string key in GameState.counters.Keys)
-            {
-                Console.Error.WriteLine($"{key}, {GameState.counters[key]}");
-            }
-        }
-
         public int day;
         public int nutrients;
         public List<Cell> board;
         public Player me;
         public Player opponent;
-
-        public bool isCopy = false;
         
         //Calculated from the trees on the board
         public IEnumerable<Tree> TreeEnumeration
@@ -66,8 +54,6 @@ namespace GameSolution.Utility
 
         public GameState(GameState state)
         {
-            counters["Clone"] += 1;
-            isCopy = true;
             day = state.day;
             nutrients = state.nutrients;
             board = new List<Cell>(state.BoardSize);
@@ -151,7 +137,6 @@ namespace GameSolution.Utility
 
         public void UpdateGameState(bool updateMyMoves = true, bool applySun = false)
         {
-            counters["UpdateGameState"] += 1;
             treeSizeKeyToCount = null;
 
             sunDirection = day % sunReset;
@@ -160,9 +145,12 @@ namespace GameSolution.Utility
             //Console.Error.WriteLine($"sundirection: {sunDirection} day: {day}");
 
             GetCacheTreeSize();
-            
-            CalculateShadows();
-            CalculateSunGeneration(applySun);
+
+            if (applySun)
+            {
+                CalculateShadows();
+                CalculateSunGeneration(true);
+            }
 
             if(updateMyMoves)
             {
@@ -194,7 +182,7 @@ namespace GameSolution.Utility
             bool canCut = player.sun >= treeCompleteCost;
 
             IEnumerable<Tree> activeTrees = isMe ? myActiveTrees : opponentActiveTrees;
-
+            
             foreach(Tree tree in activeTrees)
             {
                 //Seed Actions
@@ -216,26 +204,21 @@ namespace GameSolution.Utility
 
                             AddSeedAction(player, current, cell);
 
-
-                            if (tree.size > 1)
+                            Cell tempCurrent = current;
+                            for (int tempTSize = tSize + 1; tempTSize < tree.size; tempTSize++)
                             {
-                                Cell tempCurrent = current;
-
-                                for (int tempTSize = tSize + 1; tempTSize < tree.size; tempTSize++)
+                                int cellIndex = tempCurrent.GetCellNeighbor((i + 1) % sunReset);
+                                if (cellIndex == -1)
                                 {
-                                    int cellIndex = tempCurrent.GetCellNeighbor((i + 1) % sunReset);
-                                    if (cellIndex == -1)
-                                    {
-                                        break;
-                                    }
-                                    tempCurrent = board[cellIndex];
-                                    AddSeedAction(player, tempCurrent, cell);
+                                    break;
                                 }
+                                tempCurrent = board[cellIndex];
+                                AddSeedAction(player, tempCurrent, cell);
                             }
                         }
                     }
                 }
-
+                
                 //Complete Actions
                 if (canCut && tree.size == maxTreeSize)
                 {
@@ -350,19 +333,9 @@ namespace GameSolution.Utility
 
         private void AddSeedAction(Player player, Cell currentTargetCell, Cell sourceCell)
         {
-            Cell current = currentTargetCell;
-            if (!current.HasTree && current.richness != (int)Richness.Unusable)
+            if (!currentTargetCell.HasTree && currentTargetCell.richness != (int)Richness.Unusable)
             {               
-                /*
-                if (!sourceCell.HasTree())
-                {
-                    Console.Error.WriteLine($"Source Cell with no tree! {sourceCell}");
-                    Console.Error.WriteLine($"CurrentTarget {currentTargetCell}");
-                    Console.Error.WriteLine($"player: {player}");
-                }
-                */
-                
-                player.possibleMoves.Add(new Move(Actions.SEED, sourceCell.index, current.index));
+                player.possibleMoves.Add(new Move(Actions.SEED, sourceCell.index, currentTargetCell.index));
             }
         }
 
@@ -428,7 +401,6 @@ namespace GameSolution.Utility
         /// <param name="opponentMove">The move my opponent is making</param>
         public void ApplyMoves(Move myMove, Move opponentMove)
         {
-            counters["ApplyMoves"] += 1;
             switch (myMove.type)
             {
                 case Actions.SEED:
@@ -605,7 +577,6 @@ namespace GameSolution.Utility
 
         private int GetCacheTreeSizeKey(int size, bool isMe)
         {
-            counters["GetCacheTreeSizeKey"] += 1;
             if (isMe)
                 return size*2;
             else return size* 2 + 1;
@@ -622,12 +593,6 @@ namespace GameSolution.Utility
             return GetCacheTreeSize()[key];
         }
 
-        private Dictionary<int, int> treeSizeToCost = new Dictionary<int, int>()
-        {
-            {1,1 },
-            {2,3 },
-            {3,7 }
-        };
         public int GetCostToGrow(Tree tree)
         {
             int key = GetCacheTreeSizeKey(tree.size + 1, tree.isMine);
@@ -708,7 +673,6 @@ namespace GameSolution.Utility
 
         public int? GetWinner()
         {
-            counters["GetWinner"] += 1;
             if (day == maxTurns)
             {
                 int myScore = me.GetScore();
@@ -744,7 +708,6 @@ namespace GameSolution.Utility
 
         public bool Equals(IGameState state)
         {
-            counters["Equals"] += 1;
             GameState gameState = state as GameState;
 
             if(day == gameState.day && nutrients == gameState.nutrients && board.ToList().TrueForAll(c => c.Equals(gameState.board[c.index])) && me.Equals(gameState.me) && opponent.Equals(gameState.opponent))
@@ -758,14 +721,17 @@ namespace GameSolution.Utility
         {
             SunPower power = GameHelper.CalculateSunPowerForGame(this);
             double denominator = power.mySunPower + power.oppSunPower;
-            if(denominator != 0)
-                return power.GetDifference() / denominator;
+            double difference = power.GetDifference();
+            if (denominator != 0)
+            {
+                difference = difference / denominator;
+                return isMax ? difference : -1 * difference;
+            }
             return 0;
         }
 
         public override string ToString()
         {
-            counters["ToString"] += 1;
             return "n: " + nutrients + "\n" + string.Join("\n", board.Select(c => c.ToString())) + "\n" + me.ToString() + "\n" + opponent.ToString();
         }
     }

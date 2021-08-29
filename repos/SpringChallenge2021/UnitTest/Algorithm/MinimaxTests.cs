@@ -47,13 +47,13 @@ namespace UnitTest
 
             game = new GameState();
 
-            game.board.Insert(0, new Cell(0, 2, new List<int>() { 1, 2, 3, 4, 5, 6 }));
-            game.board.Insert(1, new Cell(1, 1, new List<int>() { -1, -1, 2, 0, 6, -1 }));
-            game.board.Insert(2, new Cell(2, 1, new List<int>() { -1, -1, -1, 3, 0, 1 }));
-            game.board.Insert(3, new Cell(3, 1, new List<int>() { 2, -1, -1, -1, 4, 0 }));
-            game.board.Insert(4, new Cell(4, 1, new List<int>() { 0, 3, -1, -1, -1, 5 }));
-            game.board.Insert(5, new Cell(5, 1, new List<int>() { 6, 0, 4, -1, -1, -1 }));
-            game.board.Insert(6, new Cell(6, 1, new List<int>() { -1, 1, 0, 5, -1, -1 }));
+            game.board.Insert(0, new Cell(0, 2, new int[] { 1, 2, 3, 4, 5, 6 }));
+            game.board.Insert(1, new Cell(1, 1, new int[] { -1, -1, 2, 0, 6, -1 }));
+            game.board.Insert(2, new Cell(2, 1, new int[] { -1, -1, -1, 3, 0, 1 }));
+            game.board.Insert(3, new Cell(3, 1, new int[] { 2, -1, -1, -1, 4, 0 }));
+            game.board.Insert(4, new Cell(4, 1, new int[] { 0, 3, -1, -1, -1, 5 }));
+            game.board.Insert(5, new Cell(5, 1, new int[] { 6, 0, 4, -1, -1, -1 }));
+            game.board.Insert(6, new Cell(6, 1, new int[] { -1, 1, 0, 5, -1, -1 }));
 
             game.ResetTrees();
             game.ResetPlayers();

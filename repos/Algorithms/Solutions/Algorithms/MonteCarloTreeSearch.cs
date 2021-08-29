@@ -8,9 +8,11 @@ namespace Algorithms
     public class MonteCarloTreeSearch : TreeAlgorithm
     {
         private Random rand;
-        public MonteCarloTreeSearch() 
+        private bool printErrors;
+        public MonteCarloTreeSearch(bool showErrors = true) 
         {
             rand = new Random();
+            printErrors = showErrors;
         }
 
         /// <summary>
@@ -20,7 +22,7 @@ namespace Algorithms
         /// <param name="timeLimit">The amount of time to give to the search in milliseconds</param>
         /// <param name="numRollouts">The number of roll outs to play per expansion</param>
         /// <returns></returns>
-        public IMove GetNextMove(Stopwatch watch, int timeLimit, int numRollouts = 1, double? exploration = null)
+        public IMove GetNextMove(Stopwatch watch, int timeLimit, int depth = -1, int numRollouts = 1, double? exploration = null)
         {
             if(exploration == null)
             {
@@ -32,7 +34,8 @@ namespace Algorithms
                 GameTreeNode selectedNode = SelectNodeWithUnplayedMoves(RootNode, exploration.Value);
                 if(selectedNode == null)
                 {
-                    Console.Error.WriteLine("Found no more moves!");
+                    if(printErrors)
+                        Console.Error.WriteLine("Found no more moves!");
                     break;
                 }
                 IMove move = SelectMoveAtRandom(selectedNode);
@@ -47,14 +50,15 @@ namespace Algorithms
                     for (int i = 0; i<numRollouts; i++)
                     {
                         var clonedState = childNode.state.Clone();
-                        winner = SimulateGame(clonedState, watch, timeLimit, childNode.isMax);
+                        winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
                         BackPropagate(childNode, winner);
                         count++;
                     }
                 }
             }
             while (watch.ElapsedMilliseconds < timeLimit);
-            Console.Error.WriteLine($"Played {count} games!");
+            if(printErrors)
+                Console.Error.WriteLine($"Played {count} games!");
             
 
             GameTreeNode bestChild = null;
@@ -67,11 +71,12 @@ namespace Algorithms
                     bestChild = child;
                     bestScore = score;
                 }
-                Console.Error.WriteLine($"w: {child.wins} l: {child.loses} d: {child.draws} move: {child.state.GetMove(RootNode.isMax)} score: {score} isMax: {RootNode.isMax}");
+                if(printErrors)
+                    Console.Error.WriteLine($"w: {child.wins} l: {child.loses} d: {child.draws} move: {child.state.GetMove(RootNode.isMax)} score: {score} isMax: {RootNode.isMax}");
             }
 
-
-            Console.Error.WriteLine($"Best: w: {bestChild.wins} l: {bestChild.loses} d: {bestChild.draws}");
+            if(printErrors)
+                Console.Error.WriteLine($"Best: w: {bestChild.wins} l: {bestChild.loses} d: {bestChild.draws}");
 
             return bestChild.state.GetMove(RootNode.isMax);
         }
@@ -87,12 +92,25 @@ namespace Algorithms
             }
         }
 
-        private int? SimulateGame(IGameState state, Stopwatch watch, int timeLimit, bool isMax)
+        private int? SimulateGame(IGameState state, Stopwatch watch, int timeLimit, int depth, bool isMax)
         {
             int? winner = state.GetWinner();
             if (winner.HasValue)
             {
                 return winner;
+            }
+            if(depth == 0)
+            {
+                double eval = state.Evaluate(isMax);
+                if (eval > 0)
+                {
+                    return 1;
+                }
+                else if (eval == 0)
+                {
+                    return 0;
+                }
+                else return -1;
             }
 
             IMove move = SelectMoveAtRandom(state, isMax);
@@ -103,7 +121,7 @@ namespace Algorithms
                 return null;
             }
 
-            winner = SimulateGame(state, watch, timeLimit, !isMax);
+            winner = SimulateGame(state, watch, timeLimit, depth - 1, !isMax);
 
             return winner;
         }
