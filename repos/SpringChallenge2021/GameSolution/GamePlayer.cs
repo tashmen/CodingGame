@@ -83,7 +83,7 @@ public class GamePlayer
             //Console.Error.WriteLine($"After parsing: {watch.ElapsedMilliseconds}ms");
 
             //game.me.possibleMoves = possibleActions;
-            game.UpdateGameState(true);
+            game.UpdateGameState();
             //Console.Error.WriteLine($"After updating gamestate: {watch.ElapsedMilliseconds}ms");
             /*
             if(game.me.possibleMoves.Count != possibleActions.Count)

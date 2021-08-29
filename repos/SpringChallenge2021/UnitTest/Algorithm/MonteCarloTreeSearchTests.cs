@@ -168,7 +168,7 @@ namespace UnitTest
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
                 search.SetState(game);
-                IMove moveToPlay = search.GetNextMove(watch, 95, 20, 20);
+                IMove moveToPlay = search.GetNextMove(watch, 95, -1, 20);
                 Move move = moveToPlay as Move;
                 Console.Error.WriteLine(move.ToString());
 
