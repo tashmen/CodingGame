@@ -34,6 +34,7 @@ namespace TestSimulation
             }
             catch(Exception e)
             {
+                Console.Error.WriteLine(e.ToString());
                 Console.ReadKey();
             }
         }
