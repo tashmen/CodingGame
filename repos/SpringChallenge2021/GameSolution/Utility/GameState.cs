@@ -137,7 +137,7 @@ namespace GameSolution.Utility
             }
 
             int costToSeedMe;
-            //int size3TreeToCut = 4;
+            int size3TreeToCut = 4;
             bool canCutMe = false;
             bool canSeedMe = false;
 
@@ -148,7 +148,7 @@ namespace GameSolution.Utility
             else
             {
                 costToSeedMe = GetCostToSeed(true);
-                /*
+                
                 if (day > 14)
                 {
                     size3TreeToCut--;
@@ -161,9 +161,9 @@ namespace GameSolution.Utility
                 {
                     size3TreeToCut--;
                 }
-                */
+                
 
-                canCutMe = mySun >= treeCompleteCost /*&& (day > 20 || GetNumberOfTrees(true, (int)TreeSize.Large) > size3TreeToCut || me.score < opponent.score)*/;
+                canCutMe = mySun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(true, (int)TreeSize.Large) > size3TreeToCut || me.score < opponent.score);
                 canSeedMe = mySun >= costToSeedMe && costToSeedMe < 1;//only seed when cost is 0
             }
 
