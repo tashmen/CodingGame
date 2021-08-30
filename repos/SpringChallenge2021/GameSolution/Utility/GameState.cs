@@ -45,6 +45,7 @@ namespace GameSolution.Utility
             me = new Player(true);
             opponent = new Player(false);
             treeCache = new List<Tree>(boardSize);
+            treeSizeKeyToCount = new List<int>(8) { 0, 0, 0, 0, 0, 0, 0, 0 };
         }
 
         public GameState(GameState state)
@@ -66,7 +67,7 @@ namespace GameSolution.Utility
             me = new Player(state.me);
             opponent = new Player(state.opponent);
 
-            treeSizeKeyToCount = state.treeSizeKeyToCount;
+            treeSizeKeyToCount = new List<int>(state.treeSizeKeyToCount);
         }
 
         public void AddTree(Tree tree, bool addToCell = true)
@@ -75,14 +76,24 @@ namespace GameSolution.Utility
             {
                 Cell cell = board[tree.cellIndex];
                 cell.AddTree(tree);
+
+                treeSizeKeyToCount[GetCacheTreeSizeKey(tree.size, tree.isMine)]++;
             }
             
             treeCache.Add(tree);
         }
 
+        public void GrowTree(Tree tree)
+        {
+            treeSizeKeyToCount[GetCacheTreeSizeKey(tree.size, tree.isMine)]--;
+            tree.Grow();
+            treeSizeKeyToCount[GetCacheTreeSizeKey(tree.size, tree.isMine)]++;
+        }
+
         public void RemoveTree(Cell cell)
         {
             treeCache.Remove(cell.tree);
+            treeSizeKeyToCount[GetCacheTreeSizeKey(cell.tree.size, cell.tree.isMine)]--;
             cell.RemoveTree();
         }
 
@@ -93,14 +104,8 @@ namespace GameSolution.Utility
 
         public void UpdateGameState(bool applySun = false)
         {
-            treeSizeKeyToCount = null;
-
             sunDirection = day % sunReset;
             shadowDirection = sunDirection + halfSunReset % sunReset;
-
-            //Console.Error.WriteLine($"sundirection: {sunDirection} day: {day}");
-
-            GetCacheTreeSize();
 
             if (applySun)
             {
@@ -124,40 +129,50 @@ namespace GameSolution.Utility
                 return;
             }
 
+            int costToSeedMe;
+            int size3TreeToCut = 4;
+            bool canCutMe = false;
+            bool canSeedMe = false;
+
             if (me.isWaiting)
             {
                 me.possibleMoves.Add(new Move(Actions.WAIT));
             }
+            else
+            {
+                costToSeedMe = GetCostToSeed(true);
+                if (day > 14)
+                {
+                    size3TreeToCut--;
+                }
+                if (day > 18)
+                {
+                    size3TreeToCut--;
+                }
+                if (day > 20)
+                {
+                    size3TreeToCut--;
+                }
+
+                canCutMe = me.sun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(true, (int)TreeSize.Large) > size3TreeToCut || me.score < opponent.score);
+                canSeedMe = me.sun >= costToSeedMe && costToSeedMe < 1;//only seed when cost is 0
+            }
 
             opponent.possibleMoves.Add(new Move(Actions.WAIT));
-            
 
-            int costToSeedMe = GetCostToSeed(true);
-            int size3TreeToCut = 4;
-            if (day > 14)
+            int costToSeedOpp;
+            bool canSeedOpp = false;
+            bool canCutOpp = false;
+            if (!opponent.isWaiting)
             {
-                size3TreeToCut--;
-            }
-            if (day > 18)
-            {
-                size3TreeToCut--;
-            }
-            if (day > 20)
-            {
-                size3TreeToCut--;
-            }
+                costToSeedOpp = GetCostToSeed(false);
 
-            bool canCutMe = me.sun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(true, (int)TreeSize.Large) > size3TreeToCut || me.score < opponent.score);
-            bool canSeedMe = me.sun >= costToSeedMe && costToSeedMe < 1;//only seed when cost is 0
-
-            int costToSeedOpp = GetCostToSeed(false);
-
-            bool canSeed = opponent.sun >= costToSeedOpp && costToSeedOpp < 1;//only seed when cost is 0
-            bool canCut = opponent.sun >= treeCompleteCost;
+                canSeedOpp = opponent.sun >= costToSeedOpp && costToSeedOpp < 1;//only seed when cost is 0
+                canCutOpp = opponent.sun >= treeCompleteCost;
+            }
 
             foreach (Tree tree in TreeEnumeration)
             {
-
                 if (tree.isDormant)
                 {
                     continue;
@@ -219,7 +234,7 @@ namespace GameSolution.Utility
                 else if(!opponent.isWaiting)
                 {
                     //Seed Actions
-                    if (canSeed && tree.size > 0)
+                    if (canSeedOpp && tree.size > 0)
                     {
                         Cell cell = board[tree.cellIndex];
                         for (int i = 0; i < sunReset; i++)
@@ -253,7 +268,7 @@ namespace GameSolution.Utility
                     }
 
                     //Complete Actions
-                    if (canCut && tree.size == maxTreeSize)
+                    if (canCutOpp && tree.size == maxTreeSize)
                     {
                         opponent.possibleMoves.Add(new Move(Actions.COMPLETE, tree.cellIndex));
                     }
@@ -603,7 +618,7 @@ namespace GameSolution.Utility
                         throw new Exception("Tree is dormant!");
                     }
                     player.sun -= growCost;
-                    targetCell.tree.Grow();
+                    GrowTree(targetCell.tree);
                     if (updateState)
                         UpdateGameState();
                     break;
@@ -654,36 +669,6 @@ namespace GameSolution.Utility
         
         private List<int> GetCacheTreeSize()
         {
-            if (treeSizeKeyToCount == null)
-            {
-                List<int> myTreeCount = new List<int>(4) { 0, 0, 0, 0 };
-                List<int> oppTreeCount = new List<int>(4) { 0, 0, 0, 0 };
-                foreach (Tree tree in TreeEnumeration)
-                {
-                    for (int i = 0; i<=(int)TreeSize.Large; i++)
-                    {
-                        if(tree.size == i)
-                        {
-                            if (tree.isMine)
-                            {
-                                myTreeCount[i]++;
-                            }
-                            else
-                            {
-                                oppTreeCount[i]++;
-                            }
-                        }
-                    }
-                }
-                treeSizeKeyToCount = new List<int>(8);
-                for (int i = 0; i <= (int)TreeSize.Large; i++)
-                {
-                    treeSizeKeyToCount.Add(myTreeCount[i]);
-                    treeSizeKeyToCount.Add(oppTreeCount[i]);
-                }
-
-            }
-
             return treeSizeKeyToCount;
         }
 
@@ -728,6 +713,7 @@ namespace GameSolution.Utility
         public void RemoveTrees()
         {
             treeCache = new List<Tree>(BoardSize);
+            treeSizeKeyToCount = new List<int>(8) { 0, 0, 0, 0, 0, 0, 0, 0 };
             foreach (Cell cell in board)
             {
                 cell.RemoveTree();
