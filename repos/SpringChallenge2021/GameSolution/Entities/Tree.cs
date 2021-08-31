@@ -42,16 +42,9 @@
             bitBoard += 1;
         }
 
-        public void UpdateSpookyShadow(int shadowSize)
+        public void SetSpookyShadow()
         {
-            if(size <= shadowSize)
-            {
-                bitBoard |= isSpookyShadowValue;
-            }
-            else
-            {
-                bitBoard &= ~isSpookyShadowValue;
-            }
+            bitBoard |= isSpookyShadowValue;
         }
 
         public void ChangeOwnership()
@@ -79,14 +72,11 @@
 
         public bool Equals(Tree tree)
         {
-            if(tree.cellIndex == cellIndex && tree.bitBoard == bitBoard)
+            if(tree != null && tree.cellIndex == cellIndex && tree.bitBoard == bitBoard)
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
     }
 }

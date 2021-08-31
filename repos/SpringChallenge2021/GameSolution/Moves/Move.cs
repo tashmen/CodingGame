@@ -24,12 +24,12 @@ namespace GameSolution.Moves
         }
 
         public Move(string type, int targetCellIdx)
-            : this(type, 0, targetCellIdx)
+            : this(type, -1, targetCellIdx)
         {
         }
 
         public Move(string type)
-            : this(type, 0, 0)
+            : this(type, -1, -1)
         {
         }
 

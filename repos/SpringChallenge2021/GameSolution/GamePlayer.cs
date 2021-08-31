@@ -35,6 +35,11 @@ public class GamePlayer
             Cell cell = new Cell(index, richness, neighs);
             game.board.Insert(cell.index, cell);
         }
+        SeedMap seedMap = new SeedMap(game.board);
+        game.seedMap = seedMap;
+
+        ShadowMap shadowMap = new ShadowMap(game.board);
+        game.shadowMap = shadowMap;
 
         // game loop
         while (true)

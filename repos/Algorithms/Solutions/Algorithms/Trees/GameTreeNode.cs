@@ -24,13 +24,17 @@ namespace Algorithms.Trees
 
         public double GetScore(bool isMax)
         {
+            double totalPlays = TotalPlays();
+            if (totalPlays == 0)
+                return 0;
+
             if (isMax)
             {
-                return (wins + draws * 0.5) / (wins + draws + loses);
+                return (wins + draws * 0.5) / totalPlays;
             }
             else
             {
-                return (loses + draws * 0.5) / (wins + draws + loses);
+                return (loses + draws * 0.5) / totalPlays;
             }
         }
 

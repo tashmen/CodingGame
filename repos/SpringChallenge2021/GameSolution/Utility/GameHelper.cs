@@ -226,7 +226,7 @@ namespace GameSolution.Utility
             foreach (Move move in actions)
             {
                 Cell cell = state.board[move.targetCellIdx];
-                Tree tree = cell.tree;
+                Tree tree = state.GetTree(cell.index);
                 
                 int treeSizePoints = Math.Max(maxTurns - state.day - maxTreeSize + tree.size, 0);
                 Console.Error.WriteLine($"treesizepoints: {treeSizePoints}");
@@ -262,14 +262,14 @@ namespace GameSolution.Utility
                 Move growMove = FindBestGrowAction(currentState);
                 if (growMove != null)
                 {
-                    Cell growCell = currentState.board[growMove.targetCellIdx];
-                    if (growCell.tree.size == 2)
+                    Tree growTree = currentState.GetTree(growMove.targetCellIdx);
+                    if (growTree.size == 2)
                     {
                         state.ApplyMove(growMove, state.me);
                         state.AdvanceDay();
 
-                        int power = state.mySunPowerGenerationToday + currentState.me.sun - currentState.GetCostToGrow(growCell.tree);
-                        int level3TreeCountOnHighRichness = state.board.Where(c => c.HasTree && c.tree.size == 3 && (c.richness > 1 || state.nutrients > 3)).Count();
+                        int power = state.mySunPowerGenerationToday + currentState.me.sun - currentState.GetCostToGrow(growTree);
+                        int level3TreeCountOnHighRichness = state.TreeEnumeration.Where(t => t.size == 3 && (state.board[t.cellIndex].richness > 1 || state.nutrients > 3)).Count();
                         Console.Error.WriteLine($"lastTurnPower: {power} treeCount: {level3TreeCountOnHighRichness}");
                         if (power >= (level3TreeCountOnHighRichness) * 4)
                         {

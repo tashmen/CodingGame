@@ -1,26 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace GameSolution.Entities
+﻿namespace GameSolution.Entities
 {
     public class Cell
     {
         public int index { get; private set; }
         public int richness { get; private set; }
         public int[] neighbours { get; private set; }
-        public Tree tree { get; private set; }
-
-        public bool HasTree { get; private set; }
-
-        //Calculated value that must be reset!
-        public int shadowSize { get; private set; }
 
         public Cell(int index, int richness, int[] neighbours)
         {
             this.index = index;
             this.richness = richness;
             this.neighbours = neighbours;
-            Reset();
         }
 
         public Cell(Cell cell)
@@ -28,35 +18,6 @@ namespace GameSolution.Entities
             index = cell.index;
             richness = cell.richness;
             neighbours = cell.neighbours;
-            shadowSize = cell.shadowSize;
-            
-            if (cell.HasTree)
-            {
-                tree = new Tree(cell.tree);
-                HasTree = cell.HasTree;
-            }
-        }
-
-        public int GetBonusScore()
-        {
-            return (int)Math.Pow(2, richness) - 2;
-        }
-
-        public void Reset()
-        {
-            shadowSize = -1;
-        }
-
-        public void SetShadowSize(int size)
-        {
-            if(size > shadowSize)
-            {
-                shadowSize = size;
-                if (HasTree)
-                {
-                    tree.UpdateSpookyShadow(shadowSize);
-                }
-            }
         }
 
         /// <summary>
@@ -69,44 +30,16 @@ namespace GameSolution.Entities
             return neighbours[sunDirection];
         }
 
-        public bool IsCorner()
-        {
-            return index == 19 || index == 22 || index == 25 || index == 28 || index == 31 || index == 34;
-        }
-
-        public void AddTree(Tree tree)
-        {
-            if (tree.cellIndex == index)
-            {
-                this.tree = tree;
-                HasTree = true;
-            }
-            
-        }
-
-        public void RemoveTree()
-        {
-            this.tree = null;
-            HasTree = false;
-        }
-
         public override string ToString()
         {
-            return $"index: {index} rich: {richness} shadow:{shadowSize} tree: {tree?.ToString()}";
+            return $"index: {index} rich: {richness}";
         }
 
         public bool Equals(Cell cell)
         {
             if(cell.index == index && richness == cell.richness)
             {
-                if(tree == null && cell.tree == null)
-                {
-                    return true;
-                }
-                else if(tree != null && cell.tree != null && tree.Equals(cell.tree))
-                {
-                    return true;
-                }   
+                return true;
             }
             return false;
         }
