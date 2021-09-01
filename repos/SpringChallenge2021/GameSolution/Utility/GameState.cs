@@ -2,6 +2,7 @@
 using GameSolution.Entities;
 using GameSolution.Moves;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using static GameSolution.Constants;
@@ -162,8 +163,6 @@ namespace GameSolution.Utility
                 canSeedMe = mySun >= costToSeedMe && costToSeedMe < 1;//only seed when cost is 0
             }
 
-            oppPossibleMoves.Add(new Move(Actions.WAIT));
-
             int costToSeedOpp;
             bool canSeedOpp = false;
             bool canCutOpp = false;
@@ -186,18 +185,6 @@ namespace GameSolution.Utility
 
                 if (tree.isMine && !meWaiting)
                 {
-                    if (canSeedMe && treeSize > 1)//do not seed with size 1 trees
-                    {
-                        for(int i = 2; i<=treeSize; i++)//Skip seeding 1 space away
-                        {
-                            foreach (int cellIndex in seedMap.GetSeedMap(treeCellIndex, i))
-                            {
-                                Cell tempCurrent = board[cellIndex];
-                                AddSeedAction(me, cellIndex, treeCellIndex);
-                            }
-                        }
-                    }
-
                     //Complete Actions
                     if (canCutMe && treeSize == maxTreeSize)
                     {
@@ -209,22 +196,22 @@ namespace GameSolution.Utility
                     {
                         myPossibleMoves.Add(new Move(Actions.GROW, treeCellIndex));
                     }
-                }
-                else if(!oppWaiting)
-                {
-                    //Seed Actions
-                    if (canSeedOpp && treeSize > 0)
+
+
+                    if (canSeedMe && treeSize > 1)//do not seed with size 1 trees
                     {
-                        for (int i = 1; i <= treeSize; i++)
+                        for(int i = 2; i<=treeSize; i++)//Skip seeding 1 space away
                         {
                             foreach (int cellIndex in seedMap.GetSeedMap(treeCellIndex, i))
                             {
                                 Cell tempCurrent = board[cellIndex];
-                                AddSeedAction(opponent, cellIndex, treeCellIndex);
+                                AddSeedAction(me, cellIndex, treeCellIndex);
                             }
                         }
                     }
-
+                }
+                else if(!oppWaiting)
+                {
                     //Complete Actions
                     if (canCutOpp && treeSize == maxTreeSize)
                     {
@@ -236,6 +223,19 @@ namespace GameSolution.Utility
                     {
                         oppPossibleMoves.Add(new Move(Actions.GROW, treeCellIndex));
                     }
+
+                    //Seed Actions
+                    if (canSeedOpp && treeSize > 0)
+                    {
+                        for (int i = 1; i <= treeSize; i++)
+                        {
+                            foreach (int cellIndex in seedMap.GetSeedMap(treeCellIndex, i))
+                            {
+                                Cell tempCurrent = board[cellIndex];
+                                AddSeedAction(opponent, cellIndex, treeCellIndex);
+                            }
+                        }
+                    } 
                 }
             }
 
@@ -243,6 +243,8 @@ namespace GameSolution.Utility
             {
                 myPossibleMoves.Add(new Move(Actions.WAIT));
             }
+
+            oppPossibleMoves.Add(new Move(Actions.WAIT));
         }
 
         private void AddSeedAction(Player player, int targetCellIndex, int sourceCellIndex)
@@ -510,13 +512,13 @@ namespace GameSolution.Utility
             treeCache = new List<Tree>(board.Count);
         }
 
-        public IList<IMove> GetPossibleMoves(bool isMax)
+        public IList GetPossibleMoves(bool isMax)
         {
             Player player = isMax ? me : opponent;
-            return new List<IMove>(player.possibleMoves);
+            return player.possibleMoves;
         }
 
-        public void ApplyMove(IMove move, bool isMax)
+        public void ApplyMove(object move, bool isMax)
         {
             if (isMax && opponent.movePlayedForCurrentTurn != null)
             {
@@ -533,7 +535,7 @@ namespace GameSolution.Utility
             }
         }
 
-        public IMove GetMove(bool isMax)
+        public object GetMove(bool isMax)
         {
             Player player = isMax ? me : opponent;
             if (player.movePlayedForCurrentTurn != null)
@@ -620,7 +622,7 @@ namespace GameSolution.Utility
 
         public override string ToString()
         {
-            return "n: " + nutrients + "\n" + string.Join("\n", board.Select(c => c.ToString())) + "\n" + me.ToString() + "\n" + opponent.ToString();
+            return "n: " + nutrients + "\n" + string.Join("\n", TreeEnumeration.Select(c => c.ToString())) + "\n" + me.ToString() + "\n" + opponent.ToString();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Algorithms.Trees;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -9,10 +10,18 @@ namespace Algorithms
     {
         private Random rand;
         private bool printErrors;
-        public MonteCarloTreeSearch(bool showErrors = true) 
+        private SearchStrategy strategy;
+
+        public enum SearchStrategy
+        {
+            Random = 0,
+            Sequential = 1
+        }
+        public MonteCarloTreeSearch(bool showErrors = true, SearchStrategy searchStrategy = SearchStrategy.Random) 
         {
             rand = new Random();
             printErrors = showErrors;
+            strategy = searchStrategy;
         }
 
         /// <summary>
@@ -22,7 +31,7 @@ namespace Algorithms
         /// <param name="timeLimit">The amount of time to give to the search in milliseconds</param>
         /// <param name="numRollouts">The number of roll outs to play per expansion</param>
         /// <returns></returns>
-        public IMove GetNextMove(Stopwatch watch, int timeLimit, int depth = -1, int numRollouts = 1, double? exploration = null)
+        public object GetNextMove(Stopwatch watch, int timeLimit, int depth = -1, int numRollouts = 1, double? exploration = null)
         {
             if(exploration == null)
             {
@@ -38,7 +47,7 @@ namespace Algorithms
                         Console.Error.WriteLine("Found no more moves!");
                     break;
                 }
-                IMove move = SelectMoveAtRandom(selectedNode);
+                object move = SelectMove(selectedNode);
                 GameTreeNode childNode = Expand(selectedNode, move);
                 int? winner = childNode.GetWinner();
                 if (winner.HasValue)
@@ -94,12 +103,30 @@ namespace Algorithms
 
         private int? SimulateGame(IGameState state, Stopwatch watch, int timeLimit, int depth, bool isMax)
         {
-            int? winner = state.GetWinner();
+            int? winner;
+            do
+            {
+                object move = SelectMoveAtRandom(state, isMax);
+                state.ApplyMove(move, isMax);
+
+                if (watch.ElapsedMilliseconds >= timeLimit)
+                {
+                    return null;
+                }
+
+                depth--;
+                isMax = !isMax;
+
+                winner = state.GetWinner();
+            }
+            while (!winner.HasValue && depth != 0);
+
+            
             if (winner.HasValue)
             {
                 return winner;
             }
-            if(depth == 0)
+            if (depth == 0)
             {
                 double eval = state.Evaluate(isMax);
                 if (eval > 0)
@@ -113,17 +140,7 @@ namespace Algorithms
                 else return -1;
             }
 
-            IMove move = SelectMoveAtRandom(state, isMax);
-            state.ApplyMove(move, isMax);
-
-            if (watch.ElapsedMilliseconds >= timeLimit)
-            {
-                return null;
-            }
-
-            winner = SimulateGame(state, watch, timeLimit, depth - 1, !isMax);
-
-            return winner;
+            throw new InvalidOperationException("Could not find a winner for simulation!");
         }
 
         private GameTreeNode SelectNodeWithUnplayedMoves(GameTreeNode node, double exploration)
@@ -163,16 +180,43 @@ namespace Algorithms
             return bestNode;
         }
 
-        private IMove SelectMoveAtRandom(IGameState state, bool isMax)
+        private object SelectMoveAtRandom(IGameState state, bool isMax)
         {
-            IList<IMove> moves = state.GetPossibleMoves(isMax);
+            IList moves = state.GetPossibleMoves(isMax);
             int index = rand.Next(0, moves.Count);
             return moves[index];
         }
 
-        private IMove SelectMoveAtRandom(GameTreeNode node)
+        private object SelectMove(GameTreeNode node)
         {
-            IMove move;
+            switch (strategy)
+            {
+                case SearchStrategy.Random:
+                    return SelectMoveAtRandom(node);
+                case SearchStrategy.Sequential:
+                    return SelectMoveSequentially(node);
+            }
+            throw new InvalidOperationException("strategy not supported");
+        }
+
+        private object SelectMoveSequentially(GameTreeNode node)
+        {
+            object move;
+            if (node.moves.Count == 0)//If there are no more moves then that is a problem...
+            {
+                throw new Exception("No moves found!");
+            }
+            else
+            {
+                move = node.moves[0];
+                node.moves.RemoveAt(0);
+            }
+            return move;
+        }
+
+        private object SelectMoveAtRandom(GameTreeNode node)
+        {
+            object move;
             if (node.moves.Count == 0)//If there are no more moves then that is a problem...
             {
                 throw new Exception("No moves found!");

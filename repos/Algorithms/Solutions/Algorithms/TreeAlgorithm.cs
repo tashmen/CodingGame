@@ -19,7 +19,7 @@ namespace Algorithms
                 //find the child that matches the new node
                 bool isFound = false;
                 //Expand any moves left in the root node (if any)
-                foreach (IMove move in RootNode.moves)
+                foreach (object move in RootNode.moves)
                 {
                     Expand(RootNode, move);
                 }
@@ -33,7 +33,7 @@ namespace Algorithms
                         break;
                     }
 
-                    foreach (IMove move in child.moves)
+                    foreach (object move in child.moves)
                     {
                         Expand(child, move);
                     }
@@ -69,7 +69,7 @@ namespace Algorithms
         /// <param name="node">The node to expand</param>
         /// <param name="move">The move to play on the expanded node</param>
         /// <returns></returns>
-        protected GameTreeNode Expand(GameTreeNode node, IMove move)
+        protected GameTreeNode Expand(GameTreeNode node, object move)
         {
             IGameState nextState = node.state.Clone();
             nextState.ApplyMove(move, node.isMax);

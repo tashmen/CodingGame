@@ -6,12 +6,12 @@ namespace Algorithms
 {
     public class Minimax : TreeAlgorithm
     {
-        public IMove GetNextMove(Stopwatch watch, int timeLimit, int depth = int.MaxValue)
+        public object GetNextMove(Stopwatch watch, int timeLimit, int depth = int.MaxValue)
         {
             double val = 99999999;
             val *= RootNode.isMax ? -1 : 1;
-            IMove bestMove = null;
-            foreach (IMove move in RootNode.moves)
+            object bestMove = null;
+            foreach (object move in RootNode.moves)
             {
                 
                 GameTreeNode child = Expand(RootNode, move);
@@ -47,7 +47,7 @@ namespace Algorithms
             {
                 double value = -99999;
                 double minMax;
-                foreach (IMove move in currentNode.moves)
+                foreach (object move in currentNode.moves)
                 {
                     GameTreeNode childNode = Expand(currentNode, move);
                     minMax = RunMinimax(childNode, depth - 1, alpha, beta, watch, timeLimit);
@@ -66,7 +66,7 @@ namespace Algorithms
             {
                 double value = 99999;
                 double minMax;
-                foreach (IMove move in currentNode.moves)
+                foreach (object move in currentNode.moves)
                 {
                     GameTreeNode childNode = Expand(currentNode, move);
                     minMax = RunMinimax(childNode, depth - 1, alpha, beta, watch, timeLimit);

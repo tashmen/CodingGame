@@ -109,13 +109,13 @@ public class GamePlayer
 
             
 
-            IMove move;
+            object move;
             int limit = isFirstRound ? 1000 : 98;
             if (game.day > 5 && game.day < 21)
             {
                 //Console.Error.WriteLine($"Before search: {watch.ElapsedMilliseconds}ms");
                 search.SetState(game, true, true);
-                IMove moveToPlay = search.GetNextMove(watch, limit, -1, 20);
+                object moveToPlay = search.GetNextMove(watch, limit, -1, 20);
                 move = moveToPlay;
             }
             else

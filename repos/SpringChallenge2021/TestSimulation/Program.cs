@@ -17,13 +17,13 @@ namespace TestSimulation
             {
                 game = GameBuilder.BuildSampleGame();
                 Random rand = new Random();
-                MonteCarloTreeSearch search = new MonteCarloTreeSearch(false);
+                MonteCarloTreeSearch search = new MonteCarloTreeSearch(false, MonteCarloTreeSearch.SearchStrategy.Sequential);
                 do
                 {
                     Stopwatch watch = new Stopwatch();
                     watch.Start();
                     search.SetState(game);
-                    IMove moveToPlay = search.GetNextMove(watch, 95, -1, 20);
+                    object moveToPlay = search.GetNextMove(watch, 95, -1, 20);
                     Move move = moveToPlay as Move;
                     watch.Stop();
 

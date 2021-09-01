@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 
 namespace Algorithms.Trees
 {
     public class GameTreeNode
     {
         public IGameState state;
-        public IList<IMove> moves;
+        public IList moves;
         public List<GameTreeNode> children;
         public int wins = 0;
         public int loses = 0;

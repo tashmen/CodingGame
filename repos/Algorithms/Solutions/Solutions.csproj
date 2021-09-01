@@ -55,7 +55,6 @@
     <Compile Include="Graph\INode.cs" />
     <Compile Include="Algorithms\Minimax.cs" />
     <Compile Include="GameComponents\IGameState.cs" />
-    <Compile Include="GameComponents\IMove.cs" />
     <Compile Include="Algorithms\MonteCarloTreeSearch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

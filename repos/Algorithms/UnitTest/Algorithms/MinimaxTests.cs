@@ -30,7 +30,7 @@ namespace UnitTest.Algorithms
                 watch.Start();
                 search.SetState(state, isMax);
 
-                IMove move = search.GetNextMove(watch, 100);
+                object move = search.GetNextMove(watch, 100);
                 state.ApplyMove(move, isMax);
                 //isMax = !isMax;
                 watch.Stop();

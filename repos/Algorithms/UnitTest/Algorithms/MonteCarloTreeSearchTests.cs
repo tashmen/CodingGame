@@ -10,7 +10,7 @@ namespace UnitTest.Algorithms
 {
     public class MonteCarloTreeSearchTests
     {
-        MonteCarloTreeSearch search = new MonteCarloTreeSearch();
+        MonteCarloTreeSearch search = new MonteCarloTreeSearch(true, MonteCarloTreeSearch.SearchStrategy.Sequential);
         GameState state = new GameState();
         public MonteCarloTreeSearchTests(ITestOutputHelper output)
         {
@@ -28,7 +28,7 @@ namespace UnitTest.Algorithms
                 watch.Start();
                 search.SetState(state, isMax);
 
-                IMove move = search.GetNextMove(watch, 100,  -1, 500);
+                object move = search.GetNextMove(watch, 100,  -1, 500);
                 state.ApplyMove(move, isMax);
                 //isMax = !isMax;
                 watch.Stop();

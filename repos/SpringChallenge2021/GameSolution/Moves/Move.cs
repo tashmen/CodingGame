@@ -3,7 +3,7 @@ using static GameSolution.Constants;
 
 namespace GameSolution.Moves
 {
-    public class Move : IMove
+    public class Move : object
     {
         public string type;
         public int targetCellIdx;

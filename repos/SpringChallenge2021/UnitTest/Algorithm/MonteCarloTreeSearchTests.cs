@@ -51,7 +51,7 @@ namespace UnitTest
         [Fact]
         public void StrongOpponentSimulationTest()
         {
-            MonteCarloTreeSearch search = new MonteCarloTreeSearch();
+            MonteCarloTreeSearch search = new MonteCarloTreeSearch(true, MonteCarloTreeSearch.SearchStrategy.Sequential);
             //Setup a second game so that both players can play as max
             GameState game2 = game.Clone() as GameState;
             foreach (Tree tree in game2.TreeEnumeration)//Invert tree ownership
@@ -75,7 +75,7 @@ namespace UnitTest
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
                 search.SetState(game2, true);
-                IMove moveToPlay = search.GetNextMove(watch, 95, -1, 20);
+                object moveToPlay = search.GetNextMove(watch, 95, -1, 20);
                 Move move = moveToPlay as Move;
 
                 game.ApplyMove(myMove, true);
@@ -98,13 +98,13 @@ namespace UnitTest
         public void RandomSimulationTest()
         {
             Random rand = new Random();
-            MonteCarloTreeSearch search = new MonteCarloTreeSearch();
+            MonteCarloTreeSearch search = new MonteCarloTreeSearch(true, MonteCarloTreeSearch.SearchStrategy.Sequential);
             do
             {
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
                 search.SetState(game);
-                IMove moveToPlay = search.GetNextMove(watch, 95, -1, 20);
+                object moveToPlay = search.GetNextMove(watch, 95, -1, 20);
                 Move move = moveToPlay as Move;
                 Console.Error.WriteLine(move.ToString());
 

@@ -1,5 +1,6 @@
 ﻿using Algorithms;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace UnitTest.TwentyOneGame
@@ -17,7 +18,7 @@ namespace UnitTest.TwentyOneGame
         {
             Total = 0;
         }
-        public void ApplyMove(IMove move, bool isMax)
+        public void ApplyMove(object move, bool isMax)
         {
             Move m = move as Move;
             if (m.Count > 3 || m.Count <= 0)
@@ -56,18 +57,18 @@ namespace UnitTest.TwentyOneGame
             }
         }
 
-        public IMove GetMove(bool isMax)
+        public object GetMove(bool isMax)
         {
             return LastMove;
         }
 
-        public IList<IMove> GetPossibleMoves(bool isMax)
+        public IList GetPossibleMoves(bool isMax)
         {
             if (GetWinner().HasValue)
             {
-                return new List<IMove>();
+                return new List<Move>();
             }
-            return new List<IMove>()
+            return new List<Move>()
             {
                 new Move(1),
                 new Move(2),
@@ -108,7 +109,7 @@ namespace UnitTest.TwentyOneGame
         }
     }
 
-    public class Move : IMove
+    public class Move : object
     {
         public int Count;
 
