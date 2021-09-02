@@ -38,7 +38,8 @@ namespace GameSolution.Utility
         public int opponentSunPowerGenerationToday;
 
         //lazy loaded cache
-        private List<int> treeSizeKeyToCount;
+        private List<int> myTreeSizeKeyToCount;
+        private List<int> opponentTreeSizeKeyToCount;
 
         public GameState(int boardSize = 37)
         {
@@ -47,7 +48,8 @@ namespace GameSolution.Utility
             opponent = new Player(false);
             treeState = new Tree[boardSize];
             treeCache = new List<Tree>(boardSize);
-            treeSizeKeyToCount = new List<int>(8) { 0, 0, 0, 0, 0, 0, 0, 0 };
+            myTreeSizeKeyToCount = new List<int>(4) { 0, 0, 0, 0 };
+            opponentTreeSizeKeyToCount = new List<int>(4) { 0, 0, 0, 0 };
         }
 
         public GameState(GameState state)
@@ -71,28 +73,46 @@ namespace GameSolution.Utility
             me = new Player(state.me);
             opponent = new Player(state.opponent);
 
-            treeSizeKeyToCount = new List<int>(state.treeSizeKeyToCount);
+            myTreeSizeKeyToCount = new List<int>(state.myTreeSizeKeyToCount);
+            opponentTreeSizeKeyToCount = new List<int>(state.opponentTreeSizeKeyToCount);
             seedMap = state.seedMap;
             shadowMap = state.shadowMap;
         }
 
         public void AddTree(Tree tree)
         {
-            treeSizeKeyToCount[GetCacheTreeSizeKey(tree.size, tree.isMine)]++;
+            if (tree.isMine)
+                myTreeSizeKeyToCount[tree.size]++;
+            else
+                opponentTreeSizeKeyToCount[tree.size]++;
             treeState[tree.cellIndex] = tree;
             treeCache.Add(tree);
         }
 
         public void GrowTree(Tree tree)
         {
-            treeSizeKeyToCount[GetCacheTreeSizeKey(tree.size, tree.isMine)]--;
-            tree.Grow();
-            treeSizeKeyToCount[GetCacheTreeSizeKey(tree.size, tree.isMine)]++;
+
+            if (tree.isMine)
+            {
+                myTreeSizeKeyToCount[tree.size]--;
+                tree.Grow();
+                myTreeSizeKeyToCount[tree.size]++;
+            }
+            else
+            {
+                opponentTreeSizeKeyToCount[tree.size]--;
+                tree.Grow();
+                opponentTreeSizeKeyToCount[tree.size]++;
+            }
         }
 
         public void RemoveTree(Tree tree)
         {
-            treeSizeKeyToCount[GetCacheTreeSizeKey(tree.size, tree.isMine)]--;
+            if (tree.isMine)
+            {
+                myTreeSizeKeyToCount[tree.size]--;
+            }
+            else opponentTreeSizeKeyToCount[tree.size]--;
             treeState[tree.cellIndex] = null;
             treeCache.Remove(tree);
         }
@@ -119,6 +139,9 @@ namespace GameSolution.Utility
         {
             List<Move> myPossibleMoves = me.possibleMoves;
             List<Move> oppPossibleMoves = opponent.possibleMoves;
+            List<Move> myCompleteMoves = new List<Move>();
+            List<Move> mySeedMoves = new List<Move>();
+            List<Move> myGrowMoves = new List<Move>();
             bool meWaiting = me.isWaiting;
             bool oppWaiting = opponent.isWaiting;
             int mySun = me.sun;
@@ -188,13 +211,13 @@ namespace GameSolution.Utility
                     //Complete Actions
                     if (canCutMe && treeSize == maxTreeSize)
                     {
-                        myPossibleMoves.Add(new Move(Actions.COMPLETE, treeCellIndex));
+                        myCompleteMoves.Add(new Move(Actions.COMPLETE, treeCellIndex));
                     }
 
                     //Grow Actions
                     if (treeSize != maxTreeSize && mySun >= GetCostToGrow(tree))
                     {
-                        myPossibleMoves.Add(new Move(Actions.GROW, treeCellIndex));
+                        myGrowMoves.Add(new Move(Actions.GROW, treeCellIndex));
                     }
 
 
@@ -204,8 +227,7 @@ namespace GameSolution.Utility
                         {
                             foreach (int cellIndex in seedMap.GetSeedMap(treeCellIndex, i))
                             {
-                                Cell tempCurrent = board[cellIndex];
-                                AddSeedAction(me, cellIndex, treeCellIndex);
+                                AddSeedAction(mySeedMoves, cellIndex, treeCellIndex);
                             }
                         }
                     }
@@ -231,13 +253,17 @@ namespace GameSolution.Utility
                         {
                             foreach (int cellIndex in seedMap.GetSeedMap(treeCellIndex, i))
                             {
-                                Cell tempCurrent = board[cellIndex];
-                                AddSeedAction(opponent, cellIndex, treeCellIndex);
+                                AddSeedAction(oppPossibleMoves, cellIndex, treeCellIndex);
                             }
                         }
                     } 
                 }
             }
+
+            //Order moves by complete then grow and lastly seed and wait.
+            myPossibleMoves.AddRange(myCompleteMoves);
+            myPossibleMoves.AddRange(myGrowMoves);
+            myPossibleMoves.AddRange(mySeedMoves);
 
             if ((myPossibleMoves.Count == 0 || mySun < 8) && !meWaiting)
             {
@@ -247,12 +273,12 @@ namespace GameSolution.Utility
             oppPossibleMoves.Add(new Move(Actions.WAIT));
         }
 
-        private void AddSeedAction(Player player, int targetCellIndex, int sourceCellIndex)
+        private void AddSeedAction(IList<Move> moveList, int targetCellIndex, int sourceCellIndex)
         {
             Tree tree = GetTree(targetCellIndex);
             if (tree == null)
             {               
-                player.possibleMoves.Add(new Move(Actions.SEED, sourceCellIndex, targetCellIndex));
+                moveList.Add(new Move(Actions.SEED, sourceCellIndex, targetCellIndex));
             }
         }
 
@@ -461,34 +487,29 @@ namespace GameSolution.Utility
         }
 
         
-        private List<int> GetCacheTreeSize()
-        {
-            return treeSizeKeyToCount;
-        }
-
-        private int GetCacheTreeSizeKey(int size, bool isMe)
+        private List<int> GetCacheTreeSize(bool isMe)
         {
             if (isMe)
-                return size*2;
-            else return size* 2 + 1;
+            {
+                return myTreeSizeKeyToCount;
+            }
+            return opponentTreeSizeKeyToCount;
         }
+
         public int GetCostToSeed(bool isMe = true)
         {
-            int key = GetCacheTreeSizeKey((int)TreeSize.Seed, isMe);
-            return GetCacheTreeSize()[key];
+            return GetCacheTreeSize(isMe)[(int)TreeSize.Seed];
         }
 
         public int GetNumberOfTrees(bool isMe, int size)
         {
-            int key = GetCacheTreeSizeKey(size, isMe);
-            return GetCacheTreeSize()[key];
+            return GetCacheTreeSize(isMe)[size];
         }
 
         public int GetCostToGrow(Tree tree)
         {
             int treeSize = tree.size + 1;
-            int key = GetCacheTreeSizeKey(treeSize, tree.isMine);
-            return GetCacheTreeSize()[key] + treeSizeToCost[treeSize];
+            return GetCacheTreeSize(tree.isMine)[treeSize] + treeSizeToCost[treeSize];
         }
 
         public void ResetPlayers()
@@ -508,7 +529,8 @@ namespace GameSolution.Utility
         public void RemoveTrees()
         {
             treeState = new Tree[board.Count];
-            treeSizeKeyToCount = new List<int>(8) { 0, 0, 0, 0, 0, 0, 0, 0 };
+            myTreeSizeKeyToCount = new List<int>(4) { 0, 0, 0, 0 };
+            opponentTreeSizeKeyToCount = new List<int>(4) { 0, 0, 0, 0 };
             treeCache = new List<Tree>(board.Count);
         }
 
@@ -548,7 +570,7 @@ namespace GameSolution.Utility
             return new GameState(this);
         }
 
-        public int? GetWinner()
+        public double? GetWinner()
         {
             if (day == maxTurns)
             {
@@ -556,11 +578,11 @@ namespace GameSolution.Utility
                 int opponentScore = opponent.GetScore();
                 if (myScore > opponentScore)
                 {
-                    return 1;
+                    return (myScore - opponentScore);
                 }
                 else if (myScore < opponentScore)
                 {
-                    return -1;
+                    return (myScore - opponentScore);
                 }
                 else if (myScore == opponentScore)
                 {
@@ -569,11 +591,11 @@ namespace GameSolution.Utility
 
                     if (countMyTrees > countOppTrees)
                     {
-                        return 1;
+                        return (countMyTrees - countOppTrees) * 0.0001;
                     }
                     else if (countMyTrees < countOppTrees)
                     {
-                        return -1;
+                        return (countMyTrees - countOppTrees) * 0.0001;
                     }
                     else return 0;
                 }

@@ -49,7 +49,7 @@ namespace Algorithms
                 }
                 object move = SelectMove(selectedNode);
                 GameTreeNode childNode = Expand(selectedNode, move);
-                int? winner = childNode.GetWinner();
+                double? winner = childNode.GetWinner();
                 if (winner.HasValue)
                 {
                     BackPropagate(childNode, winner);
@@ -81,16 +81,16 @@ namespace Algorithms
                     bestScore = score;
                 }
                 if(printErrors)
-                    Console.Error.WriteLine($"w: {child.wins} l: {child.loses} d: {child.draws} move: {child.state.GetMove(RootNode.isMax)} score: {score} isMax: {RootNode.isMax}");
+                    Console.Error.WriteLine($"w: {child.wins} l: {child.loses} total: {child.totalPlays} move: {child.state.GetMove(RootNode.isMax)} score: {score} isMax: {RootNode.isMax}");
             }
 
             if(printErrors)
-                Console.Error.WriteLine($"Best: w: {bestChild.wins} l: {bestChild.loses} d: {bestChild.draws}");
+                Console.Error.WriteLine($"Best: w: {bestChild.wins} l: {bestChild.loses} total: {bestChild.totalPlays}");
 
             return bestChild.state.GetMove(RootNode.isMax);
         }
 
-        private void BackPropagate(GameTreeNode selectedNode, int? winner)
+        private void BackPropagate(GameTreeNode selectedNode, double? winner)
         {
             selectedNode.ApplyWinner(winner);
             GameTreeNode tempNode = selectedNode.parent;
@@ -101,9 +101,9 @@ namespace Algorithms
             }
         }
 
-        private int? SimulateGame(IGameState state, Stopwatch watch, int timeLimit, int depth, bool isMax)
+        private double? SimulateGame(IGameState state, Stopwatch watch, int timeLimit, int depth, bool isMax)
         {
-            int? winner;
+            double? winner;
             do
             {
                 object move = SelectMoveAtRandom(state, isMax);

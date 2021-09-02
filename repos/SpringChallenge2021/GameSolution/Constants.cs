@@ -10,12 +10,7 @@ namespace GameSolution
         public const int halfSunReset = sunReset / 2;
         public const int treeCompleteCost = 4;
 
-        public static Dictionary<int, int> treeSizeToCost = new Dictionary<int, int>()
-        {
-            {1,1 },
-            {2,3 },
-            {3,7 }
-        };
+        public static int[] treeSizeToCost = new int[4] { 0, 1, 3, 7 };
 
         public enum Richness
         {

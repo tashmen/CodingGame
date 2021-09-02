@@ -37,7 +37,7 @@ namespace Algorithms
                 double eval = currentNode.Evaluate();
                 return eval;
             }
-            int? winner = currentNode.GetWinner();
+            double? winner = currentNode.GetWinner();
             if (winner.HasValue)
             {
                 return winner.Value;

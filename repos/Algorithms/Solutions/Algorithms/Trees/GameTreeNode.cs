@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Algorithms.Trees
@@ -8,9 +9,9 @@ namespace Algorithms.Trees
         public IGameState state;
         public IList moves;
         public List<GameTreeNode> children;
-        public int wins = 0;
-        public int loses = 0;
-        public int draws = 0;
+        public double wins = 0;
+        public double loses = 0;
+        public int totalPlays = 0;
         public GameTreeNode parent;
         public bool isMax;
 
@@ -31,42 +32,37 @@ namespace Algorithms.Trees
 
             if (isMax)
             {
-                return (wins + draws * 0.5) / totalPlays;
+                return wins / totalPlays;
             }
             else
             {
-                return (loses + draws * 0.5) / totalPlays;
+                return loses / totalPlays;
             }
         }
 
         public int TotalPlays()
         {
-            return wins + loses + draws;
+            return totalPlays;
         }
 
-        public int? GetWinner()
+        public double? GetWinner()
         {
             return state.GetWinner();
         }
 
-        public void ApplyWinner(int? winner)
+        public void ApplyWinner(double? winner)
         {
             if (winner.HasValue)
             {
-                switch (winner.Value)
+                if(winner > 0)
                 {
-                    case 1:
-                        wins++;
-                        break;
-                    case 0:
-                        draws++;
-                        break;
-                    case -1:
-                        loses++;
-                        break;
-                    default:
-                        break;
+                    wins += winner.Value;
                 }
+                else if(winner < 0)
+                {
+                    loses += Math.Abs(winner.Value);
+                }
+                totalPlays++;
             }
         }
 

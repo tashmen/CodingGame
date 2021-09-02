@@ -76,7 +76,7 @@ namespace UnitTest.TwentyOneGame
             };
         }
 
-        public int? GetWinner()
+        public double? GetWinner()
         {
             if (Total >= 21)
             {

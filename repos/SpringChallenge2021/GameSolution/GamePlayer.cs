@@ -15,7 +15,7 @@ public class GamePlayer
         bool isFirstRound = true;
 
         //Minimax search = new Minimax();
-        MonteCarloTreeSearch search = new MonteCarloTreeSearch(false);
+        MonteCarloTreeSearch search = new MonteCarloTreeSearch(false, MonteCarloTreeSearch.SearchStrategy.Sequential);
 
         GameState game = new GameState();
 

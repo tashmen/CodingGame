@@ -35,7 +35,7 @@ namespace Algorithms
         /// Returns whether or not the game is over and who won (1 - max wins, 0 - draw, -1 - min wins, null - game is not over)
         /// </summary>
         /// <returns>Who won the game</returns>
-        int? GetWinner();
+        double? GetWinner();
 
         /// <summary>
         /// Determines if the game state is the same as this one

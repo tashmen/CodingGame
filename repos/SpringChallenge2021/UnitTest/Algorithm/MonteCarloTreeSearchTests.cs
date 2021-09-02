@@ -75,7 +75,7 @@ namespace UnitTest
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
                 search.SetState(game2, true);
-                object moveToPlay = search.GetNextMove(watch, 95, -1, 20);
+                object moveToPlay = search.GetNextMove(watch, 95, -1, 20, 1);
                 Move move = moveToPlay as Move;
 
                 game.ApplyMove(myMove, true);
@@ -92,7 +92,7 @@ namespace UnitTest
             while (game.day < 24);
 
             Console.Error.WriteLine(game.ToString());
-            Assert.Equal(-1, game.GetWinner());
+            Assert.True(game.GetWinner() < 0);
         }
         [Fact]
         public void RandomSimulationTest()
@@ -104,7 +104,7 @@ namespace UnitTest
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
                 search.SetState(game);
-                object moveToPlay = search.GetNextMove(watch, 95, -1, 20);
+                object moveToPlay = search.GetNextMove(watch, 95, -1, 20, 1);
                 Move move = moveToPlay as Move;
                 Console.Error.WriteLine(move.ToString());
 
@@ -117,7 +117,7 @@ namespace UnitTest
             while (game.day < 24);
 
             Console.Error.WriteLine(game.ToString());
-            Assert.Equal(1, game.GetWinner());
+            Assert.True(game.GetWinner() > 0);
         }
     }
 }
