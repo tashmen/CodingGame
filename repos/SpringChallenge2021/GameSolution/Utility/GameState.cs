@@ -139,9 +139,6 @@ namespace GameSolution.Utility
         {
             List<Move> myPossibleMoves = me.possibleMoves;
             List<Move> oppPossibleMoves = opponent.possibleMoves;
-            List<Move> myCompleteMoves = new List<Move>();
-            List<Move> mySeedMoves = new List<Move>();
-            List<Move> myGrowMoves = new List<Move>();
             bool meWaiting = me.isWaiting;
             bool oppWaiting = opponent.isWaiting;
             int mySun = me.sun;
@@ -160,6 +157,19 @@ namespace GameSolution.Utility
             bool canCutMe = false;
             bool canSeedMe = false;
 
+            if (day > 14)
+            {
+                size3TreeToCut--;
+            }
+            if (day > 18)
+            {
+                size3TreeToCut--;
+            }
+            if (day > 20)
+            {
+                size3TreeToCut--;
+            }
+
             if (meWaiting)
             {
                 myPossibleMoves.Add(new Move(Actions.WAIT));
@@ -167,20 +177,6 @@ namespace GameSolution.Utility
             else
             {
                 costToSeedMe = GetCostToSeed(true);
-                
-                if (day > 14)
-                {
-                    size3TreeToCut--;
-                }
-                if (day > 18)
-                {
-                    size3TreeToCut--;
-                }
-                if (day > 20)
-                {
-                    size3TreeToCut--;
-                }
-                
 
                 canCutMe = mySun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(true, (int)TreeSize.Large) > size3TreeToCut || me.score < opponent.score);
                 canSeedMe = mySun >= costToSeedMe && costToSeedMe < 1;//only seed when cost is 0
@@ -189,12 +185,16 @@ namespace GameSolution.Utility
             int costToSeedOpp;
             bool canSeedOpp = false;
             bool canCutOpp = false;
-            if (!oppWaiting)
+            if (oppWaiting)
+            {
+                oppPossibleMoves.Add(new Move(Actions.WAIT));
+            }
+            else
             {
                 costToSeedOpp = GetCostToSeed(false);
 
                 canSeedOpp = oppSun >= costToSeedOpp && costToSeedOpp < 1;//only seed when cost is 0
-                canCutOpp = oppSun >= treeCompleteCost;
+                canCutOpp = oppSun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(false, (int)TreeSize.Large) > size3TreeToCut || me.score > opponent.score);
             }
 
             foreach (Tree tree in TreeEnumeration)
@@ -211,13 +211,13 @@ namespace GameSolution.Utility
                     //Complete Actions
                     if (canCutMe && treeSize == maxTreeSize)
                     {
-                        myCompleteMoves.Add(new Move(Actions.COMPLETE, treeCellIndex));
+                        myPossibleMoves.Add(new Move(Actions.COMPLETE, treeCellIndex));
                     }
 
                     //Grow Actions
                     if (treeSize != maxTreeSize && mySun >= GetCostToGrow(tree))
                     {
-                        myGrowMoves.Add(new Move(Actions.GROW, treeCellIndex));
+                        myPossibleMoves.Add(new Move(Actions.GROW, treeCellIndex));
                     }
 
 
@@ -227,7 +227,7 @@ namespace GameSolution.Utility
                         {
                             foreach (int cellIndex in seedMap.GetSeedMap(treeCellIndex, i))
                             {
-                                AddSeedAction(mySeedMoves, cellIndex, treeCellIndex);
+                                AddSeedAction(myPossibleMoves, cellIndex, treeCellIndex);
                             }
                         }
                     }
@@ -247,9 +247,9 @@ namespace GameSolution.Utility
                     }
 
                     //Seed Actions
-                    if (canSeedOpp && treeSize > 0)
+                    if (canSeedOpp && treeSize > 1)//do not seed with size 1 trees
                     {
-                        for (int i = 1; i <= treeSize; i++)
+                        for (int i = 2; i <= treeSize; i++)//Skip seeding 1 space away
                         {
                             foreach (int cellIndex in seedMap.GetSeedMap(treeCellIndex, i))
                             {
@@ -260,17 +260,15 @@ namespace GameSolution.Utility
                 }
             }
 
-            //Order moves by complete then grow and lastly seed and wait.
-            myPossibleMoves.AddRange(myCompleteMoves);
-            myPossibleMoves.AddRange(myGrowMoves);
-            myPossibleMoves.AddRange(mySeedMoves);
-
-            if ((myPossibleMoves.Count == 0 || mySun < 8) && !meWaiting)
+            if ((myPossibleMoves.Count == 0 || mySun < 3) && !meWaiting)
             {
                 myPossibleMoves.Add(new Move(Actions.WAIT));
             }
 
-            oppPossibleMoves.Add(new Move(Actions.WAIT));
+            if ((oppPossibleMoves.Count == 0 || oppSun < 3) && !oppWaiting)
+            {
+                oppPossibleMoves.Add(new Move(Actions.WAIT));
+            }
         }
 
         private void AddSeedAction(IList<Move> moveList, int targetCellIndex, int sourceCellIndex)
@@ -644,7 +642,7 @@ namespace GameSolution.Utility
 
         public override string ToString()
         {
-            return "n: " + nutrients + "\n" + string.Join("\n", TreeEnumeration.Select(c => c.ToString())) + "\n" + me.ToString() + "\n" + opponent.ToString();
+            return "d: " + day + " n: " + nutrients + "\n" + string.Join("\n", TreeEnumeration.Select(c => c.ToString())) + "\n" + me.ToString() + "\n" + opponent.ToString();
         }
     }
 }
