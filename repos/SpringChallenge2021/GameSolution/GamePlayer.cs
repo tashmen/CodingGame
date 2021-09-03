@@ -107,16 +107,16 @@ public class GamePlayer
             }
             */
 
-            
+            GC.Collect();
 
-            object move;
+            long move;
             int limit = isFirstRound ? 1000 : 98;
-            if (game.day > 5 && game.day < 21)
+            if (true)
             {
                 //Console.Error.WriteLine($"Before search: {watch.ElapsedMilliseconds}ms");
                 search.SetState(game, true, true);
-                object moveToPlay = search.GetNextMove(watch, limit, -1, 20);
-                move = moveToPlay;
+                object moveToPlay = search.GetNextMove(watch, limit, -1, 20, 1);
+                move = (long)moveToPlay;
             }
             else
             {
@@ -129,7 +129,7 @@ public class GamePlayer
 
 
             isFirstRound = false;
-            Console.WriteLine(move);
+            Console.WriteLine(Move.ToString(move));
         }
     }
 }

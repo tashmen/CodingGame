@@ -32,11 +32,11 @@ namespace Algorithms.Trees
 
             if (isMax)
             {
-                return wins / totalPlays;
+                return (wins - loses) / totalPlays;
             }
             else
             {
-                return loses / totalPlays;
+                return (loses - wins) / totalPlays;
             }
         }
 

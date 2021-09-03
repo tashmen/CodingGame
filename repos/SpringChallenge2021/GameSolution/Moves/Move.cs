@@ -69,25 +69,6 @@ namespace GameSolution.Moves
         public static Actions GetType(long move)
         {
             return (Actions)(move & typeBitValue);
-            /*
-            if((move & waitBitValue) == waitBitValue)
-            {
-                return Actions.WAIT;
-            }
-            if((move & seedBitValue) == seedBitValue)
-            {
-                return Actions.SEED;
-            }
-            if((move & growBitValue) == growBitValue)
-            {
-                return Actions.GROW;
-            }
-            if((move & completeBitValue) == completeBitValue)
-            {
-                return Actions.COMPLETE;
-            }
-            throw new InvalidOperationException("invalid type");
-            */
         }
 
         public static int GetSourceIndex(long move)

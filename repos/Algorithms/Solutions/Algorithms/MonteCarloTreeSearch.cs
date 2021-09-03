@@ -71,7 +71,7 @@ namespace Algorithms
             
 
             GameTreeNode bestChild = null;
-            double bestScore = -1;
+            double bestScore = double.MinValue;
             foreach(GameTreeNode child in RootNode.children)
             {
                 double score = child.GetScore(RootNode.isMax);
@@ -163,11 +163,11 @@ namespace Algorithms
                 }
                 else if(tempNode.parent != null)
                 {
-                    double wins = tempNode.isMax ? tempNode.wins : tempNode.loses;
+                    double wins = RootNode.isMax ? tempNode.wins : tempNode.loses;
                     double nodeTotal = tempNode.TotalPlays();
                     double parentTotal = tempNode.parent.TotalPlays();
 
-                    double value = wins / nodeTotal + exploration * Math.Sqrt(Math.Log(parentTotal / nodeTotal));
+                    double value = wins / nodeTotal + exploration * Math.Sqrt(Math.Log(parentTotal) / nodeTotal);
                     if(value > maxValue)
                     {
                         maxValue = value;
