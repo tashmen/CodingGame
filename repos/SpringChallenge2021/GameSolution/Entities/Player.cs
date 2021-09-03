@@ -11,16 +11,16 @@ namespace GameSolution.Entities
         public bool isMe;
 
         //Calculated from the game board
-        public List<Move> possibleMoves { get; set; }
-        public Move movePlayedForCurrentTurn;
-        public Move movePlayedLastTurn;
+        public List<long> possibleMoves { get; set; }
+        public long movePlayedForCurrentTurn;
+        public long movePlayedLastTurn;
 
         public Player(bool isMe)
         {
-            possibleMoves = new List<Move>();
+            possibleMoves = new List<long>();
             this.isMe = isMe;
-            movePlayedForCurrentTurn = null;
-            movePlayedLastTurn = null;
+            movePlayedForCurrentTurn = 0;
+            movePlayedLastTurn = 0;
         }
 
         public Player(Player player)
@@ -30,21 +30,21 @@ namespace GameSolution.Entities
             isWaiting = player.isWaiting;
             isMe = player.isMe;
 
-            possibleMoves = new List<Move>(player.possibleMoves);
+            possibleMoves = new List<long>(player.possibleMoves);
             movePlayedForCurrentTurn = player.movePlayedForCurrentTurn;
             movePlayedLastTurn = player.movePlayedLastTurn;
         }
 
         public void Reset()
         {
-            possibleMoves = new List<Move>();
+            possibleMoves = new List<long>();
             isWaiting = false;
         }
 
         public void ResetMoves()
         {
             movePlayedLastTurn = movePlayedForCurrentTurn;
-            movePlayedForCurrentTurn = null;
+            movePlayedForCurrentTurn = 0;
         }
 
         public int GetScore()
@@ -54,7 +54,7 @@ namespace GameSolution.Entities
 
         public bool Equals(Player player)
         {
-            if (player.isMe == isMe && player.isWaiting == isWaiting && player.score == score && player.sun == sun && (player.movePlayedForCurrentTurn == movePlayedForCurrentTurn || (player.movePlayedForCurrentTurn != null && player.movePlayedForCurrentTurn.Equals(movePlayedForCurrentTurn))))
+            if (player.isMe == isMe && player.isWaiting == isWaiting && player.score == score && player.sun == sun && player.movePlayedForCurrentTurn == movePlayedForCurrentTurn)
             {
                 return true;
             }
@@ -66,7 +66,7 @@ namespace GameSolution.Entities
 
         public override string ToString()
         {
-            string strMove = movePlayedLastTurn != null ? movePlayedLastTurn.ToString() : "";
+            string strMove = Move.ToString(movePlayedLastTurn);
             return $"sun: {sun}, score: {score}, wait: {isWaiting}, me: {isMe} \n {strMove}";
         }
     }

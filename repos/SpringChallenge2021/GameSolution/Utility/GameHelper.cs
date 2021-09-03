@@ -10,19 +10,19 @@ namespace GameSolution.Utility
     public class GameHelper
     {
         private GameState currentState;
-        private List<Move> possibleActions;
+        private List<long> possibleActions;
 
-        public GameHelper(GameState state, List<Move> possibleActions)
+        public GameHelper(GameState state, List<long> possibleActions)
         {
             currentState = state;
             this.possibleActions = possibleActions;
         }
 
-        public Move GetNextMove()
+        public long GetNextMove()
         {
-            Move bestAction = null;
-            Move treeInShadow = FindShadowedTree();
-            if (treeInShadow != null)
+            long bestAction = 0;
+            long treeInShadow = FindShadowedTree();
+            if (treeInShadow != 0)
             {
                 bestAction = treeInShadow;
             }
@@ -31,11 +31,11 @@ namespace GameSolution.Utility
                 bestAction = FindBestFinalTurnsCompleteAction();
             }
             
-            if(bestAction == null)
+            if(bestAction == 0)
             {
                 bestAction = FindBestGrowAction(currentState);
 
-                if (bestAction == null)
+                if (bestAction == 0)
                 {
                     bestAction = FindBestSeedAction();
                 }
@@ -43,17 +43,17 @@ namespace GameSolution.Utility
 
             Console.Error.WriteLine($"Move: {bestAction} : {possibleActions.Count}");
 
-            if (bestAction == null)
+            if (bestAction == 0)
             {
-                return new Move(Actions.WAIT);
+                return Move.CreateMove(Actions.WAIT);
             }
 
             return bestAction;
         }
 
-        private Move FindBestSeedAction()
+        private long FindBestSeedAction()
         {
-            List<Move> actions = possibleActions.Where(a => a.type == Actions.SEED).ToList();
+            List<long> actions = possibleActions.Where(a => Move.GetType(a) == Actions.SEED).ToList();
             int treeCount = currentState.TreeEnumeration.Count(t => t.isMine);
             int seedCount = currentState.TreeEnumeration.Count(t => t.isMine && t.size == 0);
 
@@ -65,11 +65,11 @@ namespace GameSolution.Utility
             if (seedCount <= 0 && maxTurns - currentState.day > 4 && totalSunPower.mySunPower > costToUpgrade)
             {
                 int maxPoints = -9999;
-                Move bestSeedAction = null;
-                foreach (Move move in actions)
+                long bestSeedAction = 0;
+                foreach (long move in actions)
                 {
-                    Cell cell = currentState.board[move.targetCellIdx];
-                    Tree tree = currentState.GetTree(move.sourceCellIdx);
+                    Cell cell = currentState.board[Move.GetTargetIndex(move)];
+                    Tree tree = currentState.GetTree(Move.GetSourceIndex(move));
                     if(tree.size == 1)
                     {
                         continue;
@@ -78,7 +78,7 @@ namespace GameSolution.Utility
                     GameState afterMove = new GameState(currentState);
                     afterMove.ApplyMove(move, afterMove.me);
                     afterMove.AdvanceDay();
-                    afterMove.ApplyMove(new Move(Actions.GROW, cell.index), afterMove.me);
+                    afterMove.ApplyMove(Move.CreateMove(Actions.GROW, cell.index), afterMove.me);
                     
                     SunPower sunPower = CalculateSunPowerForGame(afterMove);
 
@@ -94,7 +94,7 @@ namespace GameSolution.Utility
                 }
                 return bestSeedAction;
             }
-            return null;
+            return 0;
         }
 
         /// <summary>
@@ -148,17 +148,17 @@ namespace GameSolution.Utility
         /// Find trees that are better to cut down then to keep standing
         /// </summary>
         /// <returns></returns>
-        private Move FindShadowedTree()
+        private long FindShadowedTree()
         {
-            List<Move> actions = possibleActions.Where(a => a.type == Actions.COMPLETE).ToList();
+            List<long> actions = possibleActions.Where(a => Move.GetType(a) == Actions.COMPLETE).ToList();
             SunPower sunPowerWithTree = CalculateSunPowerForGame(new GameState(currentState));
 
             int countLevel3Tree = currentState.TreeEnumeration.Count(t => t.size == maxTreeSize);
 
-            foreach (Move move in actions)
+            foreach (long move in actions)
             {
-                Tree tree = currentState.GetTree(move.targetCellIdx);
-                Cell cell = currentState.board[move.targetCellIdx];
+                Tree tree = currentState.GetTree(Move.GetTargetIndex(move));
+                Cell cell = currentState.board[Move.GetTargetIndex(move)];
 
                 int scoreOnCut = currentState.GetTreeCutScore(cell);
                 scoreOnCut -= 1;//take away one point for the sunpower cost
@@ -180,7 +180,7 @@ namespace GameSolution.Utility
                     return move;
                 }
             }
-            return null;
+            return 0;
         }
 
         public static SunPower CalculateSunPowerForGame(GameState state)
@@ -213,19 +213,19 @@ namespace GameSolution.Utility
             return power;
         }
 
-        private Move FindBestGrowAction(GameState state)
+        private long FindBestGrowAction(GameState state)
         {
-            List<Move> actions = possibleActions.Where(a => a.type == Actions.GROW).ToList();
+            List<long> actions = possibleActions.Where(a => Move.GetType(a) == Actions.GROW).ToList();
             int maxPoints = -9999;
-            Move bestGrowAction = null;
+            long bestGrowAction = 0;
             List<Tree> myTrees = state.TreeEnumeration.Where(t => t.isMine).ToList();
             Dictionary<int, int> treeSizeToCount = new Dictionary<int, int>();
             treeSizeToCount[1] = myTrees.Where(t => t.size == 1).Count();
             treeSizeToCount[2] = myTrees.Where(t => t.size == 2).Count();
             treeSizeToCount[3] = myTrees.Where(t => t.size == 3).Count();
-            foreach (Move move in actions)
+            foreach (long move in actions)
             {
-                Cell cell = state.board[move.targetCellIdx];
+                Cell cell = state.board[Move.GetTargetIndex(move)];
                 Tree tree = state.GetTree(cell.index);
                 
                 int treeSizePoints = Math.Max(maxTurns - state.day - maxTreeSize + tree.size, 0);
@@ -254,15 +254,15 @@ namespace GameSolution.Utility
             return bestGrowAction;
         }
 
-        private Move FindBestFinalTurnsCompleteAction()
+        private long FindBestFinalTurnsCompleteAction()
         {
             if (maxTurns - currentState.day == 2)
             {
                 GameState state = new GameState(currentState);
-                Move growMove = FindBestGrowAction(currentState);
-                if (growMove != null)
+                long growMove = FindBestGrowAction(currentState);
+                if (growMove != 0)
                 {
-                    Tree growTree = currentState.GetTree(growMove.targetCellIdx);
+                    Tree growTree = currentState.GetTree(Move.GetTargetIndex(growMove));
                     if (growTree.size == 2)
                     {
                         state.ApplyMove(growMove, state.me);
@@ -273,19 +273,19 @@ namespace GameSolution.Utility
                         Console.Error.WriteLine($"lastTurnPower: {power} treeCount: {level3TreeCountOnHighRichness}");
                         if (power >= (level3TreeCountOnHighRichness) * 4)
                         {
-                            return null;
+                            return 0;
                         }
                     }
                 }
             }
             
-            List<Move> actions = possibleActions.Where(a => a.type == Actions.COMPLETE).ToList();
+            List<long> actions = possibleActions.Where(a => Move.GetType(a) == Actions.COMPLETE).ToList();
             int maxPoints = 0;
-            Move bestAction = null;
-            foreach (Move move in actions)
+            long bestAction = 0;
+            foreach (long move in actions)
             {
-                Tree tree = currentState.GetTree(move.targetCellIdx);
-                Cell cell = currentState.board[move.targetCellIdx];
+                Tree tree = currentState.GetTree(Move.GetTargetIndex(move));
+                Cell cell = currentState.board[Move.GetTargetIndex(move)];
 
                 int points = currentState.GetTreeCutScore(cell);
                 points -= 1;//you lose one point (4 sunpower) to chop a tree

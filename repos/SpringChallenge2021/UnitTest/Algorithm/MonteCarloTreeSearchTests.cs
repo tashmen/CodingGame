@@ -60,7 +60,7 @@ namespace UnitTest
             }
             do
             {
-                Move myMove;
+                long myMove;
                 if (!game.me.isWaiting)
                 {
                     GameState clonedState = game.Clone() as GameState;
@@ -69,14 +69,14 @@ namespace UnitTest
                 }
                 else
                 {
-                    myMove = game.GetMove(true) as Move;
+                    myMove = (long)game.GetMove(true);
                 }
 
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
                 search.SetState(game2, true);
                 object moveToPlay = search.GetNextMove(watch, 95, -1, 20, 1);
-                Move move = moveToPlay as Move;
+                long move = (long)moveToPlay;
 
                 game.ApplyMove(myMove, true);
                 game.ApplyMove(move, false);
@@ -105,12 +105,12 @@ namespace UnitTest
                 watch.Start();
                 search.SetState(game);
                 object moveToPlay = search.GetNextMove(watch, 95, -1, 20, 1);
-                Move move = moveToPlay as Move;
+                long move = (long)moveToPlay;
                 Console.Error.WriteLine(move.ToString());
 
                 watch.Stop();
                 Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-                Move opponentMove = game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)];
+                long opponentMove = game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)];
                 Console.Error.WriteLine($"MCTS: {move.ToString()}, Random: {opponentMove.ToString()}");
                 game.ApplyMoves(move, opponentMove);
             }

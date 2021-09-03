@@ -24,10 +24,10 @@ namespace TestSimulation
                     watch.Start();
                     search.SetState(game);
                     object moveToPlay = search.GetNextMove(watch, 95, -1, 20);
-                    Move move = moveToPlay as Move;
+                    long move = (long)moveToPlay;
                     watch.Stop();
 
-                    Move opponentMove = game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)];
+                    long opponentMove = game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)];
                     game.ApplyMoves(move, opponentMove);
                 }
                 while (game.day < 24);

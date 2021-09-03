@@ -61,7 +61,7 @@ namespace UnitTest
                 watch.Start();
                 search.SetState(game);
                 object moveToPlay = search.GetNextMove(watch, 100);
-                Move move = moveToPlay as Move;
+                long move = (long)moveToPlay;
                 Console.Error.WriteLine(move.ToString());
 
                 watch.Stop();

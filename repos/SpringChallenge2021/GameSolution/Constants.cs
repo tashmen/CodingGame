@@ -28,7 +28,15 @@ namespace GameSolution
             Large = 3
         }
 
-        public static class Actions
+        public enum Actions
+        {
+            WAIT = 1,
+            SEED = 2,
+            GROW = 4,
+            COMPLETE = 8
+        }
+
+        public static class ActionsString
         {
             public const string WAIT = "WAIT";
             public const string SEED = "SEED";

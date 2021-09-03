@@ -81,7 +81,7 @@ namespace UnitTest
             double totalMovesPlayed = 0;
             GameState clone = game.Clone() as GameState;
             watch.Start();
-            for (int i = 0; i < 50000; i++)
+            for (int i = 0; i < 500000; i++)
             {
                 game.ApplyMoves(game.me.possibleMoves[rand.Next(0, game.me.possibleMoves.Count)], game.opponent.possibleMoves[rand.Next(0, game.opponent.possibleMoves.Count)]);
                 totalMovesPlayed += 2;
@@ -101,7 +101,7 @@ namespace UnitTest
         {
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            double numberOfClones = 100000.0;
+            double numberOfClones = 1000000.0;
             for (int i = 0; i < numberOfClones; i++)
             {
                 var clone = game.Clone();
@@ -117,7 +117,7 @@ namespace UnitTest
         {
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            double numberOfUpdates = 100000.0;
+            double numberOfUpdates = 1000000.0;
             for (int i = 0; i < numberOfUpdates; i++)
             {
                 game.UpdateGameState();

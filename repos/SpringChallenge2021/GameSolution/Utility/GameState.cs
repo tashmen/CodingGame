@@ -137,8 +137,8 @@ namespace GameSolution.Utility
 
         private void CalculateMoves()
         {
-            List<Move> myPossibleMoves = me.possibleMoves;
-            List<Move> oppPossibleMoves = opponent.possibleMoves;
+            List<long> myPossibleMoves = me.possibleMoves;
+            List<long> oppPossibleMoves = opponent.possibleMoves;
             bool meWaiting = me.isWaiting;
             bool oppWaiting = opponent.isWaiting;
             int mySun = me.sun;
@@ -172,7 +172,7 @@ namespace GameSolution.Utility
 
             if (meWaiting)
             {
-                myPossibleMoves.Add(new Move(Actions.WAIT));
+                myPossibleMoves.Add(Move.CreateMove(Actions.WAIT));
             }
             else
             {
@@ -187,7 +187,7 @@ namespace GameSolution.Utility
             bool canCutOpp = false;
             if (oppWaiting)
             {
-                oppPossibleMoves.Add(new Move(Actions.WAIT));
+                oppPossibleMoves.Add(Move.CreateMove(Actions.WAIT));
             }
             else
             {
@@ -211,13 +211,13 @@ namespace GameSolution.Utility
                     //Complete Actions
                     if (canCutMe && treeSize == maxTreeSize)
                     {
-                        myPossibleMoves.Add(new Move(Actions.COMPLETE, treeCellIndex));
+                        myPossibleMoves.Add(Move.CreateMove(Actions.COMPLETE, treeCellIndex));
                     }
 
                     //Grow Actions
                     if (treeSize != maxTreeSize && mySun >= GetCostToGrow(tree))
                     {
-                        myPossibleMoves.Add(new Move(Actions.GROW, treeCellIndex));
+                        myPossibleMoves.Add(Move.CreateMove(Actions.GROW, treeCellIndex));
                     }
 
 
@@ -237,13 +237,13 @@ namespace GameSolution.Utility
                     //Complete Actions
                     if (canCutOpp && treeSize == maxTreeSize)
                     {
-                        oppPossibleMoves.Add(new Move(Actions.COMPLETE, treeCellIndex));
+                        oppPossibleMoves.Add(Move.CreateMove(Actions.COMPLETE, treeCellIndex));
                     }
 
                     //Grow Actions
                     if (treeSize != maxTreeSize && oppSun >= GetCostToGrow(tree))
                     {
-                        oppPossibleMoves.Add(new Move(Actions.GROW, treeCellIndex));
+                        oppPossibleMoves.Add(Move.CreateMove(Actions.GROW, treeCellIndex));
                     }
 
                     //Seed Actions
@@ -262,21 +262,21 @@ namespace GameSolution.Utility
 
             if ((myPossibleMoves.Count == 0 || mySun < 3) && !meWaiting)
             {
-                myPossibleMoves.Add(new Move(Actions.WAIT));
+                myPossibleMoves.Add(Move.CreateMove(Actions.WAIT));
             }
 
             if ((oppPossibleMoves.Count == 0 || oppSun < 3) && !oppWaiting)
             {
-                oppPossibleMoves.Add(new Move(Actions.WAIT));
+                oppPossibleMoves.Add(Move.CreateMove(Actions.WAIT));
             }
         }
 
-        private void AddSeedAction(IList<Move> moveList, int targetCellIndex, int sourceCellIndex)
+        private void AddSeedAction(IList<long> moveList, int targetCellIndex, int sourceCellIndex)
         {
             Tree tree = GetTree(targetCellIndex);
             if (tree == null)
             {               
-                moveList.Add(new Move(Actions.SEED, sourceCellIndex, targetCellIndex));
+                moveList.Add(Move.CreateMove(Actions.SEED, sourceCellIndex, targetCellIndex));
             }
         }
 
@@ -337,16 +337,16 @@ namespace GameSolution.Utility
         /// </summary>
         /// <param name="myMove">The move I am making</param>
         /// <param name="opponentMove">The move my opponent is making</param>
-        public void ApplyMoves(Move myMove, Move opponentMove)
+        public void ApplyMoves(long myMove, long opponentMove)
         {
-            switch (myMove.type)
+            switch (Move.GetType(myMove))
             {
                 case Actions.SEED:
-                    if(opponentMove.type == Actions.SEED && myMove.targetCellIdx == opponentMove.targetCellIdx)
+                    if(Move.GetType(opponentMove) == Actions.SEED && Move.GetTargetIndex(myMove) == Move.GetTargetIndex(opponentMove))
                     {
-                        Tree sourceTree = GetTree(myMove.sourceCellIdx);
+                        Tree sourceTree = GetTree(Move.GetSourceIndex(myMove));
                         sourceTree.SetDormant(true);
-                        sourceTree = GetTree(opponentMove.sourceCellIdx);
+                        sourceTree = GetTree(Move.GetSourceIndex(opponentMove));
                         sourceTree.SetDormant(true);
                     }
                     else
@@ -362,11 +362,11 @@ namespace GameSolution.Utility
             }
 
             int countComplete = 0;
-            if(myMove.type == Actions.COMPLETE)
+            if(Move.GetType(myMove) == Actions.COMPLETE)
             {
                 countComplete++;
             }
-            if(opponentMove.type == Actions.COMPLETE)
+            if(Move.GetType(opponentMove) == Actions.COMPLETE)
             {
                 countComplete++;
             }
@@ -391,10 +391,10 @@ namespace GameSolution.Utility
         /// </summary>
         /// <param name="move">The move to play</param>
         /// <param name="player">The player who made the move</param>
-        public void ApplyMove(Move move, Player player, bool updateState = true, bool updateNutrients = true)
+        public void ApplyMove(long move, Player player, bool updateState = true, bool updateNutrients = true)
         {
-            int targetIndex = move.targetCellIdx;
-            int sourceIndex = move.sourceCellIdx;
+            int targetIndex = Move.GetTargetIndex(move);
+            int sourceIndex = Move.GetSourceIndex(move);
             Tree targetTree = null;
             Tree sourceTree = null;
 
@@ -406,7 +406,7 @@ namespace GameSolution.Utility
             {
                 sourceTree = GetTree(sourceIndex);
             }
-            switch (move.type)
+            switch (Move.GetType(move))
             {
                 case Actions.COMPLETE:
                     if(player.sun < treeCompleteCost)
@@ -540,16 +540,16 @@ namespace GameSolution.Utility
 
         public void ApplyMove(object move, bool isMax)
         {
-            if (isMax && opponent.movePlayedForCurrentTurn != null)
+            if (isMax && opponent.movePlayedForCurrentTurn != 0)
             {
                 throw new Exception("Expected opponent's move to be empty");
             }
 
             Player player = isMax ? me : opponent;
-            Move movePlayer = move as Move;
+            long movePlayer = (long)move;
             player.movePlayedForCurrentTurn = movePlayer;
 
-            if(me.movePlayedForCurrentTurn != null && opponent.movePlayedForCurrentTurn != null)
+            if(me.movePlayedForCurrentTurn != 0 && opponent.movePlayedForCurrentTurn != 0)
             {
                 ApplyMoves(me.movePlayedForCurrentTurn, opponent.movePlayedForCurrentTurn);
             }
@@ -558,7 +558,7 @@ namespace GameSolution.Utility
         public object GetMove(bool isMax)
         {
             Player player = isMax ? me : opponent;
-            if (player.movePlayedForCurrentTurn != null)
+            if (player.movePlayedForCurrentTurn != 0)
                 return player.movePlayedForCurrentTurn;
             else return player.movePlayedLastTurn;
         }

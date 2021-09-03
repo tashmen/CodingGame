@@ -76,12 +76,12 @@ public class GamePlayer
                 game.AddTree(tree);
             }
 
-            List<Move> possibleActions = new List<Move>();
+            List<long> possibleActions = new List<long>();
             int numberOfPossibleMoves = int.Parse(Console.ReadLine());
             for (int i = 0; i < numberOfPossibleMoves; i++)
             {
                 string possibleMove = Console.ReadLine();
-                Move movePlayer = Move.Parse(possibleMove);
+                long movePlayer = Move.Parse(possibleMove);
                 possibleActions.Add(movePlayer);
             }
 
