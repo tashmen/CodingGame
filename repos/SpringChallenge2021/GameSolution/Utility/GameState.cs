@@ -178,7 +178,7 @@ namespace GameSolution.Utility
             {
                 costToSeedMe = GetCostToSeed(true);
 
-                canCutMe = mySun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(true, (int)TreeSize.Large) > size3TreeToCut || me.score < opponent.score);
+                canCutMe = day > 11 && mySun >= treeCompleteCost && (day > 22 || GetNumberOfTrees(true, (int)TreeSize.Large) > size3TreeToCut);
                 canSeedMe = mySun >= costToSeedMe && costToSeedMe < 1;//only seed when cost is 0
             }
 
@@ -194,7 +194,7 @@ namespace GameSolution.Utility
                 costToSeedOpp = GetCostToSeed(false);
 
                 canSeedOpp = oppSun >= costToSeedOpp && costToSeedOpp < 1;//only seed when cost is 0
-                canCutOpp = oppSun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(false, (int)TreeSize.Large) > size3TreeToCut || me.score > opponent.score);
+                canCutOpp = day > 11 && oppSun >= treeCompleteCost && (day > 20 || GetNumberOfTrees(false, (int)TreeSize.Large) > size3TreeToCut);
             }
 
             foreach (Tree tree in TreeEnumeration)
@@ -227,7 +227,17 @@ namespace GameSolution.Utility
                         {
                             foreach (int cellIndex in seedMap.GetSeedMap(treeCellIndex, i))
                             {
-                                AddSeedAction(myPossibleMoves, cellIndex, treeCellIndex);
+                                bool canSeed = true;
+                                foreach(int treeCheckIndex in seedMap.GetSeedMap(cellIndex, 1))
+                                {
+                                    Tree treeCheck = GetTree(treeCheckIndex);
+                                    if (treeCheck != null && treeCheck.isMine)
+                                    {
+                                        canSeed = false;
+                                    }
+                                }
+                                if(canSeed)
+                                    AddSeedAction(myPossibleMoves, cellIndex, treeCellIndex);
                             }
                         }
                     }
@@ -253,7 +263,17 @@ namespace GameSolution.Utility
                         {
                             foreach (int cellIndex in seedMap.GetSeedMap(treeCellIndex, i))
                             {
-                                AddSeedAction(oppPossibleMoves, cellIndex, treeCellIndex);
+                                bool canSeed = true;
+                                foreach (int treeCheckIndex in seedMap.GetSeedMap(cellIndex, 1))
+                                {
+                                    Tree treeCheck = GetTree(treeCheckIndex);
+                                    if (treeCheck != null && !treeCheck.isMine)
+                                    {
+                                        canSeed = false;
+                                    }
+                                }
+                                if (canSeed)
+                                    AddSeedAction(oppPossibleMoves, cellIndex, treeCellIndex);
                             }
                         }
                     } 
