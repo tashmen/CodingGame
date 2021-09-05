@@ -67,7 +67,7 @@
 
         public override string ToString()
         {
-            return $"i: {cellIndex} s: {size} me: {isMine} d: {isDormant}";
+            return $"i: {cellIndex} s: {size} me: {isMine} d: {isDormant}, ss: {isSpookyShadow}";
         }
 
         public bool Equals(Tree tree)

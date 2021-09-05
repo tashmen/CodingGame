@@ -58,6 +58,8 @@ namespace UnitTest
             {
                 tree.ChangeOwnership();
             }
+            game2.ChangeTreeOwnership();
+
             do
             {
                 long myMove;

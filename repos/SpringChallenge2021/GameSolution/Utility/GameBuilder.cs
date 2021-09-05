@@ -53,13 +53,16 @@ namespace GameSolution.Utility
             game.board.Insert(33, new Cell(33, 1, new int[] { 34, 17, 16, 32, -1, -1 }));
             game.board.Insert(34, new Cell(34, 1, new int[] { -1, 35, 17, 33, -1, -1 }));
             game.board.Insert(35, new Cell(35, 1, new int[] { -1, 36, 18, 17, 34, -1 }));
-            game.board.Insert(36, new Cell(36, 1, new int[] { -1, 7, 18, 35, -1, -1 }));
+            game.board.Insert(36, new Cell(36, 1, new int[] { -1, 19, 7, 18, 35, -1 }));
 
-            SeedMap seedMap = new SeedMap(game.board);
-            game.seedMap = seedMap;
+            SeedMapMask seedMapMask = new SeedMapMask(game.board);
+            game.seedMapMask = seedMapMask;
 
             ShadowMap shadowMap = new ShadowMap(game.board);
             game.shadowMap = shadowMap;
+
+            //ShadowMapMask shadowMapMask = new ShadowMapMask(game.board);
+            //game.shadowMapMask = shadowMapMask;
 
             game.ResetTrees();
             game.ResetPlayers();

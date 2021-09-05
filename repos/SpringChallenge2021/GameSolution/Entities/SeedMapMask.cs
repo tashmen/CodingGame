@@ -6,20 +6,17 @@ namespace GameSolution.Entities
     /// <summary>
     /// This map is intended to calculate all the indices where a seed can be placed at differing sizes
     /// </summary>
-    public class SeedMap
+    public class SeedMapMask
     {
-        public List<int>[][] seedMapByCellThenSize;
+        public long[][] seedMapByCellThenSize;
 
-        public SeedMap(List<Cell> board)
+        public SeedMapMask(List<Cell> board)
         {
-            seedMapByCellThenSize = new List<int>[board.Count][];
+            seedMapByCellThenSize = new long[board.Count][];
             foreach(Cell cell in board)
             {
                 int currentCellIndex = cell.index;
-                seedMapByCellThenSize[currentCellIndex] = new List<int>[maxTreeSize];
-                seedMapByCellThenSize[currentCellIndex][0] = new List<int>(sunReset);
-                seedMapByCellThenSize[currentCellIndex][1] = new List<int>(sunReset * 2);
-                seedMapByCellThenSize[currentCellIndex][2] = new List<int>(sunReset * 3);
+                seedMapByCellThenSize[currentCellIndex] = new long[maxTreeSize] { 0, 0, 0 };
 
                 for (int i = 0; i < sunReset; i++)
                 {
@@ -34,7 +31,7 @@ namespace GameSolution.Entities
                         current = board[index];
 
                         if(current.richness != (int)Richness.Unusable)
-                            seedMapByCellThenSize[currentCellIndex][tSize].Add(index);
+                            seedMapByCellThenSize[currentCellIndex][tSize] |= BitFunctions.GetBitMask(index);
 
                         Cell tempCurrent = current;
                         for (int tempTSize = tSize + 1; tempTSize < maxTreeSize; tempTSize++)
@@ -47,14 +44,24 @@ namespace GameSolution.Entities
                             tempCurrent = board[cellIndex];
 
                             if (tempCurrent.richness != (int)Richness.Unusable)
-                                seedMapByCellThenSize[currentCellIndex][tempTSize].Add(cellIndex);
+                                seedMapByCellThenSize[currentCellIndex][tempTSize] |= BitFunctions.GetBitMask(cellIndex);
                         }
                     }
                 }
             }
         }
 
-        public List<int> GetSeedMap(int cellIndex, int treeSize)
+        public long GetSeedMap(int cellIndex, int treeSize, int startSize)
+        {
+            long seedMap = 0;
+            for(int i = startSize - 1; i<treeSize; i++)
+            {
+                seedMap |= seedMapByCellThenSize[cellIndex][i];
+            }
+            return seedMap;
+        }
+
+        public long GetSeedMap(int cellIndex, int treeSize)
         {
             return seedMapByCellThenSize[cellIndex][treeSize - 1];
         }

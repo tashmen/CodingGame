@@ -46,12 +46,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Algorithm\Combined.cs" />
+    <Compile Include="Entities\BitFunctions.cs" />
     <Compile Include="Entities\Cell.cs" />
     <Compile Include="Entities\Player.cs" />
+    <Compile Include="Entities\SeedMapMask.cs" />
     <Compile Include="Entities\SeedMap.cs" />
+    <Compile Include="Entities\ShadowMapMask.cs" />
     <Compile Include="Entities\ShadowMap.cs" />
     <Compile Include="Entities\SunPower.cs" />
     <Compile Include="Entities\Tree.cs" />
+    <Compile Include="Entities\TreeState.cs" />
     <Compile Include="Moves\Move.cs" />
     <Compile Include="GamePlayer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
