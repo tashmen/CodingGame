@@ -1,4 +1,4 @@
-﻿namespace GameSolution.Entities
+﻿namespace Algorithms.Utility
 {
     public static class BitFunctions
     {

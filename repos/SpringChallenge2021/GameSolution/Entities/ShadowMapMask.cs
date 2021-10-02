@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Algorithms.Utility;
+using System.Collections.Generic;
 using static GameSolution.Constants;
 
 namespace GameSolution.Entities

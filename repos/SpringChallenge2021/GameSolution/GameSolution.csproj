@@ -46,7 +46,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Algorithm\Combined.cs" />
-    <Compile Include="Entities\BitFunctions.cs" />
     <Compile Include="Entities\Cell.cs" />
     <Compile Include="Entities\Player.cs" />
     <Compile Include="Entities\SeedMapMask.cs" />
