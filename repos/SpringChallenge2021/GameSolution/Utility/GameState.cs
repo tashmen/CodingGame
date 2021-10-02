@@ -208,7 +208,7 @@ namespace GameSolution.Utility
                             {
                                 if ((seedableLocations & 1) == 1)
                                 {
-                                    if ((seedMapMask.GetSeedMap(targetCellIndex, (int)TreeSize.Small) & allTrees) == 0)
+                                    if ((seedMapMask.GetSeedMap(targetCellIndex, (int)TreeSize.Small) & allTrees) == 0)//Don't seed next to own trees
                                     {
                                         possibleMoves.Add(Move.CreateMove(Actions.SEED, cellIndex, targetCellIndex));
                                     }

@@ -113,7 +113,7 @@ public class GamePlayer
             GC.Collect();
 
             long move;
-            int limit = isFirstRound ? 1000 : 98;
+            int limit = isFirstRound ? 998 : 98;
             if (true)
             {
                 //Console.Error.WriteLine($"Before search: {watch.ElapsedMilliseconds}ms");

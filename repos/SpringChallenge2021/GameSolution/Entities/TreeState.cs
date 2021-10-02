@@ -14,6 +14,8 @@ namespace GameSolution.Entities
         private long isOppLocations = 0;
         private long isDormant = 0;
         private long isSpookyShadow = 0;
+        private int[] treeCountCacheMe = new int[4] { -1, -1, -1, -1 };
+        private int[] treeCountCacheOpp = new int[4] { -1, -1, -1, -1 };
 
         public bool Equals(TreeState otherState)
         {
@@ -49,6 +51,9 @@ namespace GameSolution.Entities
             ref long location = ref GetLocation(tree.size);
             ref long player = ref GetPlayer(tree.isMine);
 
+            var treeCountCache = tree.isMine ? treeCountCacheMe : treeCountCacheOpp;
+            treeCountCache[tree.size] = GetCount(tree.size, tree.isMine) + 1;
+
             location = BitFunctions.SetBit(location, tree.cellIndex);
             player = BitFunctions.SetBit(player, tree.cellIndex);
             emptyLocations = BitFunctions.ClearBit(emptyLocations, tree.cellIndex);
@@ -61,6 +66,10 @@ namespace GameSolution.Entities
             ref long location = ref GetLocation(tree.size);
             ref long newLocation = ref GetLocation(tree.size + 1);
 
+            var treeCountCache = tree.isMine ? treeCountCacheMe : treeCountCacheOpp;
+            treeCountCache[tree.size] = GetCount(tree.size, tree.isMine) - 1;
+            treeCountCache[tree.size + 1] = GetCount(tree.size + 1, tree.isMine) + 1;
+
             location = BitFunctions.ClearBit(location, tree.cellIndex);
             newLocation = BitFunctions.SetBit(newLocation, tree.cellIndex);
             isDormant = BitFunctions.SetBit(isDormant, tree.cellIndex);
@@ -70,6 +79,9 @@ namespace GameSolution.Entities
         {
             ref long location = ref GetLocation(tree.size);
             ref long player = ref GetPlayer(tree.isMine);
+
+            var treeCountCache = tree.isMine ? treeCountCacheMe : treeCountCacheOpp;
+            treeCountCache[tree.size] = GetCount(tree.size, tree.isMine) - 1;
 
             location = BitFunctions.ClearBit(location, tree.cellIndex);
             player = BitFunctions.ClearBit(player, tree.cellIndex);
@@ -131,10 +143,16 @@ namespace GameSolution.Entities
 
         public int GetCount(int treeSize, bool isMe)
         {
-            long location = GetLocation(treeSize);
-            long player = GetPlayer(isMe);
+            var treeCountCache = isMe ? treeCountCacheMe : treeCountCacheOpp;
+            if(treeCountCache[treeSize] == -1)
+            {
+                long location = GetLocation(treeSize);
+                long player = GetPlayer(isMe);
 
-            return BitFunctions.NumberOfSetBits(location & player);
+                treeCountCache[treeSize] = BitFunctions.NumberOfSetBits(location & player);
+            }
+            
+            return treeCountCache[treeSize];
         }
 
         public int GetCountForSun(int treeSize, bool isMe)
