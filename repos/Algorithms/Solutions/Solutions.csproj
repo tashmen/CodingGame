@@ -57,6 +57,7 @@
     <Compile Include="GameComponents\IGameState.cs" />
     <Compile Include="Algorithms\MonteCarloTreeSearch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utility\BitFunctions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
