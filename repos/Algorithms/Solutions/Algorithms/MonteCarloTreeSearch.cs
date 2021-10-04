@@ -183,6 +183,10 @@ namespace Algorithms
         private object SelectMoveAtRandom(IGameState state, bool isMax)
         {
             IList moves = state.GetPossibleMoves(isMax);
+            if (moves.Count == 0)
+            {
+                throw new Exception("No moves available!");
+            }
             int index = rand.Next(0, moves.Count);
             return moves[index];
         }

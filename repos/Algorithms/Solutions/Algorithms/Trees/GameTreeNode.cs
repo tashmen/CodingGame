@@ -18,7 +18,11 @@ namespace Algorithms.Trees
         public GameTreeNode(IGameState state, bool isMax, GameTreeNode parent = null)
         {
             this.state = state;
-            moves = state.GetPossibleMoves(isMax);
+            moves = new List<object>();
+            foreach(object obj in state.GetPossibleMoves(isMax))
+            {
+                moves.Add(obj);
+            }
             children = new List<GameTreeNode>();
             this.parent = parent;
             this.isMax = isMax;

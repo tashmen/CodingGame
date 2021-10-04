@@ -12,7 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Combined.cs = Combined.cs
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "IntegrationTests\IntegrationTests.csproj", "{059B5315-F51D-489F-80E1-997B680DF355}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IntegrationTests", "IntegrationTests\IntegrationTests.csproj", "{059B5315-F51D-489F-80E1-997B680DF355}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSimulation", "TestSimulation\TestSimulation.csproj", "{FA3A1E58-65C0-4101-B824-54CF0FB87666}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{059B5315-F51D-489F-80E1-997B680DF355}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{059B5315-F51D-489F-80E1-997B680DF355}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{059B5315-F51D-489F-80E1-997B680DF355}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA3A1E58-65C0-4101-B824-54CF0FB87666}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA3A1E58-65C0-4101-B824-54CF0FB87666}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA3A1E58-65C0-4101-B824-54CF0FB87666}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA3A1E58-65C0-4101-B824-54CF0FB87666}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

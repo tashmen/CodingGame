@@ -4,16 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{7C9392F8-6783-49CD-86E8-E3ED6666DD6C}</ProjectGuid>
+    <ProjectGuid>{FA3A1E58-65C0-4101-B824-54CF0FB87666}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>GameSolution</RootNamespace>
-    <AssemblyName>GameSolution</AssemblyName>
+    <RootNamespace>TestSimulation</RootNamespace>
+    <AssemblyName>TestSimulation</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <LangVersion>8.0</LangVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -45,20 +43,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Algorithms\Combined.cs" />
-    <Compile Include="Entities\Board.cs" />
-    <Compile Include="Entities\Move.cs" />
-    <Compile Include="Game\GameState.cs" />
-    <Compile Include="Player.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\GameSolution\GameSolution.csproj">
+      <Project>{7C9392F8-6783-49CD-86E8-E3ED6666DD6C}</Project>
+      <Name>GameSolution</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>C:\Users\jnorc\source\repos\SourceCombiner\SourceCombine\bin\Release\SourceCombine.exe $(ProjectPath) $(SolutionDir)\Combined.cs false $(ProjectDir)</PostBuildEvent>
-  </PropertyGroup>
 </Project>
