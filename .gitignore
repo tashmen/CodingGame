@@ -1,0 +1,7 @@
+*.pdb
+*.idb
+\debug
+\.vs
+\obj
+\bin
+\packages
