@@ -48,6 +48,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Algorithms\Genetic\GeneticAlgorithm.cs" />
+    <Compile Include="Algorithms\Genetic\Individual.cs" />
+    <Compile Include="Algorithms\Genetic\Population.cs" />
+    <Compile Include="Algorithms\NeuralNetwork\NeuralNetwork.cs" />
+    <Compile Include="Algorithms\NeuralNetwork\Neuron.cs" />
+    <Compile Include="Algorithms\NeuralNetwork\NeuronLayer.cs" />
     <Compile Include="Algorithms\TreeAlgorithm.cs" />
     <Compile Include="Algorithms\Trees\GameTreeNode.cs" />
     <Compile Include="Graph\Graph.cs" />
