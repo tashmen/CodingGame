@@ -12,22 +12,13 @@ namespace GameSolution.Game
     public class NeuralGameHelper
     {
         public GameState state;
-        public NeuralNetwork heroNet1;
-        public NeuralNetwork heroNet2;
-        public NeuralNetwork heroNet3;
         public NeuralNetwork heroNet;
 
         public NeuralGameHelper(GameState state)
         {
             this.state = state;
 
-            heroNet1 = new NeuralNetwork(4, new int[] { 354, 177, 60, 15 }, 354);
-
-            /*
-            heroNet1 = new NeuralNetwork(4, new int[] { 118, 59, 20, 5 }, 118);
-            heroNet2 = new NeuralNetwork(4, new int[] { 118, 59, 20, 5 }, 118);
-            heroNet3 = new NeuralNetwork(4, new int[] { 118, 59, 20, 5 }, 118);
-            */
+            heroNet = new NeuralNetwork(4, new int[] { 354, 177, 60, 15 }, 354);
         }
 
         public void ImportNetworkFromFile(string fileName)
@@ -35,11 +26,6 @@ namespace GameSolution.Game
             using (var reader = new BinaryReader(new FileStream(fileName, FileMode.Open)))
             {
                 heroNet = new NeuralNetwork(reader);
-                /*
-                heroNet1 = new NeuralNetwork(reader);
-                heroNet2 = new NeuralNetwork(reader);
-                heroNet3 = new NeuralNetwork(reader);
-                */
             }   
         }
 
@@ -47,9 +33,7 @@ namespace GameSolution.Game
         {
             using (var writer = new BinaryWriter(new FileStream(fileName, FileMode.Create)))
             {
-                heroNet1.Save(writer);
-                heroNet2.Save(writer);
-                heroNet3.Save(writer);
+                heroNet.Save(writer);
             }
         }
 
@@ -58,14 +42,44 @@ namespace GameSolution.Game
             var game = state;
 
             Move move = new Move();
-            AddMoveForHero(game.board.myHeroes[0], move, heroNet1);
-            AddMoveForHero(game.board.myHeroes[1], move, heroNet2);
-            AddMoveForHero(game.board.myHeroes[2], move, heroNet3);
+
+            double[] neuralInputs = new double[354];
+
+            var distToBoardPiece1 = AddNeuralInputsForHero(game.board.myHeroes[0], move, heroNet, 0, ref neuralInputs);
+            var distToBoardPiece2 = AddNeuralInputsForHero(game.board.myHeroes[1], move, heroNet, 118, ref neuralInputs);
+            var distToBoardPiece3 = AddNeuralInputsForHero(game.board.myHeroes[2], move, heroNet, 236, ref neuralInputs);
+
+            var output = heroNet.output(neuralInputs);
+
+            ConvertOutputToMove(output, 0, move, distToBoardPiece1);
+            ConvertOutputToMove(output, 5, move, distToBoardPiece2);
+            ConvertOutputToMove(output, 10, move, distToBoardPiece3);
 
             return move;
         }
 
-        public void AddMoveForHero(Hero heroIn, Move move, NeuralNetwork heroNetIn)
+        public void ConvertOutputToMove(double[] output, int index, Move move, List<Tuple<double, BoardPiece>> distToBoardPiece)
+        {
+            int moveType = (int)(output[index++] * 3);
+            int x1 = (int)(output[index++] * 17630);
+            int y1 = (int)(output[index++] * 9000);
+            int spellType = (int)(output[index++] * 3);
+            int entityId = distToBoardPiece[(int)(output[index++] * distToBoardPiece.Count)].Item2.id;
+            switch (moveType)
+            {
+                case (int)MoveType.MOVE:
+                    move.AddHeroMove(x1, y1);
+                    break;
+                case (int)MoveType.SPELL:
+                    move.AddSpellMove(x1, y1, (SpellType)spellType, entityId);
+                    break;
+                case (int)MoveType.WAIT:
+                    move.AddWaitMove();
+                    break;
+            }
+        }
+
+        public List<Tuple<double, BoardPiece>> AddNeuralInputsForHero(Hero heroIn, Move move, NeuralNetwork heroNetIn, int neuralIndex, ref double[] neuralInputs)
         {
             var game = state;
             var distToBoardPiece = new List<Tuple<double, BoardPiece>>();
@@ -79,17 +93,15 @@ namespace GameSolution.Game
 
             distToBoardPiece = distToBoardPiece.OrderBy(bp => bp.Item1).ToList();
 
-            double[] neuralInputs = new double[118];
-            neuralInputs[0] = game.board.myBase.health;
-            neuralInputs[1] = game.board.myBase.mana;
-            neuralInputs[2] = game.board.myBase.x;
-            neuralInputs[3] = game.board.myBase.y;
-            neuralInputs[4] = game.board.opponentBase.health;
-            neuralInputs[5] = game.board.opponentBase.mana;
-            neuralInputs[6] = game.board.opponentBase.x;
-            neuralInputs[7] = game.board.opponentBase.y;
-
-            var neuralIndex = 8;
+            
+            neuralInputs[neuralIndex++] = game.board.myBase.health;
+            neuralInputs[neuralIndex++] = game.board.myBase.mana;
+            neuralInputs[neuralIndex++] = game.board.myBase.x;
+            neuralInputs[neuralIndex++] = game.board.myBase.y;
+            neuralInputs[neuralIndex++] = game.board.opponentBase.health;
+            neuralInputs[neuralIndex++] = game.board.opponentBase.mana;
+            neuralInputs[neuralIndex++] = game.board.opponentBase.x;
+            neuralInputs[neuralIndex++] = game.board.opponentBase.y;
 
             for (int i = 0; i < 10; i++)
             {
@@ -135,28 +147,8 @@ namespace GameSolution.Game
                     }
                 }
             }
-            
 
-
-            var output1 = heroNetIn.output(neuralInputs);
-
-            int moveType = (int)(output1[0] * 3);
-            int x1 = (int)(output1[1] * 17630);
-            int y1 = (int)(output1[2] * 9000);
-            int spellType = (int)(output1[3] * 3);
-            int entityId = distToBoardPiece[(int)(output1[4] * distToBoardPiece.Count)].Item2.id;
-            switch (moveType)
-            {
-                case (int)MoveType.MOVE:
-                    move.AddHeroMove(x1, y1);
-                    break;
-                case (int)MoveType.SPELL:
-                    move.AddSpellMove(x1, y1, (SpellType)spellType, entityId);
-                    break;
-                case (int)MoveType.WAIT:
-                    move.AddWaitMove();
-                    break;
-            }
+            return distToBoardPiece;
         }
     }
 }
