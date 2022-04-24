@@ -72,14 +72,24 @@ namespace GameSolution.Entities
         {
             if (!distanceHash.ContainsKey(piece.id))
             {
-                distanceHash[piece.id] = GetDistance(piece.x, x, piece.y, y);
+                distanceHash[piece.id] = GetDistance(piece.x, piece.y, x, y);
             }
             return distanceHash[piece.id];
         } 
 
-        public static double GetDistance(int x1, int x2, int y1, int y2)
+        public Tuple<int, int> GetMidPoint(BoardPiece piece)
+        {
+            return GetMidPoint(piece.x, piece.y, x, y);
+        }
+
+        public static double GetDistance(int x1, int y1, int x2, int y2)
         {
             return Math.Sqrt(Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2));
+        }
+
+        public static Tuple<int, int> GetMidPoint(int x1, int y1, int x2, int y2)
+        {
+            return new Tuple<int, int>(Math.Abs(x1 - x2) / 2, Math.Abs(y1 - y2) / 2);
         }
 
         public string ToString()

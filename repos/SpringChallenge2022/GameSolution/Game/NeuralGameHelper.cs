@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GameSolution.Game
 {
@@ -18,7 +16,15 @@ namespace GameSolution.Game
         {
             this.state = state;
 
-            heroNet = new NeuralNetwork(4, new int[] { 354, 177, 60, 15 }, 354);
+            heroNet = new NeuralNetwork(4, new int[] { 177, 88, 44, 15 }, 354);
+        }
+
+        public void ImportNetworkFromByteLoader()
+        {
+            using (var reader = new BinaryReader(new MemoryStream(ByteLoader.LoadBytes())))
+            {
+                heroNet = new NeuralNetwork(reader);
+            }
         }
 
         public void ImportNetworkFromFile(string fileName)

@@ -8,10 +8,6 @@ using GameSolution.Entities;
 using GameSolution.Game;
 using System.Diagnostics;
 
-/**
- * Auto-generated code below aims at helping you parse
- * the standard input according to the problem statement.
- **/
 class Player
 {
     static void Main(string[] args)
@@ -95,10 +91,10 @@ class Player
                         p = new Monster(id, x, y, null, health, shieldLife, isControlled == 1, vx, vy, nearBase == 1, isThreatForMax);
                         break;
                     case 1:
-                        p = new Hero(id, x, y, true, shieldLife, isControlled == 1, vx, vy, BoardPiece.GetDistance(baseX, x, baseY, y) < 5000);
+                        p = new Hero(id, x, y, true, shieldLife, isControlled == 1, vx, vy, BoardPiece.GetDistance(baseX, baseY, x, y) < 5000);
                         break;
                     case 2:
-                        p = new Hero(id, x, y, false, shieldLife, isControlled == 1, vx, vy, BoardPiece.GetDistance(baseX, x, baseY, y) < 5000);
+                        p = new Hero(id, x, y, false, shieldLife, isControlled == 1, vx, vy, BoardPiece.GetDistance(baseX, baseY, x, y) < 5000);
                         break;
                 }
 
@@ -109,13 +105,6 @@ class Player
 
             state.SetNextTurn(new Board(pieces));
 
-            /*
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            Console.Error.WriteLine("Move count: " + state.GetPossibleMoves(true).Count);
-            watch.Stop();
-            Console.Error.WriteLine(watch.ElapsedMilliseconds);
-            */
             Move move;
             if (!runNeural)
             {
@@ -128,6 +117,10 @@ class Player
                 if(!isLive && isFirstRound)
                 {
                     game.ImportNetworkFromFile(fileName);
+                }
+                else if(isLive && isFirstRound)
+                {
+                    game.ImportNetworkFromByteLoader();
                 }
 
                 move = game.RunNeuralNetwork();
