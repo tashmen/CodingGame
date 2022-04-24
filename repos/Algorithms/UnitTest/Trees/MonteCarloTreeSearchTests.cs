@@ -1,4 +1,4 @@
-﻿using Algorithms;
+﻿using Algorithms.Trees;
 using System;
 using System.Diagnostics;
 using UnitTest.Fixtures;

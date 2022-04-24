@@ -1,8 +1,6 @@
-﻿using GameSolution.Algorithms.NeuralNetwork;
+﻿using Algorithms.NeuralNetwork;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using UnitTest.Fixtures;
 using Xunit;
 using Xunit.Abstractions;

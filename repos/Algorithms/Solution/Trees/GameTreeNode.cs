@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Algorithms.GameComponent;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 

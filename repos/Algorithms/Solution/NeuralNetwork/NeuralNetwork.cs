@@ -1,12 +1,9 @@
-﻿using GameSolution.Algorithms.Genetic;
+﻿using Algorithms.Genetic;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace GameSolution.Algorithms.NeuralNetwork
+namespace Algorithms.NeuralNetwork
 {
     /**The NeuralNetwork Class is used as the 'brain'*/
     public class NeuralNetwork : Individual

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GameSolution.Algorithms.Genetic
+namespace Algorithms.Genetic
 {
     public class GeneticAlgorithm
     {

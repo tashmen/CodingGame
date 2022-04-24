@@ -1,8 +1,6 @@
-﻿using Algorithms;
-using GameSolution.Algorithms.Genetic;
-using GameSolution.Algorithms.NeuralNetwork;
+﻿using Algorithms.Genetic;
+using Algorithms.NeuralNetwork;
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using UnitTest.Fixtures;
 using UnitTest.TwentyOneGame;

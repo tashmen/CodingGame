@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GameSolution.Algorithms
+namespace Algorithms.Space
 {
     public class Point2d
     {

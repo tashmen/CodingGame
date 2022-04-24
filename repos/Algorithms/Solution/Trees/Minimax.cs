@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 
-namespace Algorithms
+namespace Algorithms.Trees
 {
     public class Minimax : TreeAlgorithm
     {

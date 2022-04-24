@@ -4,4 +4,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="C:\Users\jnorc\source\repos\SourceCombiner\SourceCombine\bin\Release\SourceCombine.exe $(ProjectPath) $(SolutionDir)\Combined.cs false $(ProjectDir)" />
+  </Target>
+
 </Project>

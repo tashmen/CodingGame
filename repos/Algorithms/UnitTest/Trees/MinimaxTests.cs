@@ -1,4 +1,5 @@
 ﻿using Algorithms;
+using Algorithms.Trees;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

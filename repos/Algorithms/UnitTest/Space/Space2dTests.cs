@@ -1,4 +1,4 @@
-﻿using GameSolution.Algorithms;
+﻿using Algorithms.Space;
 using System;
 using System.Collections.Generic;
 using UnitTest.Fixtures;

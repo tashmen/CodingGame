@@ -4,7 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 
-namespace GameSolution.Algorithms
+namespace Algorithms.Space
 {
     public class Space2d
     {
