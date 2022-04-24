@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Algorithms.Space;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,12 +16,21 @@ namespace GameSolution.Entities
 
     public class BoardPiece
     {
+        public Point2d point { get; set; }
+        public int x { get
+            {
+                return (int)point.x;
+            } 
+        }
+        public int y { get
+            {
+                return (int)point.y;
+            } 
+        }
         public int speed { get; set; }
         public int range { get; set; }
         public int sightRange { get; set; }
         public int id { get; set; }
-        public int x {get; set;}
-        public int y { get; set; }
         public bool? isMax { get; set; }
         public int shieldLife { get; set; }
         public bool isControlled { get; set; }
@@ -31,8 +41,7 @@ namespace GameSolution.Entities
         public BoardPiece(int id, int x, int y, bool? isMax, int speed, int range, int sightRange, int shieldLife, bool isControlled, int vx, int vy, bool isNearBase)
         {
             this.id = id;
-            this.x = x;
-            this.y = y;
+            this.point = new Point2d(x, y);
             this.isMax = isMax;
             this.speed = speed;
             this.range = range;
@@ -48,8 +57,7 @@ namespace GameSolution.Entities
         public BoardPiece(BoardPiece piece)
         {
             this.id = piece.id;
-            this.x = piece.x;
-            this.y = piece.y;
+            this.point = new Point2d(piece.x, piece.y);
             this.isMax = piece.isMax;
             this.speed = piece.speed;
             this.range = piece.range;

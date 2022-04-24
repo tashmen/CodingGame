@@ -1,9 +1,8 @@
-﻿using GameSolution.Algorithms;
+﻿using Algorithms.Space;
 using GameSolution.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 
 namespace GameSolution.Game
 {
@@ -137,18 +136,19 @@ namespace GameSolution.Game
                 else
                 {
                     var m = distToAllMonsters[0].Item2;
-                    if(CanCastControlOnNearBaseMonster(m, board.myHeroes[0]))
+                    var hero1 = board.myHeroes[0];
+                    if (CanCastControlOnNearBaseMonster(m, hero1))
                     {
                         var target = GetControlTargetingPointForMonster(m);
                         move.AddSpellMove(target.Item1, target.Item2, SpellType.CONTROL, m.id);
                     }
-                    else if (CanCastWindOnNearBaseMonster(m, board.myHeroes[0]))
+                    else if (CanCastWindOnNearBaseMonster(m, hero1))
                     {
                         move.AddSpellMove(board.opponentBase.x, board.opponentBase.y, SpellType.WIND, -99);
                     }
                     else
                     {
-                        if (m.GetDistance(board.myBase) < 6000)
+                        if (m.GetDistance(board.myBase) < 7000)
                         {
                             move.AddHeroMove(m.x, m.y);
                         }
@@ -159,14 +159,27 @@ namespace GameSolution.Game
                         }
                     }
 
-                    if(distToOpponentHeroes.Count > 0 && CanCastControlOnNearBaseHero(distToOpponentHeroes[0].Item2, board.myHeroes[1]))
+                    var hero2 = board.myHeroes[1];
+                    if (distToOpponentHeroes.Count > 0 && CanCastControlOnNearBaseHero(distToOpponentHeroes[0].Item2, hero2))
                     {
                         move.AddSpellMove(board.opponentBase.x, board.opponentBase.y, SpellType.CONTROL, distToOpponentHeroes[0].Item2.id);
                     }
                     else move.AddHeroMove(m.x, m.y);
 
-                    m = distToAllMonsters[1].Item2;
-                    move.AddHeroMove(m.x, m.y);
+                    
+                    var hero3 = board.myHeroes[2];
+                    var maximumTarget = MaximizeTargetsOnAllMonstersInRange(hero3);
+
+                    if(maximumTarget != null)
+                    {
+                        move.AddHeroMove(maximumTarget.Item1, maximumTarget.Item2);
+                    }
+                    else
+                    {
+                        m = distToAllMonsters[1].Item2;
+                        move.AddHeroMove(m.x, m.y);
+                    }
+                    
                 }
             }
 
@@ -212,9 +225,15 @@ namespace GameSolution.Game
                 return new Tuple<int, int>(monstersInRange[0].x, monstersInRange[0].y);
             }
 
-            
+            List<Point2d> points = new List<Point2d>();
+            foreach(var monster in monstersInRange)
+            {
+                points.Add(monster.point);
+            }
 
+            var result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), hero.range);
 
+            return new Tuple<int, int>(result.Item2.GetTruncatedX(), result.Item2.GetTruncatedY());
         }
 
         public List<Monster> GetMonstersInRange(Hero hero)

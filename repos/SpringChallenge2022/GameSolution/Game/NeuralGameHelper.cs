@@ -1,4 +1,4 @@
-﻿using GameSolution.Algorithms.NeuralNetwork;
+﻿using Algorithms.NeuralNetwork;
 using GameSolution.Entities;
 using System;
 using System.Collections.Generic;

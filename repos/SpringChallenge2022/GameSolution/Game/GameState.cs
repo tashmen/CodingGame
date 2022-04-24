@@ -1,10 +1,8 @@
-﻿using Algorithms;
+﻿using Algorithms.GameComponent;
 using GameSolution.Entities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace GameSolution.Game
 {
