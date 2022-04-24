@@ -21,6 +21,7 @@ namespace UnitTest.Algorithms
         [Fact]
         public void Test_Play_21_Game()
         {
+            Random rand = new Random();
             bool isMax = true;
             do
             {
@@ -51,6 +52,9 @@ namespace UnitTest.Algorithms
                     }
                     else if (sticks != 1)
                         sticks = sticks + 1;
+
+                    if (true)
+                        sticks = rand.Next(1, 3);
 
                     move = new Move(sticks);
                     state.ApplyMove(move, !isMax);

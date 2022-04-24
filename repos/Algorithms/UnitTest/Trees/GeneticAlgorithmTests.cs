@@ -54,7 +54,7 @@ namespace UnitTest.Algorithms
                             {
                                 int sticks;
 
-                                if (rand.Next(0, 45) < network.GetFitness())
+                                if (false && rand.Next(0, 45) < network.GetFitness())
                                 {
                                     sticks = state.Total % 4;
                                     if (sticks == 3)
