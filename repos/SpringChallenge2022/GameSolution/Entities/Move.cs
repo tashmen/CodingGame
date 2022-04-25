@@ -54,40 +54,47 @@ namespace GameSolution.Entities
 
     public class Move
     {
-        List<HeroMove> heroMoves;
+        HeroMove[] heroMoves;
 
         public Move()
         {
-            heroMoves = new List<HeroMove>();
+            heroMoves = new HeroMove[3];
         }
         public Move(Move move)
         {
-            heroMoves = move.heroMoves.Select(m => new HeroMove(m)).ToList();
+            heroMoves = move.heroMoves.Select(m => new HeroMove(m)).ToArray();
         }
 
-        public void AddMove(Move move)
+        public int ConvertHeroIdToIndex(int heroId)
         {
-            heroMoves.Add(move.heroMoves[0]);
+            if (heroId < 3)
+                return heroId;
+            else return heroId - 3;
         }
 
-        public void AddHeroMove(int x, int y)
+        public void AddMove(Move move, int heroId)
         {
-            heroMoves.Add(new HeroMove(x, y, MoveType.MOVE, SpellType.NONE, -99));
+            heroMoves[heroId] = move.heroMoves[0];
         }
 
-        public void AddWaitMove()
+        public void AddHeroMove(int x, int y, int heroId)
         {
-            heroMoves.Add(new HeroMove(-1, -1, MoveType.WAIT, SpellType.NONE, -99));
+            heroMoves[heroId] = new HeroMove(x, y, MoveType.MOVE, SpellType.NONE, -99);
         }
 
-        public void AddSpellMove(int x, int y, SpellType spell, int targetId)
+        public void AddWaitMove(int heroId)
         {
-            heroMoves.Add(new HeroMove(x, y, MoveType.SPELL, spell, targetId));
+            heroMoves[heroId] = new HeroMove(-1, -1, MoveType.WAIT, SpellType.NONE, -99);
+        }
+
+        public void AddSpellMove(int x, int y, SpellType spell, int targetId, int heroId)
+        {
+            heroMoves[heroId] = new HeroMove(x, y, MoveType.SPELL, spell, targetId);
         }
 
         public bool Equals(Move move)
         {
-            for(int i = 0; i < heroMoves.Count; i++)
+            for(int i = 0; i < heroMoves.Length; i++)
             {
                 if (!heroMoves.Equals(move))
                 {

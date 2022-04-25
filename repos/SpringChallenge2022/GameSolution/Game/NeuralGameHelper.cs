@@ -66,6 +66,7 @@ namespace GameSolution.Game
 
         public void ConvertOutputToMove(double[] output, int index, Move move, List<Tuple<double, BoardPiece>> distToBoardPiece)
         {
+            int heroIndex = index / 5;
             int moveType = (int)(output[index++] * 3);
             int x1 = (int)(output[index++] * 17630);
             int y1 = (int)(output[index++] * 9000);
@@ -74,13 +75,13 @@ namespace GameSolution.Game
             switch (moveType)
             {
                 case (int)MoveType.MOVE:
-                    move.AddHeroMove(x1, y1);
+                    move.AddHeroMove(x1, y1, heroIndex);
                     break;
                 case (int)MoveType.SPELL:
-                    move.AddSpellMove(x1, y1, (SpellType)spellType, entityId);
+                    move.AddSpellMove(x1, y1, (SpellType)spellType, entityId, heroIndex);
                     break;
                 case (int)MoveType.WAIT:
-                    move.AddWaitMove();
+                    move.AddWaitMove(heroIndex);
                     break;
             }
         }

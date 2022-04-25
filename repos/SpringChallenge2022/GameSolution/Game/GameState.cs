@@ -72,7 +72,7 @@ namespace GameSolution.Game
             for (int i = 0; i < 3; i++)
             {
                 move = new Move();
-                move.AddWaitMove();
+                move.AddWaitMove(i);
                 heroMoves[i] = new List<Move>();
                 heroMoves[i].Add(move);
             }
@@ -93,7 +93,7 @@ namespace GameSolution.Game
                     if (!myHeroes[i].isControlled)
                     {
                         move = new Move();
-                        move.AddHeroMove(piece.x, piece.y);
+                        move.AddHeroMove(piece.x, piece.y, myHeroes[i].id);
                         heroMoves[i].Add(move);
                     }
                 }
@@ -121,10 +121,10 @@ namespace GameSolution.Game
                                 if (h.GetDistance(piece) < 1280)
                                 {
                                     move = new Move();
-                                    move.AddSpellMove(myBase.x, myBase.y, SpellType.WIND, -99);
+                                    move.AddSpellMove(myBase.x, myBase.y, SpellType.WIND, -99, h.id);
                                     heroMoves[i].Add(move);
                                     move = new Move();
-                                    move.AddSpellMove(opponentBase.x, opponentBase.y, SpellType.WIND, -99);
+                                    move.AddSpellMove(opponentBase.x, opponentBase.y, SpellType.WIND, -99, h.id);
                                     heroMoves[i].Add(move);
                                 }
                             }
@@ -139,7 +139,7 @@ namespace GameSolution.Game
                                 if (h.GetDistance(piece) < 2200)
                                 {
                                     move = new Move();
-                                    move.AddSpellMove(-1, -1, SpellType.SHIELD, piece.id);
+                                    move.AddSpellMove(-1, -1, SpellType.SHIELD, piece.id, h.id);
                                     heroMoves[i].Add(move);
                                 }
                             }
@@ -154,11 +154,11 @@ namespace GameSolution.Game
                                 if (h.GetDistance(piece) < 2200)
                                 {
                                     move = new Move();
-                                    move.AddSpellMove(myBase.x, myBase.y, SpellType.CONTROL, piece.id);
+                                    move.AddSpellMove(myBase.x, myBase.y, SpellType.CONTROL, piece.id, h.id);
                                     heroMoves[i].Add(move);
 
                                     move = new Move();
-                                    move.AddSpellMove(opponentBase.x, opponentBase.y, SpellType.CONTROL, piece.id);
+                                    move.AddSpellMove(opponentBase.x, opponentBase.y, SpellType.CONTROL, piece.id, h.id);
                                     heroMoves[i].Add(move);
                                 }
                             }
@@ -175,9 +175,9 @@ namespace GameSolution.Game
                     foreach (Move heroMove3 in heroMoves[2])
                     {
                         move = new Move();
-                        move.AddMove(heroMove1);
-                        move.AddMove(heroMove2);
-                        move.AddMove(heroMove3);
+                        move.AddMove(heroMove1, 0);
+                        move.AddMove(heroMove2, 1);
+                        move.AddMove(heroMove3, 2);
                         finalPossibleMoves.Add(move);
                     }
                 }
