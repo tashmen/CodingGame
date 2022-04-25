@@ -46,12 +46,40 @@ namespace Algorithms.Space
             return maxPoint;
         }
 
+        /// <summary>
+        /// Given a list of points and a circle radius, find the circle location that covers the maximum number of points, at point i.
+        /// </summary>
+        /// <param name="points">The list of points to consider</param>
+        /// <param name="radius">The radius of the circle</param>
+        /// <param name="i">The index of the point to use for the sweeping circle</param>
+        /// <returns>The number of points covered by the circle that is centered at the point.</returns>
+        public static Tuple<int, Point2d> FindCircleWithMaximumPoints(Point2d[] points, double radius, int i)
+        {
+            Tuple<int, Point2d> maxPoint = null;
+            if (points == null)
+                return null;
+            if (radius <= 0)
+                return null;
+
+            var numberOfPoints = points.Count();
+            double[,] distance = new double[numberOfPoints, numberOfPoints];
+            
+            for (int j = 0; j < numberOfPoints; j++)
+            {
+                distance[i, j] = distance[j, i] = points[i].GetDistance(points[j]);
+            }
+
+            var currentAnswer = GetPointsInside(distance, points, i, radius, numberOfPoints);
+            maxPoint = new Tuple<int, Point2d>(currentAnswer.Item1, new Point2d(points[i].x + (radius * Math.Round(Math.Cos(currentAnswer.Item2), 15)), points[i].y + (radius * Math.Round(Math.Sin(currentAnswer.Item2), 15))));
+
+            return maxPoint;
+        }
+
         private static bool IsInteger(double d)
         {
             return Math.Abs(d % 1) <= (Double.Epsilon * 100);
         }
         
-
         private static Tuple<int, double> GetPointsInside(double[,] distance, Point2d[] points, int i, double radius, int numberOfPoints)
         {
             List<Tuple<double, bool>> angles = new List<Tuple<double, bool>>();

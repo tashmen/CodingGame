@@ -13,9 +13,24 @@ namespace Algorithms.Space
             this.y = y;
         }
 
+        public override string ToString()
+        {
+            return $"({x},{y})";
+        }
+
         public bool Equals(Point2d point)
         {
             return point.x == this.x && point.y == this.y;
+        }
+
+        public Point2d GetTruncatedPoint()
+        {
+            return new Point2d(Math.Truncate(this.x), Math.Truncate(this.y));
+        }
+
+        public Point2d GetRoundedPoint()
+        {
+            return new Point2d(Math.Round(this.x), Math.Round(this.y));
         }
 
         public int GetTruncatedX()

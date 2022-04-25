@@ -14,6 +14,21 @@ namespace UnitTest.Algorithms
             var converter = new TestOutputFixture(output);
             Console.SetError(converter);
         }
+
+        [Fact]
+        public void TestFindCircleWithMaximumPoints_AtIndex()
+        {
+            var points = new List<Point2d>()
+            {
+                new Point2d(5197,4972),
+                new Point2d(5311,4455),
+                new Point2d(4991,3415)
+            };
+            var result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), 799, 0);
+            Assert.Equal(3, result.Item1);
+            var point = new Point2d(5197, 4972);
+            Assert.True(point.GetDistance(result.Item2) <= 800);
+        }
         
         [Fact]
         public void TestFindCircleWithMaximumPoints()
