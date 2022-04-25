@@ -111,9 +111,11 @@ namespace GameSolution.Game
             {
                 if (distToAllMonsters.Count == 1)
                 {
+                    bool hero1CastWind = false;
                     var m = distToAllMonsters[0].Item2;
                     if (CanCastWindOnNearBaseMonster(distToAllMonsters[0].Item2, board.myHeroes[0]))
                     {
+                        hero1CastWind = true;
                         move.AddSpellMove(board.opponentBase.x, board.opponentBase.y, SpellType.WIND, -99);
                     }
                     else
@@ -130,20 +132,27 @@ namespace GameSolution.Game
                             
                     }
 
-                    move.AddHeroMove(m.x, m.y);
+                    var hero2 = board.myHeroes[1];
+                    if (!hero1CastWind && CanCastWindOnNearBaseMonster(m, hero2))
+                    {
+                        move.AddSpellMove(board.opponentBase.x, board.opponentBase.y, SpellType.WIND, -99);
+                    }
+                    else move.AddHeroMove(m.x, m.y);
                     move.AddHeroMove(m.x, m.y);
                 }
                 else
                 {
                     var m = distToAllMonsters[0].Item2;
                     var hero1 = board.myHeroes[0];
+                    bool hero1CastWind = false;
                     if (CanCastControlOnNearBaseMonster(m, hero1))
                     {
                         var target = GetControlTargetingPointForMonster(m);
-                        move.AddSpellMove(target.Item1, target.Item2, SpellType.CONTROL, m.id);
+                        move.AddSpellMove(target.GetTruncatedX(), target.GetTruncatedY(), SpellType.CONTROL, m.id);
                     }
                     else if (CanCastWindOnNearBaseMonster(m, hero1))
                     {
+                        hero1CastWind = true;
                         move.AddSpellMove(board.opponentBase.x, board.opponentBase.y, SpellType.WIND, -99);
                     }
                     else
@@ -160,25 +169,56 @@ namespace GameSolution.Game
                     }
 
                     var hero2 = board.myHeroes[1];
-                    if (distToOpponentHeroes.Count > 0 && CanCastControlOnNearBaseHero(distToOpponentHeroes[0].Item2, hero2))
+                    if (!hero1CastWind && CanCastWindOnNearBaseMonster(m, hero2))
+                    {
+                        move.AddSpellMove(board.opponentBase.x, board.opponentBase.y, SpellType.WIND, -99);
+                    }
+                    else if (distToOpponentHeroes.Count > 0 && CanCastControlOnNearBaseHero(distToOpponentHeroes[0].Item2, hero2))
                     {
                         move.AddSpellMove(board.opponentBase.x, board.opponentBase.y, SpellType.CONTROL, distToOpponentHeroes[0].Item2.id);
                     }
-                    else move.AddHeroMove(m.x, m.y);
+                    else
+                    {
+                        var maximumTarget2 = MaximizeTargetsOnAllMonstersInRange(hero2);
+
+                        if (maximumTarget2 != null && distToAllMonsters.Count < 3)
+                        {
+                            move.AddHeroMove(maximumTarget2.GetTruncatedX(), maximumTarget2.GetTruncatedY());
+                        }
+                        else
+                            move.AddHeroMove(m.x, m.y);
+                    }
 
                     
                     var hero3 = board.myHeroes[2];
-                    var maximumTarget = MaximizeTargetsOnAllMonstersInRange(hero3);
 
-                    if(maximumTarget != null)
+                    var windableMonsters = GetWindableMonstersInRange(hero3);
+                    var controllableMonsters = GetControllableMonstersInRange(hero3);
+                    if(windableMonsters.Count > 3 && board.myBase.mana > 60)
                     {
-                        move.AddHeroMove(maximumTarget.Item1, maximumTarget.Item2);
+                        move.AddSpellMove(board.opponentBase.x, board.opponentBase.y, SpellType.WIND, -99);
+                    }
+                    else if (board.myBase.mana > 100 && controllableMonsters.Count > 0)
+                    {
+                        var monster = controllableMonsters[0];
+                        var target = GetControlTargetingPointForMonster(monster);
+                        move.AddSpellMove(target.GetTruncatedX(), target.GetTruncatedY(), SpellType.CONTROL, monster.id);
                     }
                     else
                     {
-                        m = distToAllMonsters[1].Item2;
-                        move.AddHeroMove(m.x, m.y);
+                        var maximumTarget3 = MaximizeTargetsOnAllMonstersInRange(hero3);
+
+                        if (maximumTarget3 != null)
+                        {
+                            move.AddHeroMove(maximumTarget3.GetTruncatedX(), maximumTarget3.GetTruncatedY());
+                        }
+                        else
+                        {
+                            m = distToAllMonsters[1].Item2;
+                            move.AddHeroMove(m.x, m.y);
+                        }
                     }
+                    
                     
                 }
             }
@@ -214,7 +254,7 @@ namespace GameSolution.Game
 
         
 
-        public Tuple<int, int>? MaximizeTargetsOnAllMonstersInRange(Hero hero)
+        public Point2d? MaximizeTargetsOnAllMonstersInRange(Hero hero)
         {
             var monstersInRange = GetMonstersInRange(hero);
             if (!monstersInRange.Any())
@@ -222,18 +262,31 @@ namespace GameSolution.Game
 
             if(monstersInRange.Count == 1)
             {
-                return new Tuple<int, int>(monstersInRange[0].x, monstersInRange[0].y);
+                return null;
             }
 
             List<Point2d> points = new List<Point2d>();
-            foreach(var monster in monstersInRange)
+            foreach (var monster in monstersInRange)
             {
+                points.Add(hero.point);
                 points.Add(monster.point);
+                Console.Error.WriteLine("Found point: (" + monster.point.x + ", " + monster.point.y + ")");
             }
 
+            Console.Error.WriteLine("Hero point: " + hero.point);
+            
             var result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), hero.range);
+            var roundedResult = result.Item2.GetRoundedPoint();
+            if(hero.point.GetDistance(roundedResult) > hero.speed)
+            {
+                result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), hero.range-1);
+                roundedResult = result.Item2.GetRoundedPoint();
+                if (hero.point.GetDistance(roundedResult) > hero.speed)
+                    throw new Exception("Circle too far!");
+            }
+            Console.Error.WriteLine("Max circle: " + result.Item1 + result.Item2.GetRoundedPoint());
 
-            return new Tuple<int, int>(result.Item2.GetTruncatedX(), result.Item2.GetTruncatedY());
+            return roundedResult;
         }
 
         public List<Monster> GetMonstersInRange(Hero hero)
@@ -280,7 +333,8 @@ namespace GameSolution.Game
             return direction;
         }
 
-        public Tuple<int, int> GetControlTargetingPointForMonster(Monster monster)
+        static bool alternate = true;
+        public Point2d GetControlTargetingPointForMonster(Monster monster)
         {
             int x, x1, x2;
             int y, y1, y2;
@@ -300,18 +354,50 @@ namespace GameSolution.Game
             dist1 = BoardPiece.GetDistance(x1, y1, monster.x, monster.y);
             dist2 = BoardPiece.GetDistance(x2, y2, monster.x, monster.y);
 
-            if (dist1 < dist2) 
+            Console.Error.WriteLine($"Targeting distances dist1, dist2: {dist1}, {dist2}");
+
+            if (dist1 < dist2 && alternate) 
             {
+                alternate = false;
                 x = x1;
                 y = y1;
             }
             else
             {
+                alternate = true;
                 x = x2;
                 y = y2;
             }
 
-            return new Tuple<int, int>(x, y);
+            return new Point2d(x, y);
+        }
+
+        public List<Monster> GetWindableMonstersInRange(Hero hero)
+        {
+            List<Monster> monsters = new List<Monster>();
+            foreach (var monster in board.monsters)
+            {
+                if (monster.health > 5 && CanCastWind(monster, hero) && hero.GetDistance(board.opponentBase) < 7000)
+                {
+                    monsters.Add(monster);
+                }
+            }
+            return monsters;
+        }
+
+        public List<Monster> GetControllableMonstersInRange(Hero hero)
+        {
+            List<Monster> monsters = new List<Monster>();
+            foreach (var monster in board.monsters)
+            {
+                if (monster.threatForMax.HasValue && !monster.threatForMax.Value)
+                    continue;
+                if (monster.health > 15 && CanCastControlOrShield(monster, hero))
+                {
+                    monsters.Add(monster);
+                }
+            }
+            return monsters;
         }
 
         public bool CanCastControlOrShield(BoardPiece piece, Hero hero)
