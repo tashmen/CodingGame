@@ -120,6 +120,13 @@ namespace GameSolution.Game
             var topRightPoint = new Point2d(myBase.x + (myBaseDirection) * (topRight.sightRange + myBase.sightRange), myBase.y + (myBaseDirection) * topRight.sightRange);
             var bottomLeftPoint = new Point2d(myBase.x + (myBaseDirection) * bottomLeft.sightRange, opponentBase.y + (opponentBaseDirection) * bottomLeft.sightRange);
 
+            if(myBaseDirection < 0)
+            {
+                var swap = bottomLeftPoint;
+                bottomLeftPoint = topRightPoint;
+                topRightPoint = swap;
+            }
+
             /*
             var heroes = myHeroes.Select(h => h).ToList();
             goalie = GetHeroClosestToPoint(heroes, myBase.point);

@@ -74,22 +74,22 @@ namespace GameSolution.Entities
 
         public void AddMove(Move move, int heroId)
         {
-            heroMoves[heroId] = move.heroMoves[0];
+            heroMoves[ConvertHeroIdToIndex(heroId)] = move.heroMoves[0];
         }
 
         public void AddHeroMove(int x, int y, int heroId)
         {
-            heroMoves[heroId] = new HeroMove(x, y, MoveType.MOVE, SpellType.NONE, -99);
+            heroMoves[ConvertHeroIdToIndex(heroId)] = new HeroMove(x, y, MoveType.MOVE, SpellType.NONE, -99);
         }
 
         public void AddWaitMove(int heroId)
         {
-            heroMoves[heroId] = new HeroMove(-1, -1, MoveType.WAIT, SpellType.NONE, -99);
+            heroMoves[ConvertHeroIdToIndex(heroId)] = new HeroMove(-1, -1, MoveType.WAIT, SpellType.NONE, -99);
         }
 
         public void AddSpellMove(int x, int y, SpellType spell, int targetId, int heroId)
         {
-            heroMoves[heroId] = new HeroMove(x, y, MoveType.SPELL, spell, targetId);
+            heroMoves[ConvertHeroIdToIndex(heroId)] = new HeroMove(x, y, MoveType.SPELL, spell, targetId);
         }
 
         public bool Equals(Move move)
