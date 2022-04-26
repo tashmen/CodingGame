@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.29905.134
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuralTrainer", "NeuralTrainer\NeuralTrainer.csproj", "{2E5D1CDF-F64D-4417-89DF-B8CCA4097125}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainingDataCompressor", "TrainingDataCompressor\TrainingDataCompressor.csproj", "{27D471F0-4D7E-4EC7-9DFB-752004673AA0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{2E5D1CDF-F64D-4417-89DF-B8CCA4097125}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E5D1CDF-F64D-4417-89DF-B8CCA4097125}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E5D1CDF-F64D-4417-89DF-B8CCA4097125}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27D471F0-4D7E-4EC7-9DFB-752004673AA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27D471F0-4D7E-4EC7-9DFB-752004673AA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27D471F0-4D7E-4EC7-9DFB-752004673AA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27D471F0-4D7E-4EC7-9DFB-752004673AA0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
