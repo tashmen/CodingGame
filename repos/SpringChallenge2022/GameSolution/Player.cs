@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using GameSolution.Entities;
 using GameSolution.Game;
 using System.Diagnostics;
+using Algorithms.Trees;
 
 class Player
 {
@@ -14,6 +15,7 @@ class Player
     {
         bool runNeural = false;
         bool isLive = true;
+        bool simulate = true;
         string fileName = null;
         if (args.Length > 0)
         {
@@ -105,10 +107,20 @@ class Player
 
             state.SetNextTurn(new Board(pieces));
 
+            
+
             Move move;
-            if (!runNeural)
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            if (simulate)
             {
-                GameHelper game = new GameHelper();
+                Minimax search = new Minimax();
+                search.SetState(state, true, false);
+                move = (Move)search.GetNextMove(watch, 48, 4);
+            }
+            else if (!runNeural)
+            {
+                GameHelper game = new GameHelper(state);
                 move = game.GetBestMove(state);
             }
             else
@@ -125,7 +137,9 @@ class Player
 
                 move = game.RunNeuralNetwork();
             }
-            
+            watch.Stop();
+            Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
+
 
             int limit = isFirstRound ? 998 : 48;
 

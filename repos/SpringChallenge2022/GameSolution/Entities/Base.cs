@@ -22,9 +22,9 @@ namespace GameSolution.Entities
             this.mana = piece.mana;
         }
 
-        public Base Clone(Base piece)
+        public override BoardPiece Clone()
         {
-            return new Base(piece);
+            return new Base(this);
         }
     }
 }

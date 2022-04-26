@@ -20,9 +20,9 @@ namespace GameSolution.Entities
 
         }
 
-        public Hero Clone(Hero piece)
+        public override BoardPiece Clone()
         {
-            return new Hero(piece);
+            return new Hero(this);
         }
     }
 }

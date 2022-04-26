@@ -70,7 +70,7 @@ namespace GameSolution.Entities
             distanceHash = new Dictionary<int, double>();
         }
 
-        public BoardPiece Clone()
+        public virtual BoardPiece Clone()
         {
             return new BoardPiece(this);
         }

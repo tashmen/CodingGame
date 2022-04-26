@@ -21,16 +21,17 @@ namespace GameSolution.Game
         public List<Tuple<double, Hero>> distToMyHeroes { get; set; }
         public int turn;
 
-        public Move GetBestMove(GameState state)
+        public GameHelper(GameState state)
         {
             turn = state.turn;
             board = state.board;
 
             CalculateHelper();
+        }
 
+        public Move GetBestMove(GameState state)
+        {
             var strategy = DetermineStrategy();
-
-
             Move move = null;
 
             switch (strategy)
@@ -72,10 +73,13 @@ namespace GameSolution.Game
 
             distToAllMonsters = distToAllMonsters.OrderBy(t => t.Item1).ToList();
 
+            /*
             foreach (var distToMonster in distToAllMonsters)
             {
                 Console.Error.WriteLine("Found monster at distance: " + distToMonster.Item1);
             }
+            */
+            
 
             distToOpponentHeroes = new List<Tuple<double, Hero>>();
             foreach (Hero h in board.opponentHeroes)
@@ -366,22 +370,18 @@ namespace GameSolution.Game
             {
                 points.Add(hero.point);
                 points.Add(monster.point);
-                Console.Error.WriteLine("Found point: (" + monster.point.x + ", " + monster.point.y + ")");
+                //Console.Error.WriteLine("Found point: (" + monster.point.x + ", " + monster.point.y + ")");
             }
 
-            Console.Error.WriteLine("Hero point: " + hero.point);
+            //Console.Error.WriteLine("Hero point: " + hero.point);
             
-            var result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), hero.range);
+            var result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), hero.range-1);
             var roundedResult = result.Item2.GetRoundedPoint();
             if(hero.point.GetDistance(roundedResult) > hero.speed)
             {
-                Console.Error.WriteLine("Circle too far after rounding!");
-                result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), hero.range-1);
-                roundedResult = result.Item2.GetRoundedPoint();
-                if (hero.point.GetDistance(roundedResult) > hero.speed)
-                    throw new Exception("Circle too far!");
+                Console.Error.WriteLine("Circle too far!");
             }
-            Console.Error.WriteLine("Max circle: " + result.Item1 + result.Item2.GetRoundedPoint());
+            //Console.Error.WriteLine("Max circle: " + result.Item1 + result.Item2.GetRoundedPoint());
 
             return roundedResult;
         }

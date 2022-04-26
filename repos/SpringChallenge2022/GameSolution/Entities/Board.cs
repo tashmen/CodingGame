@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Algorithms.Space;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace GameSolution.Entities
@@ -65,7 +66,22 @@ namespace GameSolution.Entities
 
         public void ApplyMove(Move move, bool isMax)
         {
+            var heroes = isMax ? myHeroes : opponentHeroes;
             
+            foreach(Hero hero in heroes)
+            {
+                HeroMove heroMove = move.GetMove(hero.id);
+                switch (heroMove.moveType)
+                {
+                    case MoveType.MOVE:
+                        var point = heroMove.point;
+                        var newPoint = Space2d.TranslatePoint(hero.point, point, hero.speed);
+                        hero.point = newPoint;
+                        break;
+                    case MoveType.SPELL:
+                        break;
+                }
+            }
         }
 
 

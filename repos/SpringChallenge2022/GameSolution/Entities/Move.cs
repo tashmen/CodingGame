@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Algorithms.Genetic;
+using Algorithms.Space;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,8 +24,9 @@ namespace GameSolution.Entities
 
     public class HeroMove
     {
-        public int x { get; set; }
-        public int y { get; set; }
+        public Point2d point { get; set; }
+        public int x { get { return point.GetTruncatedX(); } }
+        public int y { get { return point.GetTruncatedY(); } }
         public MoveType moveType { get; set; }
         public SpellType spellType {get; set;}
 
@@ -31,8 +34,7 @@ namespace GameSolution.Entities
 
         public HeroMove(int x, int y, MoveType moveType, SpellType spellType, int entityId)
         {
-            this.x = x;
-            this.y = y;
+            this.point = new Point2d(x, y);
             this.moveType = moveType;
             this.spellType = spellType;
             this.targetId = entityId;
@@ -40,8 +42,7 @@ namespace GameSolution.Entities
 
         public HeroMove(HeroMove heroMove)
         {
-            this.x = heroMove.x;
-            this.y = heroMove.y;
+            this.point = new Point2d(heroMove.point);
             this.moveType = heroMove.moveType;
             this.spellType = heroMove.spellType;
         }
@@ -50,11 +51,42 @@ namespace GameSolution.Entities
         {
             return this.x == heroMove.x && this.y == heroMove.y && this.moveType == heroMove.moveType && this.spellType == heroMove.spellType && this.targetId == heroMove.targetId;
         }
+
+        public static HeroMove CreateWaitMove()
+        {
+            return new HeroMove(-1, -1, MoveType.WAIT, SpellType.NONE, -99);
+        }
+
+        public static HeroMove CreateHeroMove(int x, int y)
+        {
+            return new HeroMove(x, y, MoveType.MOVE, SpellType.NONE, -99);
+        }
+
+        public static HeroMove CreateWindSpellMove(int x, int y)
+        {
+            return CreateSpellMove(x, y, SpellType.WIND, -99);
+        }
+
+        public static HeroMove CreateControlSpellMove(int x, int y, int targetId)
+        {
+            return CreateSpellMove(x, y, SpellType.CONTROL, targetId);
+        }
+
+        public static HeroMove CreateShieldSpellMove(int targetId)
+        {
+            return CreateSpellMove(-1, -1, SpellType.SHIELD, targetId);
+        }
+
+        public static HeroMove CreateSpellMove(int x, int y, SpellType spell, int targetId)
+        {
+            return new HeroMove(x, y, MoveType.SPELL, spell, targetId);
+        }
     }
 
     public class Move
     {
-        HeroMove[] heroMoves;
+        public HeroMove[] heroMoves { get; set; }
+        public double fitness { get; set; }
 
         public Move()
         {
@@ -72,24 +104,29 @@ namespace GameSolution.Entities
             else return heroId - 3;
         }
 
-        public void AddMove(Move move, int heroId)
+        public HeroMove GetMove(int heroId)
         {
-            heroMoves[ConvertHeroIdToIndex(heroId)] = move.heroMoves[0];
+            return heroMoves[ConvertHeroIdToIndex(heroId)];
+        }
+
+        public void AddMove(HeroMove heroMove, int heroId)
+        {
+            heroMoves[ConvertHeroIdToIndex(heroId)] = heroMove;
         }
 
         public void AddHeroMove(int x, int y, int heroId)
         {
-            heroMoves[ConvertHeroIdToIndex(heroId)] = new HeroMove(x, y, MoveType.MOVE, SpellType.NONE, -99);
+            heroMoves[ConvertHeroIdToIndex(heroId)] = HeroMove.CreateHeroMove(x, y);
         }
 
         public void AddWaitMove(int heroId)
         {
-            heroMoves[ConvertHeroIdToIndex(heroId)] = new HeroMove(-1, -1, MoveType.WAIT, SpellType.NONE, -99);
+            heroMoves[ConvertHeroIdToIndex(heroId)] = HeroMove.CreateWaitMove();
         }
 
         public void AddSpellMove(int x, int y, SpellType spell, int targetId, int heroId)
         {
-            heroMoves[ConvertHeroIdToIndex(heroId)] = new HeroMove(x, y, MoveType.SPELL, spell, targetId);
+            heroMoves[ConvertHeroIdToIndex(heroId)] = HeroMove.CreateSpellMove(x, y, spell, targetId);
         }
 
         public bool Equals(Move move)

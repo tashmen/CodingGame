@@ -22,9 +22,9 @@ namespace GameSolution.Entities
             this.threatForMax = piece.threatForMax;
         }
 
-        public Monster Clone(Monster piece)
+        public override BoardPiece Clone()
         {
-            return new Monster(piece);
+            return new Monster(this);
         }
     }
 }
