@@ -1,13 +1,9 @@
-﻿using GameSolution.Algorithms.Genetic;
-using GameSolution.Algorithms.NeuralNetwork;
+﻿using Algorithms.Genetic;
+using Algorithms.NeuralNetwork;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NeuralTrainer
 {
@@ -18,11 +14,11 @@ namespace NeuralTrainer
         public static string pathToReferee = pathToCodingGame + "SpringChallenge2022\\target\\spider-attack-spring-2022-1.0-SNAPSHOT.jar";
         public static string pathToBrutalTester = pathToCodingGame + "cg-brutaltester-1.0.0.jar";
         public static string pathToLogs = pathToCodingGame + "logs\\";
-        public static string pathToGame = "C:\\Users\\jnorc\\source\\repos\\SpringChallenge2022\\GameSolution\\bin\\Debug\\GameSolution.exe";
+        public static string pathToGame = "C:\\Users\\jnorc\\source\\repos\\SpringChallenge2022\\GameSolution\\bin\\Release\\netcoreapp3.1\\GameSolution.exe";
         public static string pathTolog4j = pathToCodingGame + "log4j2.xml";
         public static string dataFileType = ".data";
 
-        public static int gamesToPlay = 100;
+        public static int gamesToPlay = 20;
         public static int populationSize = 100;
         public static void Main(string[] args)
         {
@@ -32,6 +28,11 @@ namespace NeuralTrainer
 
             if (isFirstLoad)
             {
+                for (int i = 0; i < populationSize; i++)
+                {
+                    NeuralNetwork net = new NeuralNetwork(4, new int[] { 177, 88, 44, 15 }, 354);
+                    population.addIndividual(net);
+                }
                 ExportNetwork(population);
             }
             else
@@ -39,7 +40,7 @@ namespace NeuralTrainer
                 ImportNetwork(population);
             }
 
-            GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.7);
+            GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.04, 0.05, 0.7);
 
             while (!Console.KeyAvailable)
             {
@@ -93,12 +94,11 @@ namespace NeuralTrainer
         {
             for (int i = 0; i < populationSize; i++)
             {
-                NeuralNetwork net = new NeuralNetwork(4, new int[] { 354, 177, 60, 15 }, 354);
+                NeuralNetwork net = (NeuralNetwork)population.getIndividual(i);
                 using (var writer = new BinaryWriter(new FileStream(pathToDataFolder + i + dataFileType, FileMode.Create)))
                 {
                     net.Save(writer);
                 }
-                population.addIndividual(net);
             }
         }
 
