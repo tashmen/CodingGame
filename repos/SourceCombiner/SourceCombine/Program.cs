@@ -33,7 +33,7 @@ namespace SourceCombiner
             }
             string projectFileLocation = args[3];
 
-            var filesToParse = GetSourceFileNames(projectFilePath);
+            var filesToParse = GetSourceFileNames(projectFileLocation);
             Console.Error.WriteLine($"Found {filesToParse.Count} files.");
             var namespaces = GetUniqueNamespaces(filesToParse, projectFileLocation);
 
@@ -62,7 +62,7 @@ namespace SourceCombiner
 
             foreach (var file in files)
             {
-                IEnumerable<string> sourceLines = File.ReadAllLines(projectFileLocation + file);
+                IEnumerable<string> sourceLines = File.ReadAllLines(file);
                 sb.AppendLine(@"//*** SourceCombiner -> original file " + Path.GetFileName(file) + " ***");
                 var openingTag = "using ";
                 foreach (var sourceLine in sourceLines)
@@ -79,15 +79,16 @@ namespace SourceCombiner
             return sb.ToString();
         }
 
-        private static List<string> GetSourceFileNames(string projectFilePath)
+        private static List<string> GetSourceFileNames(string projectFileDirectory)
         {
             List<string> files = new List<string>();
-            XDocument doc = XDocument.Load(projectFilePath);
-            Console.Error.WriteLine(doc.ToString());
-            return doc.Root.Descendants().Where(e => {
-                Console.Error.WriteLine(e.Name);
-                return e.Name.LocalName == "Compile" && !SourceFilesToIgnore.Where(s => e.Attribute("Include").Value.Contains(s)).Any();
-                }).Select(e => e.Attribute("Include").Value).ToList();
+
+            
+
+            files = Directory.GetFiles(projectFileDirectory, "*.cs", SearchOption.AllDirectories)
+                .Where(fileName => !fileName.Contains("\\obj\\") && !fileName.Contains("\\bin\\") && !fileName.Contains("\\packages\\")).ToList();
+
+            return files;
         }
 
 
@@ -99,7 +100,7 @@ namespace SourceCombiner
 
             foreach (var file in files)
             {
-                IEnumerable<string> sourceLines = File.ReadAllLines(projectFileLocation + file);
+                IEnumerable<string> sourceLines = File.ReadAllLines(file);
 
                 foreach (var sourceLine in sourceLines)
                 {
