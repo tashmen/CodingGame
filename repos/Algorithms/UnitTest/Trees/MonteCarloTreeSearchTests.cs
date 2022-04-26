@@ -22,6 +22,7 @@ namespace UnitTest.Algorithms
         public void Test_Play_21_Game()
         {
             Random rand = new Random();
+            var playRandom = false;
             bool isMax = true;
             do
             {
@@ -29,7 +30,7 @@ namespace UnitTest.Algorithms
                 watch.Start();
                 search.SetState(state, isMax);
 
-                object move = search.GetNextMove(watch, 100,  -1, 500);
+                object move = search.GetNextMove(watch, 100,  1, 500);
                 state.ApplyMove(move, isMax);
                 //isMax = !isMax;
                 watch.Stop();
@@ -45,15 +46,9 @@ namespace UnitTest.Algorithms
 
                 if (state.Total < 21)
                 {
-                    int sticks = state.Total % 4;
-                    if (sticks == 3)
-                    {
-                        sticks = 2;
-                    }
-                    else if (sticks != 1)
-                        sticks = sticks + 1;
+                    var sticks = state.GetBestMove();
 
-                    if (true)
+                    if (playRandom)
                         sticks = rand.Next(1, 3);
 
                     move = new Move(sticks);

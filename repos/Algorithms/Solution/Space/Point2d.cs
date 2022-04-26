@@ -13,6 +13,12 @@ namespace Algorithms.Space
             this.y = y;
         }
 
+        public Point2d(Point2d point)
+        {
+            x = point.x;
+            y = point.y;
+        }
+
         public override string ToString()
         {
             return $"({x},{y})";
@@ -40,6 +46,11 @@ namespace Algorithms.Space
         public int GetTruncatedY()
         {
             return (int)y;
+        }
+
+        public double GetAngle(Point2d point)
+        {
+            return Math.Atan2(point.y - y, point.x - x);
         }
 
         public double GetDistance(Point2d point)

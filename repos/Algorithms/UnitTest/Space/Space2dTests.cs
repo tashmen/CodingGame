@@ -29,6 +29,23 @@ namespace UnitTest.Algorithms
             var point = new Point2d(5197, 4972);
             Assert.True(point.GetDistance(result.Item2) <= 800);
         }
+
+        [Theory]
+        [InlineData(0, 0, 0, 800, 800, 0, 800)]
+        [InlineData(0, 0, 0, 1600, 800, 0, 800)]
+        [InlineData(0, 0, 1600, 1600, 800, 565, 565)]
+        [InlineData(0, 0, -1600, -1600, 800, -565, -565)]
+        [InlineData(0, 0, -1600, 1600, 800, -565, 565)]
+        [InlineData(0, 0, 1600, -1600, 800, 565, -565)]
+        public void TestTranslatePoint(int x, int y, int x1, int y1, double maxDistance, int rx, int ry)
+        {
+            Point2d startPoint = new Point2d(x, y);
+            Point2d targetPoint = new Point2d(x1, y1);
+
+            Point2d resultPoint = Space2d.TranslatePoint(startPoint, targetPoint, maxDistance);
+            Assert.Equal(rx, resultPoint.GetTruncatedX());
+            Assert.Equal(ry, resultPoint.GetTruncatedY());
+        }
         
         [Fact]
         public void TestFindCircleWithMaximumPoints()

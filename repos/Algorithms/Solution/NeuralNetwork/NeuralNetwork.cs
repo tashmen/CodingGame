@@ -229,11 +229,16 @@ namespace Algorithms.NeuralNetwork
         }
 
         //mutates the individual 
-        public void Mutate()
+        public void Mutate(double mutationRate)
         {
             double[] weights = getWeights();
-            int num = (int)(rand.NextDouble() * getNumWeights());
-            weights[num] = (rand.NextDouble() * 2 - 1);
+            for(int i = 0; i < weights.Length; i++)
+            {
+                if(rand.NextDouble() < mutationRate)
+                {
+                    weights[i] = (rand.NextDouble() * 2 - 1);
+                }
+            }
             setWeights(weights);
         }
 

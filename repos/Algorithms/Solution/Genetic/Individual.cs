@@ -13,7 +13,7 @@ namespace Algorithms.Genetic
         Individual CreateBaby(Individual parent2, double crossOver);
 
         /** Mutates the individual */
-        void Mutate();
+        void Mutate(double mutationRate);
 
         /** Returns the fitness of the individual */
         double GetFitness();

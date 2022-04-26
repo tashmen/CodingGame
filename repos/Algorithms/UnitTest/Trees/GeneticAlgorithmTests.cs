@@ -18,13 +18,13 @@ namespace UnitTest.Algorithms
         }
         
         [Fact]
-        public void Test_Play_21_Game()
+        public void Test_Play_21_Game_Neural()
         {
             
             Population population = new Population(100);
             for(int i =0; i<100; i++)
             {
-                population.addIndividual(new NeuralNetwork(4, new int[] { 1, 16, 4, 1 }, 1));
+                population.addIndividual(new NeuralNetwork(4, new int[] { 1, 16, 16, 3, 1 }, 1));
             }
 
             GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.7);
@@ -73,12 +73,18 @@ namespace UnitTest.Algorithms
                     }
                 });
             }
-            while (population.avgFitness() < 50);
+            while (population.avgFitness() < 60);
 
             population.sortPopulation();
             Individual individual = population.getIndividual(0);
             Console.Error.WriteLine(genetic.generationCounter);
             Console.Error.WriteLine(individual.GetFitness());
+        }
+
+        [Fact]
+        public void Play_21_Game_Genetic()
+        {
+            
         }
     }
 }

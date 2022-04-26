@@ -77,6 +77,19 @@ namespace UnitTest.TwentyOneGame
             };
         }
 
+        public int GetBestMove()
+        {
+            int sticks = Total % 4;
+            if (sticks == 3)
+            {
+                sticks = 2;
+            }
+            else if (sticks != 1)
+                sticks = sticks + 1;
+
+            return sticks;
+        }
+
         public double? GetWinner()
         {
             if (Total >= 21)

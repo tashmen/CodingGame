@@ -62,15 +62,13 @@ namespace Algorithms.Genetic
 
                 //4)Create a baby and add him to the new population
                 child = individual1.CreateBaby(individual2, crossOver);
-                if (rand.NextDouble() < mutationRate)
-                    child.Mutate();
+                child.Mutate(mutationRate);
                 newPopulation.addIndividual(child);
                 x++;
                 if (x < population.size)
                 {
                     child = individual2.CreateBaby(individual1, crossOver);
-                    if (rand.NextDouble() < mutationRate)
-                        child.Mutate();
+                    child.Mutate(mutationRate);
                     newPopulation.addIndividual(child);
                 }
             }
