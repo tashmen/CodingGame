@@ -8,9 +8,11 @@ namespace GameSolution.Entities
 {
     public class Hero : BoardPiece
     {
+        public static int Speed = 800;
+        public static int Range = 800;
+        public static int SightRange = 2200;
 
-
-        public Hero(int id, int x, int y, bool? isMax, int shieldLife, bool isControlled, int vx, int vy, bool isNearBase) : base(id, x, y, isMax, 800, 800, 2200, shieldLife, isControlled, vx, vy, isNearBase)
+        public Hero(int id, int x, int y, bool? isMax, int shieldLife, bool isControlled, int vx, int vy, bool isNearBase) : base(id, x, y, isMax, shieldLife, isControlled, vx, vy, isNearBase)
         {
 
         }

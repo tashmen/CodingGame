@@ -121,8 +121,8 @@ namespace GameSolution.Game
             var myBaseDirection = GetBaseDirectionality(myBase);
             var opponentBaseDirection = GetBaseDirectionality(opponentBase);
 
-            var topRightPoint = new Point2d(myBase.x + (myBaseDirection) * (topRight.sightRange + myBase.sightRange), myBase.y + (myBaseDirection) * topRight.sightRange);
-            var bottomLeftPoint = new Point2d(myBase.x + (myBaseDirection) * bottomLeft.sightRange, opponentBase.y + (opponentBaseDirection) * bottomLeft.sightRange);
+            var topRightPoint = new Point2d(myBase.x + (myBaseDirection) * (Hero.SightRange + Hero.SightRange), myBase.y + (myBaseDirection) * Hero.SightRange);
+            var bottomLeftPoint = new Point2d(myBase.x + (myBaseDirection) * Hero.SightRange, opponentBase.y + (opponentBaseDirection) * Hero.SightRange);
 
             if(myBaseDirection < 0)
             {
@@ -163,7 +163,7 @@ namespace GameSolution.Game
                     if (CanCastWindOnNearBaseMonster(distToAllMonsters[0].Item2, goalie))
                     {
                         hero1CastWind = true;
-                        move.AddSpellMove(opponentBase.x, opponentBase.y, SpellType.WIND, -99, goalie.id);
+                        move.AddWindSpellMove(opponentBase.x, opponentBase.y, goalie.id);
                     }
                     else
                     {
@@ -182,7 +182,7 @@ namespace GameSolution.Game
                     
                     if (!hero1CastWind && CanCastWindOnNearBaseMonster(m, topRight))
                     {
-                        move.AddSpellMove(opponentBase.x, opponentBase.y, SpellType.WIND, -99, topRight.id);
+                        move.AddWindSpellMove(opponentBase.x, opponentBase.y, topRight.id);
                     }
                     else move.AddHeroMove(m.x, m.y, topRight.id);
 
@@ -204,17 +204,17 @@ namespace GameSolution.Game
                     else if (CanCastWindOnNearBaseMonster(m, goalie))
                     {
                         goalieCastWind = true;
-                        move.AddSpellMove(opponentBase.x, opponentBase.y, SpellType.WIND, -99, goalie.id);
+                        move.AddWindSpellMove(opponentBase.x, opponentBase.y, goalie.id);
                     }
                     else if (CanCastControlOnNearBaseMonster(m, goalie))
                     {
                         var target = GetControlTargetingPointForMonster(m);
-                        move.AddSpellMove(target.GetTruncatedX(), target.GetTruncatedY(), SpellType.CONTROL, m.id, goalie.id);
+                        move.AddControlSpellMove(target.GetTruncatedX(), target.GetTruncatedY(), m.id, goalie.id);
                     } 
                     else
                     {
                         
-                        if (distToOpponentHeroes.Count > 0 && distToOpponentHeroes[0].Item1 < 6500 && distToOpponentHeroes[0].Item2.GetDistance(goalie) > goalie.speed && m.GetDistance(myBase) > 5000)
+                        if (distToOpponentHeroes.Count > 0 && distToOpponentHeroes[0].Item1 < 6500 && distToOpponentHeroes[0].Item2.GetDistance(goalie) > Hero.Speed && m.GetDistance(myBase) > 5000)
                         {
                             var h = distToOpponentHeroes[0].Item2;
                             move.AddHeroMove(h.x, h.y, goalie.id);
@@ -250,11 +250,11 @@ namespace GameSolution.Game
 
                     if ((!goalieCastWind || myBase.mana >= 20) && CanCastWindOnNearBaseMonster(m, topRight))
                     {
-                        move.AddSpellMove(opponentBase.x, board.opponentBase.y, SpellType.WIND, -99, topRight.id);
+                        move.AddWindSpellMove(opponentBase.x, board.opponentBase.y, topRight.id);
                     }
                     else if (distToOpponentHeroes.Count > 0 && CanCastControlOnNearBaseHero(distToOpponentHeroes[0].Item2, topRight))
                     {
-                        move.AddSpellMove(opponentBase.x, board.opponentBase.y, SpellType.CONTROL, distToOpponentHeroes[0].Item2.id, topRight.id);
+                        move.AddControlSpellMove(opponentBase.x, board.opponentBase.y, distToOpponentHeroes[0].Item2.id, topRight.id);
                     }
                     else
                     {
@@ -280,13 +280,13 @@ namespace GameSolution.Game
                     }
                     if(windableMonsters.Count > 3 && myBase.mana > 60)
                     {
-                        move.AddSpellMove(opponentBase.x, opponentBase.y, SpellType.WIND, -99, bottomLeft.id);
+                        move.AddWindSpellMove(opponentBase.x, opponentBase.y, bottomLeft.id);
                     }
                     else if (myBase.mana > 100 && controllableMonsters.Count > 0)
                     {
                         var monster = controllableMonsters[0];
                         var target = GetControlTargetingPointForMonster(monster);
-                        move.AddSpellMove(target.GetTruncatedX(), target.GetTruncatedY(), SpellType.CONTROL, monster.id, bottomLeft.id);
+                        move.AddControlSpellMove(target.GetTruncatedX(), target.GetTruncatedY(), monster.id, bottomLeft.id);
                     }
                     else
                     {
@@ -375,9 +375,9 @@ namespace GameSolution.Game
 
             //Console.Error.WriteLine("Hero point: " + hero.point);
             
-            var result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), hero.range-1);
+            var result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), Hero.Range-1);
             var roundedResult = result.Item2.GetRoundedPoint();
-            if(hero.point.GetDistance(roundedResult) > hero.speed)
+            if(hero.point.GetDistance(roundedResult) > Hero.Speed)
             {
                 Console.Error.WriteLine("Circle too far!");
             }
@@ -402,7 +402,7 @@ namespace GameSolution.Game
         public bool IsMonsterInRangeOfHero(Monster monster, Hero hero)
         {
             var dist = hero.GetDistance(monster);
-            if (dist < hero.speed + hero.range)
+            if (dist < Hero.Speed + Hero.Range)
                 return true;
             return false;
         }

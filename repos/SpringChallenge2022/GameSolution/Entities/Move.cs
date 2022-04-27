@@ -1,7 +1,4 @@
-﻿using Algorithms.Genetic;
-using Algorithms.Space;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Text;
 
@@ -28,52 +25,58 @@ namespace GameSolution.Entities
         //y => 2^16
         //moveType => 2^2
         //SpellType => 2^2
-        //targetId => 2^=16
-        public Point2d point { get; set; }
-        public int x { get { return point.GetTruncatedX(); } }
-        public int y { get { return point.GetTruncatedY(); } }
-        public MoveType moveType { get; set; }
-        public SpellType spellType {get; set;}
+        //targetId => 2^16
 
-        public int targetId { get; set; }
+        public static long xMask = (long)Math.Pow(2, 16) - 1;
+        public static long yMask = (long)Math.Pow(2, 32) - 1 - xMask;
+        public static long moveTypeMask = (long)Math.Pow(2, 34) - 1 - yMask - xMask;
+        public static long spellTypeMask = (long)Math.Pow(2, 36) - 1 - moveTypeMask - yMask - xMask;
+        public static long targetIdMask = (long)Math.Pow(2, 52) - 1 - spellTypeMask - moveTypeMask - yMask - xMask;
 
-        public long move;
-
-        public HeroMove(int x, int y, MoveType moveType, SpellType spellType, int entityId)
+        public static MoveType GetMoveType(long move)
         {
-            move = x + y >> 16 + (int)moveType >> 18 + (int)spellType >> 20 + entityId >> 22;
-            
-            this.point = new Point2d(x, y);
-            this.moveType = moveType;
-            this.spellType = spellType;
-            this.targetId = entityId;
+            return (MoveType)((move & moveTypeMask) >> 32);
         }
 
-        public HeroMove(HeroMove heroMove)
+        public static int GetX(long move)
         {
-            this.point = new Point2d(heroMove.point);
-            this.moveType = heroMove.moveType;
-            this.spellType = heroMove.spellType;
+            return (int)(move & xMask);
         }
 
-        public bool Equals(HeroMove heroMove)
+        public static int GetY(long move)
         {
-            return this.x == heroMove.x && this.y == heroMove.y && this.moveType == heroMove.moveType && this.spellType == heroMove.spellType && this.targetId == heroMove.targetId;
+            return (int)((move & yMask) >> 16);
+        }
+
+        public static SpellType GetSpellType(long move)
+        {
+            return (SpellType)((move & spellTypeMask) >> 34);
+        }
+
+        public static int GetTargetId(long move)
+        {
+            return (int)((move & targetIdMask) >> 36);
+        }
+
+        public static long CreateHeroMove(int x, int y, MoveType moveType, SpellType spellType, int entityId)
+        {
+            long move = x + ((long)y << 16) + ((long)moveType << 32) + ((long)spellType << 34) + ((long)entityId << 36);
+            return move;
         }
 
         public static long CreateWaitMove()
         {
-            return new HeroMove(-1, -1, MoveType.WAIT, SpellType.NONE, -99);
+            return CreateHeroMove(0, 0, MoveType.WAIT, SpellType.NONE, 0);
         }
 
         public static long CreateHeroMove(int x, int y)
         {
-            return new HeroMove(x, y, MoveType.MOVE, SpellType.NONE, -99);
+            return CreateHeroMove(x, y, MoveType.MOVE, SpellType.NONE, 0);
         }
 
         public static long CreateWindSpellMove(int x, int y)
         {
-            return CreateSpellMove(x, y, SpellType.WIND, -99);
+            return CreateSpellMove(x, y, SpellType.WIND, 0);
         }
 
         public static long CreateControlSpellMove(int x, int y, int targetId)
@@ -83,27 +86,26 @@ namespace GameSolution.Entities
 
         public static long CreateShieldSpellMove(int targetId)
         {
-            return CreateSpellMove(-1, -1, SpellType.SHIELD, targetId);
+            return CreateSpellMove(0, 0, SpellType.SHIELD, targetId);
         }
 
         public static long CreateSpellMove(int x, int y, SpellType spell, int targetId)
         {
-            return new long(x, y, MoveType.SPELL, spell, targetId);
+            return CreateHeroMove(x, y, MoveType.SPELL, spell, targetId);
         }
     }
 
     public class Move
     {
-        public HeroMove[] heroMoves { get; set; }
-        public double fitness { get; set; }
+        public long[] heroMoves { get; set; }
 
         public Move()
         {
-            heroMoves = new HeroMove[3];
+            heroMoves = new long[3];
         }
         public Move(Move move)
         {
-            heroMoves = move.heroMoves.Select(m => new HeroMove(m)).ToArray();
+            heroMoves = move.heroMoves.Select(m => m).ToArray();
         }
 
         public int ConvertHeroIdToIndex(int heroId)
@@ -113,12 +115,12 @@ namespace GameSolution.Entities
             else return heroId - 3;
         }
 
-        public HeroMove GetMove(int heroId)
+        public long GetMove(int heroId)
         {
             return heroMoves[ConvertHeroIdToIndex(heroId)];
         }
 
-        public void AddMove(HeroMove heroMove, int heroId)
+        public void AddMove(long heroMove, int heroId)
         {
             heroMoves[ConvertHeroIdToIndex(heroId)] = heroMove;
         }
@@ -136,6 +138,21 @@ namespace GameSolution.Entities
         public void AddSpellMove(int x, int y, SpellType spell, int targetId, int heroId)
         {
             heroMoves[ConvertHeroIdToIndex(heroId)] = HeroMove.CreateSpellMove(x, y, spell, targetId);
+        }
+
+        public void AddWindSpellMove(int x, int y, int heroId)
+        {
+            heroMoves[ConvertHeroIdToIndex(heroId)] = HeroMove.CreateWindSpellMove(x, y);
+        }
+
+        public void AddControlSpellMove(int x, int y, int targetId, int heroId)
+        {
+            heroMoves[ConvertHeroIdToIndex(heroId)] = HeroMove.CreateControlSpellMove(x, y, targetId);
+        }
+
+        public void AddShieldSpellMove(int targetId, int heroId)
+        {
+            heroMoves[ConvertHeroIdToIndex(heroId)] = HeroMove.CreateShieldSpellMove(targetId);
         }
 
         public bool Equals(Move move)
@@ -159,27 +176,28 @@ namespace GameSolution.Entities
         public override string ToString()
         {
             StringBuilder moveStr = new StringBuilder();
-            foreach(HeroMove move in heroMoves)
+            foreach(long move in heroMoves)
             {
-                switch (move.moveType)
+                switch (HeroMove.GetMoveType(move))
                 {
                     case MoveType.MOVE:
-                        moveStr.Append("MOVE " + move.x + " " + move.y + Environment.NewLine);
+                        moveStr.Append("MOVE " + HeroMove.GetX(move) + " " + HeroMove.GetY(move) + Environment.NewLine);
                         break;
                     case MoveType.WAIT:
-                        moveStr.Append("WAIT " + Environment.NewLine);
+                        moveStr.Append("WAIT" + Environment.NewLine);
                         break;
                     case MoveType.SPELL:
-                        switch (move.spellType)
+                        var spellType = HeroMove.GetSpellType(move);
+                        switch (spellType)
                         {
                             case SpellType.WIND:
-                                moveStr.Append("SPELL " + move.spellType.ToString() + " " + move.x + " " + move.y + Environment.NewLine);
+                                moveStr.Append("SPELL " + spellType.ToString() + " " + HeroMove.GetX(move) + " " + HeroMove.GetY(move) + Environment.NewLine);
                                 break;
                             case SpellType.SHIELD:
-                                moveStr.Append("SPELL " + move.spellType.ToString() + " " + move.targetId + Environment.NewLine);
+                                moveStr.Append("SPELL " + spellType.ToString() + " " + HeroMove.GetTargetId(move) + Environment.NewLine);
                                 break;
                             case SpellType.CONTROL:
-                                moveStr.Append("SPELL " + move.spellType.ToString() + " " + move.targetId + " " + move.x + " " + move.y + Environment.NewLine);
+                                moveStr.Append("SPELL " + spellType.ToString() + " " + HeroMove.GetTargetId(move) + " " + HeroMove.GetX(move) + " " + HeroMove.GetY(move) + Environment.NewLine);
                                 break;
                         }
                         

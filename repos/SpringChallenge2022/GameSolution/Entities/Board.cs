@@ -70,12 +70,12 @@ namespace GameSolution.Entities
             
             foreach(Hero hero in heroes)
             {
-                HeroMove heroMove = move.GetMove(hero.id);
-                switch (heroMove.moveType)
+                long heroMove = move.GetMove(hero.id);
+                switch (HeroMove.GetMoveType(heroMove))
                 {
                     case MoveType.MOVE:
-                        var point = heroMove.point;
-                        var newPoint = Space2d.TranslatePoint(hero.point, point, hero.speed);
+                        var point = new Point2d(HeroMove.GetX(heroMove), HeroMove.GetY(heroMove));
+                        var newPoint = Space2d.TranslatePoint(hero.point, point, Hero.Speed);
                         hero.point = newPoint;
                         break;
                     case MoveType.SPELL:

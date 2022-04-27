@@ -108,13 +108,13 @@ namespace GameSolution.Game
 
 
 
-            IList<HeroMove>[] heroMoves = new List<HeroMove>[3];
-            HeroMove heroMove;
+            IList<long>[] heroMoves = new List<long>[3];
+            long heroMove;
             //Initialize with wait move
             for (int i = 0; i < 3; i++)
             {
                 heroMove = HeroMove.CreateWaitMove();
-                heroMoves[i] = new List<HeroMove>();
+                heroMoves[i] = new List<long>();
                 heroMoves[i].Add(heroMove);
             }
 
@@ -229,11 +229,11 @@ namespace GameSolution.Game
 
 
             //Take each single hero move and combine them into a set of 3 hero moves using all permutations
-            foreach (HeroMove heroMove1 in heroMoves[0])
+            foreach (long heroMove1 in heroMoves[0])
             {
-                foreach (HeroMove heroMove2 in heroMoves[1])
+                foreach (long heroMove2 in heroMoves[1])
                 {
-                    foreach (HeroMove heroMove3 in heroMoves[2])
+                    foreach (long heroMove3 in heroMoves[2])
                     {
                         var move = new Move();
                         move.AddMove(heroMove1, 0);
