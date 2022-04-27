@@ -1,6 +1,4 @@
-﻿using Algorithms.Space;
-
-namespace Solution.Space
+﻿namespace Algorithms.Space
 {
     public class Circle2d : Point2d
     {

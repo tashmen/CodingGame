@@ -55,6 +55,11 @@ namespace Algorithms.Trees
                     value = Math.Max(value, minMax);
                     alpha = Math.Max(alpha, value);
 
+                    if (watch.ElapsedMilliseconds >= timeLimit)
+                    {
+                        return value;
+                    }
+
                     if (alpha >= beta)
                     {
                         break;
@@ -73,6 +78,12 @@ namespace Algorithms.Trees
 
                     value = Math.Min(value, minMax);
                     beta = Math.Min(beta, value);
+
+                    if (watch.ElapsedMilliseconds >= timeLimit)
+                    {
+                        return value;
+                    }
+
                     if (beta <= alpha)
                     {
                         break;
