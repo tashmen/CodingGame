@@ -16,14 +16,19 @@ namespace GameSolution.Entities
 
     public enum SpellType
     {
-        NONE = -1,
-        WIND = 0,
-        SHIELD = 1,
-        CONTROL = 2
+        NONE = 0,
+        WIND = 1,
+        SHIELD = 2,
+        CONTROL = 3
     };
 
-    public class HeroMove
+    public static class HeroMove
     {
+        //x => 2^16
+        //y => 2^16
+        //moveType => 2^2
+        //SpellType => 2^2
+        //targetId => 2^=16
         public Point2d point { get; set; }
         public int x { get { return point.GetTruncatedX(); } }
         public int y { get { return point.GetTruncatedY(); } }
@@ -32,8 +37,12 @@ namespace GameSolution.Entities
 
         public int targetId { get; set; }
 
+        public long move;
+
         public HeroMove(int x, int y, MoveType moveType, SpellType spellType, int entityId)
         {
+            move = x + y >> 16 + (int)moveType >> 18 + (int)spellType >> 20 + entityId >> 22;
+            
             this.point = new Point2d(x, y);
             this.moveType = moveType;
             this.spellType = spellType;
@@ -52,34 +61,34 @@ namespace GameSolution.Entities
             return this.x == heroMove.x && this.y == heroMove.y && this.moveType == heroMove.moveType && this.spellType == heroMove.spellType && this.targetId == heroMove.targetId;
         }
 
-        public static HeroMove CreateWaitMove()
+        public static long CreateWaitMove()
         {
             return new HeroMove(-1, -1, MoveType.WAIT, SpellType.NONE, -99);
         }
 
-        public static HeroMove CreateHeroMove(int x, int y)
+        public static long CreateHeroMove(int x, int y)
         {
             return new HeroMove(x, y, MoveType.MOVE, SpellType.NONE, -99);
         }
 
-        public static HeroMove CreateWindSpellMove(int x, int y)
+        public static long CreateWindSpellMove(int x, int y)
         {
             return CreateSpellMove(x, y, SpellType.WIND, -99);
         }
 
-        public static HeroMove CreateControlSpellMove(int x, int y, int targetId)
+        public static long CreateControlSpellMove(int x, int y, int targetId)
         {
             return CreateSpellMove(x, y, SpellType.CONTROL, targetId);
         }
 
-        public static HeroMove CreateShieldSpellMove(int targetId)
+        public static long CreateShieldSpellMove(int targetId)
         {
             return CreateSpellMove(-1, -1, SpellType.SHIELD, targetId);
         }
 
-        public static HeroMove CreateSpellMove(int x, int y, SpellType spell, int targetId)
+        public static long CreateSpellMove(int x, int y, SpellType spell, int targetId)
         {
-            return new HeroMove(x, y, MoveType.SPELL, spell, targetId);
+            return new long(x, y, MoveType.SPELL, spell, targetId);
         }
     }
 

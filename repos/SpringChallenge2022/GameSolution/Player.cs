@@ -48,7 +48,6 @@ class Player
 
             for (int i = 0; i < 2; i++)
             {
-                
                 inputs = Console.ReadLine().Split(' ');
                 int health = int.Parse(inputs[0]); // Your base health
                 int mana = int.Parse(inputs[1]); // Ignore in the first league; Spend ten mana to cast a spell
@@ -105,18 +104,22 @@ class Player
 
             }
 
-            state.SetNextTurn(new Board(pieces));
-
-            
-
-            Move move;
             Stopwatch watch = new Stopwatch();
             watch.Start();
+
+
+
+            state.SetNextTurn(new Board(pieces));
+
+            int limit = isFirstRound ? 998 : 40;
+
+            Move move;
             if (simulate)
             {
                 Minimax search = new Minimax();
                 search.SetState(state, true, false);
-                move = (Move)search.GetNextMove(watch, 48, 4);
+                Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
+                move = (Move)search.GetNextMove(watch, limit, 4);
             }
             else if (!runNeural)
             {
@@ -139,9 +142,6 @@ class Player
             }
             watch.Stop();
             Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
-
-
-            int limit = isFirstRound ? 998 : 48;
 
             Console.Write(move);
 

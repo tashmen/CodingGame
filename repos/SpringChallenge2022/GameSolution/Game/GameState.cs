@@ -3,6 +3,7 @@ using GameSolution.Entities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GameSolution.Game
 {
@@ -15,6 +16,9 @@ namespace GameSolution.Game
         public Move? maxMove { get; set; }
         public Move? minMove { get; set; }
 
+        public IList<Move> possibleMaxMoves { get; set; }
+        public IList<Move> possibleMinMoves { get; set; }
+
         public GameState()
         {
             turn = 0;
@@ -26,6 +30,9 @@ namespace GameSolution.Game
         {
             turn++;
             this.board = board;
+
+            possibleMaxMoves = CalculateMoves(true);
+            possibleMinMoves = CalculateMoves(false);
         }
 
         public GameState(GameState state)
@@ -34,6 +41,9 @@ namespace GameSolution.Game
             turn = state.turn;
             maxMove = state.maxMove != null ? state.maxMove.Clone() : null;
             minMove= state.minMove != null ? state.minMove.Clone() : null;
+
+            possibleMaxMoves = state.possibleMaxMoves;
+            possibleMinMoves = state.possibleMinMoves;
         }
 
         public void ApplyMove(object move, bool isMax)
@@ -87,7 +97,7 @@ namespace GameSolution.Game
             return null;
         }
 
-        public IList GetPossibleMoves(bool isMax)
+        private IList<Move> CalculateMoves(bool isMax)
         {
             IList<Move> finalPossibleMoves = new List<Move>();
             GameHelper gameHelper = new GameHelper(this);
@@ -96,7 +106,7 @@ namespace GameSolution.Game
             var myBase = isMax ? board.myBase : board.opponentBase;
             var opponentBase = isMax ? board.opponentBase : board.myBase;
 
-            
+
 
             IList<HeroMove>[] heroMoves = new List<HeroMove>[3];
             HeroMove heroMove;
@@ -108,7 +118,13 @@ namespace GameSolution.Game
                 heroMoves[i].Add(heroMove);
             }
 
-            
+            if (isMax)
+            {
+                finalPossibleMoves.Add(gameHelper.GetBestMove(this));
+            }
+
+
+            /*
             for (int i = 0; i < myHeroes.Count; i++)
             {
                 var hero = myHeroes[i];
@@ -119,9 +135,101 @@ namespace GameSolution.Game
                     heroMoves[i].Add(heroMove);
                 }
             }
+            */
+
+            //Build movement moves
+            
+            foreach (BoardPiece piece in board.boardPieces)
+            {
+                //Do not move towards enemy heroes
+                if (piece is Hero && piece.isMax.Value != isMax)
+                    continue;
+                //Do not move towards monsters that are targeting the enemy
+                if (piece is Monster && ((Monster)piece).threatForMax.HasValue && ((Monster)piece).threatForMax.Value != isMax)
+                    continue;
+
+                for (int i = 0; i < myHeroes.Count; i++)
+                {
+                    if (!myHeroes[i].isControlled)
+                    {
+                        if (heroMoves[i].Count > 1)
+                            continue;
+                        heroMove = HeroMove.CreateHeroMove(piece.x, piece.y);
+                        heroMoves[i].Add(heroMove);
+                    }
+                }
+            }
+            
+
+
+            //Build spell moves
+            /*
+            foreach (BoardPiece piece in board.boardPieces)
+            {
+                if (piece is Base)
+                {
+                    //do nothing
+                }
+                else
+                {
+                    if (myBase.mana >= 10 && piece.shieldLife == 0)
+                    {
+                        //do not wind friendly heroes
+                        if (!(piece is Hero && piece.isMax.Value == isMax))
+                        {//Wind spell
+                            for (int i = 0; i < 3; i++)
+                            {
+                                Hero h = myHeroes[i];
+                                //Console.Error.WriteLine("Piece: " + piece.ToString());
+                                //Check range and shield, 
+                                if (h.GetDistance(piece) < 1280)
+                                {
+                                    heroMove = HeroMove.CreateWindSpellMove(myBase.x, myBase.y);
+                                    heroMoves[i].Add(heroMove);
+                                    heroMove = HeroMove.CreateWindSpellMove(opponentBase.x, opponentBase.y);
+                                    heroMoves[i].Add(heroMove);
+                                }
+                            }
+                        }
+                        //do not shield opponent heroes
+                        if (!(piece is Hero && piece.isMax.Value != isMax))
+                        {//Shield spell
+                            for (int i = 0; i < 3; i++)
+                            {
+                                Hero h = myHeroes[i];
+                                //Check range and shield; 
+                                if (h.GetDistance(piece) < 2200)
+                                {
+                                    heroMove = HeroMove.CreateShieldSpellMove(piece.id);
+                                    heroMoves[i].Add(heroMove);
+                                }
+                            }
+                        }
+                        //do not control friendly heroes
+                        if (!(piece is Hero && piece.isMax.Value == isMax))
+                        {//Control spell
+                            for (int i = 0; i < 3; i++)
+                            {
+                                Hero h = myHeroes[i];
+                                //Check range and shield; 
+                                if (h.GetDistance(piece) < 2200)
+                                {
+                                    heroMove = HeroMove.CreateControlSpellMove(myBase.x, myBase.y, piece.id);
+                                    heroMoves[i].Add(heroMove);
+
+                                    heroMove = HeroMove.CreateControlSpellMove(opponentBase.x, opponentBase.y, piece.id);
+                                    heroMoves[i].Add(heroMove);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            */
+
 
             //Take each single hero move and combine them into a set of 3 hero moves using all permutations
-            foreach(HeroMove heroMove1 in heroMoves[0])
+            foreach (HeroMove heroMove1 in heroMoves[0])
             {
                 foreach (HeroMove heroMove2 in heroMoves[1])
                 {
@@ -136,7 +244,13 @@ namespace GameSolution.Game
                 }
             }
 
-            return (IList)finalPossibleMoves;
+            //Console.Error.WriteLine("Total Move Count: " + finalPossibleMoves.Count);
+            return finalPossibleMoves;
+        }
+
+        public IList GetPossibleMoves(bool isMax)
+        {
+            return isMax ? (IList)possibleMaxMoves : (IList)possibleMinMoves;
         }
 
         public double? GetWinner()

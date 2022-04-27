@@ -143,7 +143,7 @@ namespace GameSolution.Game
             if (bottomLeftPoint.Equals(bottomLeft.point))
                 bottomLeftScanner = true;
 
-            Console.Error.WriteLine($"goalie: {goalie.id}, topRight: {topRight.id}, bottomLeft: {bottomLeft.id}");
+            //Console.Error.WriteLine($"goalie: {goalie.id}, topRight: {topRight.id}, bottomLeft: {bottomLeft.id}");
 
 
             //When no monsters; spread out to the corners of the map; with one player as "goalie"
@@ -451,7 +451,7 @@ namespace GameSolution.Game
             dist1 = BoardPiece.GetDistance(x1, y1, monster.x, monster.y);
             dist2 = BoardPiece.GetDistance(x2, y2, monster.x, monster.y);
 
-            Console.Error.WriteLine($"Targeting distances dist1, dist2: {dist1}, {dist2}");
+            //Console.Error.WriteLine($"Targeting distances dist1, dist2: {dist1}, {dist2}");
 
             if (dist1 < dist2 && alternate) 
             {
