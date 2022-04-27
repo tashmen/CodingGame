@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Algorithms.Space;
+using System;
 
 namespace GameSolution.Entities
 {
@@ -10,6 +7,7 @@ namespace GameSolution.Entities
     {
         public static int Speed = 400;
         public static int Range = 300;
+        public static int TargetingRange = 5000;
 
         public int health { get; set; }
         public bool? threatForMax { get; set; }
@@ -28,6 +26,11 @@ namespace GameSolution.Entities
         public override BoardPiece Clone()
         {
             return new Monster(this);
+        }
+
+        public void Move()
+        {
+            point = new Point2d(x + vx, y + vy);
         }
     }
 }

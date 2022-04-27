@@ -31,7 +31,7 @@ namespace GameSolution.Entities
         public int vy { get; set; }
         public bool isNearBase { get; set; }
 
-        public double[] distanceHash;
+        public static int MaxEntityId = 1000;
 
         public BoardPiece(int id, int x, int y, bool? isMax, int shieldLife, bool isControlled, int vx, int vy, bool isNearBase)
         {
@@ -43,7 +43,6 @@ namespace GameSolution.Entities
             this.vx = vx;
             this.vy = vy;
             this.isNearBase = isNearBase;
-            distanceHash = new double[2000];
         }
 
         public BoardPiece(BoardPiece piece)
@@ -56,7 +55,6 @@ namespace GameSolution.Entities
             this.vx = piece.vx;
             this.vy = piece.vy;
             this.isNearBase = piece.isNearBase;
-            distanceHash = new double[100];
         }
 
         public virtual BoardPiece Clone()
@@ -67,27 +65,8 @@ namespace GameSolution.Entities
         
         public double GetDistance(BoardPiece piece)
         {
-            if (distanceHash[piece.id] == 0)
-            {
-                distanceHash[piece.id] = GetDistance(piece.x, piece.y, x, y);
-            }
-            return distanceHash[piece.id];
+            return DistanceHash.GetDistance(x, y, piece.x, piece.y);
         } 
-
-        public Tuple<int, int> GetMidPoint(BoardPiece piece)
-        {
-            return GetMidPoint(piece.x, piece.y, x, y);
-        }
-
-        public static double GetDistance(int x1, int y1, int x2, int y2)
-        {
-            return Math.Sqrt(Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2));
-        }
-
-        public static Tuple<int, int> GetMidPoint(int x1, int y1, int x2, int y2)
-        {
-            return new Tuple<int, int>(Math.Abs(x1 - x2) / 2, Math.Abs(y1 - y2) / 2);
-        }
 
         public override string ToString()
         {

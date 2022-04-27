@@ -14,6 +14,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameSolution", "GameSolutio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSimulation", "TestSimulation\TestSimulation.csproj", "{11AD9993-ECC2-4A3E-959F-4BB19EB53C60}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameSolutionNeural", "GameSolutionNeural\GameSolutionNeural.csproj", "{3A630571-A80F-4F4C-A58E-FF78E76F9FF7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{11AD9993-ECC2-4A3E-959F-4BB19EB53C60}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11AD9993-ECC2-4A3E-959F-4BB19EB53C60}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11AD9993-ECC2-4A3E-959F-4BB19EB53C60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A630571-A80F-4F4C-A58E-FF78E76F9FF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A630571-A80F-4F4C-A58E-FF78E76F9FF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A630571-A80F-4F4C-A58E-FF78E76F9FF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A630571-A80F-4F4C-A58E-FF78E76F9FF7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

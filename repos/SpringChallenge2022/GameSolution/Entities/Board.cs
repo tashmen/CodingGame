@@ -6,6 +6,10 @@ namespace GameSolution.Entities
 {
     public class Board
     {
+        public static int MaxX = 17630;
+        public static int MaxY = 9000;
+        public static int MinX = 0;
+        public static int MinY = 0;
         public IList<BoardPiece> boardPieces { get; set; }
         public Base myBase { get; set; }
         public Base opponentBase { get; set; }

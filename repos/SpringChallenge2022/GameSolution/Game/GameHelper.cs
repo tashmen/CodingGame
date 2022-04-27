@@ -121,7 +121,7 @@ namespace GameSolution.Game
             var myBaseDirection = GetBaseDirectionality(myBase);
             var opponentBaseDirection = GetBaseDirectionality(opponentBase);
 
-            var topRightPoint = new Point2d(myBase.x + (myBaseDirection) * (Hero.SightRange + Hero.SightRange), myBase.y + (myBaseDirection) * Hero.SightRange);
+            var topRightPoint = new Point2d(myBase.x + (myBaseDirection) * (Hero.SightRange + Base.SightRange), myBase.y + (myBaseDirection) * Hero.SightRange);
             var bottomLeftPoint = new Point2d(myBase.x + (myBaseDirection) * Hero.SightRange, opponentBase.y + (opponentBaseDirection) * Hero.SightRange);
 
             if(myBaseDirection < 0)
@@ -372,14 +372,16 @@ namespace GameSolution.Game
                 points.Add(monster.point);
                 //Console.Error.WriteLine("Found point: (" + monster.point.x + ", " + monster.point.y + ")");
             }
+            points.Add(hero.point);
 
             //Console.Error.WriteLine("Hero point: " + hero.point);
             
-            var result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), Hero.Range-1);
+            var result = Space2d.FindCircleWithMaximumPoints(points.ToArray(), Hero.Speed-1);
             var roundedResult = result.Item2.GetRoundedPoint();
             if(hero.point.GetDistance(roundedResult) > Hero.Speed)
             {
-                Console.Error.WriteLine("Circle too far!");
+                Console.Error.WriteLine($"Circle too far! hero: {hero.point} point: {result}");
+                Console.Error.WriteLine(string.Join(',', points));
             }
             //Console.Error.WriteLine("Max circle: " + result.Item1 + result.Item2.GetRoundedPoint());
 
@@ -448,8 +450,8 @@ namespace GameSolution.Game
 
             double dist1, dist2;
 
-            dist1 = BoardPiece.GetDistance(x1, y1, monster.x, monster.y);
-            dist2 = BoardPiece.GetDistance(x2, y2, monster.x, monster.y);
+            dist1 = DistanceHash.GetDistance(x1, y1, monster.x, monster.y);
+            dist2 = DistanceHash.GetDistance(x2, y2, monster.x, monster.y);
 
             //Console.Error.WriteLine($"Targeting distances dist1, dist2: {dist1}, {dist2}");
 

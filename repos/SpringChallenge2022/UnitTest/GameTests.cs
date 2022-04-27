@@ -1,4 +1,5 @@
 ﻿using Algorithms;
+using Algorithms.Space;
 using Algorithms.Trees;
 using GameSolution.Entities;
 using GameSolution.Game;
@@ -29,8 +30,8 @@ namespace UnitTest
             game = new GameState();
 
             List<BoardPiece> boardPieces = new List<BoardPiece>();
-            boardPieces.Add(new Base(-1, 0, 0, true, 3, 0));
-            boardPieces.Add(new Base(-2, 17630, 9000, false, 3, 0));
+            boardPieces.Add(new Base(BoardPiece.MaxEntityId-1, 0, 0, true, 3, 0));
+            boardPieces.Add(new Base(BoardPiece.MaxEntityId - 2, 17630, 9000, false, 3, 0));
             boardPieces.Add(new Hero(0, 0, 0, true, 0, false, 0, 0, true));
             boardPieces.Add(new Hero(1, 0, 0, true, 0, false, 0, 0, true));
             boardPieces.Add(new Hero(2, 0, 0, true, 0, false, 0, 0, true));
@@ -55,32 +56,27 @@ namespace UnitTest
         }
 
         [Fact]
-        public void PlaySelf()
+        public void PlaySelf_One_Monster()
+        {
+            Minimax search = new Minimax();
+            var nextPoint = Space2d.TranslatePoint(new Point2d(3535, 3535), new Point2d(0, 0), Monster.Speed);
+            game.board.boardPieces.Add(new Monster(20, 3535, 3535, null, 10, 0, false, nextPoint.GetTruncatedX() - 3535, nextPoint.GetTruncatedY() - 3535, true, true));
+            game.board.SetupBoard();
+            do
+            {
+                PlayGame(search);
+            }
+            while (!game.GetWinner().HasValue);
+        }
+
+        [Fact]
+        public void PlaySelf_No_Monsters()
         {
             Minimax search = new Minimax();
 
             do
             {
-                Stopwatch watch = new Stopwatch();
-                watch.Start();
-                search.SetState(game, true, false);
-                Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-                Move move = (Move) search.GetNextMove(watch, 45, 4);
-                game.ApplyMove(move, true);
-                watch.Stop();
-
-                if (watch.ElapsedMilliseconds > 50)
-                    throw new Exception("timeout");
-
-                watch.Start();
-                search.SetState(game, false, false);
-                Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-                move = (Move)search.GetNextMove(watch, 45, 4);
-                game.ApplyMove(move, false);
-                watch.Stop();
-
-                if (watch.ElapsedMilliseconds > 50)
-                    throw new Exception("timeout");
+                PlayGame(search);
             }
             while (!game.GetWinner().HasValue);
         }
@@ -93,6 +89,32 @@ namespace UnitTest
             GameHelper gameHelper = new GameHelper(game);
             watch.Stop();
             Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
+        }
+
+        private void PlayGame(Minimax search)
+        {
+            int timeout = 5000000;
+
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            search.SetState(game, true, false);
+            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+            Move move = (Move)search.GetNextMove(watch, timeout, 1);
+            game.ApplyMove(move, true);
+            watch.Stop();
+
+            if (watch.ElapsedMilliseconds > timeout)
+                throw new Exception("timeout");
+
+            watch.Start();
+            search.SetState(game, false, false);
+            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+            move = (Move)search.GetNextMove(watch, timeout, 1);
+            game.ApplyMove(move, false);
+            watch.Stop();
+
+            if (watch.ElapsedMilliseconds > timeout)
+                throw new Exception("timeout");
         }
     }
 }

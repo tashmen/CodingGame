@@ -1,4 +1,5 @@
 ﻿using Algorithms.GameComponent;
+using Algorithms.Space;
 using GameSolution.Entities;
 using System;
 using System.Collections;
@@ -26,24 +27,121 @@ namespace GameSolution.Game
             minMove = null;
         }
 
-        public void SetNextTurn(Board board)
+        public GameState(GameState state)
+        {
+            board = state.board.Clone();
+            turn = state.turn;
+            maxMove = state.maxMove;
+            minMove = state.minMove;
+
+            possibleMaxMoves = state.possibleMaxMoves;
+            possibleMinMoves = state.possibleMinMoves;
+        }
+
+        public void SetNextTurn(Board board, bool simulate = false)
         {
             turn++;
             this.board = board;
+
+            if (simulate)
+            {
+                bool boardPiecesChanged = false;
+                boardPiecesChanged |= DamageMonsters();
+                boardPiecesChanged |= MoveMonsters();
+
+                if (boardPiecesChanged)
+                {
+                    board.SetupBoard();
+                }
+            }
 
             possibleMaxMoves = CalculateMoves(true);
             possibleMinMoves = CalculateMoves(false);
         }
 
-        public GameState(GameState state)
+        public bool DamageMonsters()
         {
-            board = state.board.Clone();
-            turn = state.turn;
-            maxMove = state.maxMove != null ? state.maxMove.Clone() : null;
-            minMove= state.minMove != null ? state.minMove.Clone() : null;
+            bool boardPiecesChanged = false;
+            foreach(Hero hero in board.myHeroes)
+            {
+                foreach(Monster monster in board.monsters)
+                {
+                    if(hero.GetDistance(monster) <= Hero.Range)
+                    {
+                        monster.health -= 2;
+                        board.myBase.mana += 1;
+                    }
+                }
+            }
 
-            possibleMaxMoves = state.possibleMaxMoves;
-            possibleMinMoves = state.possibleMinMoves;
+            foreach(Hero hero in board.opponentHeroes)
+            {
+                foreach (Monster monster in board.monsters)
+                {
+                    if (hero.GetDistance(monster) <= Hero.Range)
+                    {
+                        monster.health -= 2;
+                        board.opponentBase.mana += 1;
+                    }
+                }
+            }
+
+            for(int i = 0; i<board.monsters.Count; i++)
+            {
+                var monster = board.monsters[i];
+                if(monster.health <= 0)
+                {
+                    board.boardPieces.Remove(monster);
+                    boardPiecesChanged = true;
+                }
+            }
+
+            return boardPiecesChanged;
+        }
+
+        public bool MoveMonsters()
+        {
+            bool boardPiecesChanged = false;
+            foreach (Monster monster in board.monsters)
+            {
+                monster.Move();
+
+                if (!monster.isNearBase)
+                {
+                    if (monster.x > Board.MaxX || monster.x < Board.MinX || monster.y > Board.MaxY || monster.y < Board.MinY)
+                    {
+                        board.boardPieces.Remove(monster);
+                    }
+                }
+
+                boardPiecesChanged = CheckBaseDistance(board.myBase, monster);
+                boardPiecesChanged = CheckBaseDistance(board.opponentBase, monster);
+            }
+
+            return boardPiecesChanged;
+        }
+
+        public bool CheckBaseDistance(Base b, Monster monster)
+        {
+            bool boardPiecesChanged = false;
+
+            var distance = b.GetDistance(monster);
+            if (distance <= Monster.Range)
+            {
+                b.health--;
+                board.boardPieces.Remove(monster);
+                boardPiecesChanged = true;
+            }
+
+            if (!monster.isNearBase && distance <= Monster.TargetingRange)
+            {
+                monster.isNearBase = true;
+                var point = Space2d.TranslatePoint(monster.point, b.point, Monster.Speed);
+                monster.vx = point.GetTruncatedX() - monster.x;
+                monster.vy = point.GetTruncatedY() - monster.y;
+            }
+
+            return boardPiecesChanged;
         }
 
         public void ApplyMove(object move, bool isMax)
@@ -52,6 +150,7 @@ namespace GameSolution.Game
             if (isMax)
             {
                 maxMove = m;
+                minMove = null;
             }
             else
             {
@@ -64,7 +163,7 @@ namespace GameSolution.Game
             {
                 board.ApplyMove(maxMove, true);
                 board.ApplyMove(minMove, false);
-                SetNextTurn(board);
+                SetNextTurn(board, true);
             }
         }
 
@@ -82,12 +181,29 @@ namespace GameSolution.Game
         {
             double value = 0;
 
-            var myBase = isMax ? board.myBase : board.opponentBase;
-            var myHeroes = isMax ? board.myHeroes : board.opponentHeroes;
+            var myBase = board.myBase;
+            var opponentBase = board.opponentBase;
+            var myHeroes = board.myHeroes;
 
-            value += myBase.health * 2000;//lots of points per base health since this is how we stay alive to win the game
+            value += (myBase.health - opponentBase.health) * 2000;//lots of points per base health since this is how we stay alive to win the game
 
             value += myBase.mana * 0.1;//Small amount of bonus for mana as this give us potential to cast spells
+
+            
+            foreach(Hero hero in myHeroes)
+            {
+                foreach(Hero hero2 in myHeroes)
+                {
+                    if (hero.id == hero2.id)
+                        continue;
+
+                    var d = hero.GetDistance(hero2);
+                    if (d >= Hero.SightRange)
+                    {
+                        value += 50;//Small bonus for being spread out.
+                    }
+                }
+            }
 
             return value;
         }
@@ -110,6 +226,7 @@ namespace GameSolution.Game
 
             IList<long>[] heroMoves = new List<long>[3];
             long heroMove;
+
             //Initialize with wait move
             for (int i = 0; i < 3; i++)
             {
@@ -120,7 +237,11 @@ namespace GameSolution.Game
 
             if (isMax)
             {
-                finalPossibleMoves.Add(gameHelper.GetBestMove(this));
+                var move = gameHelper.GetBestMove(this);
+                for (int i = 0; i < 3; i++)
+                {
+                    heroMoves[i].Add(move.GetMove(i));
+                }
             }
 
 
@@ -138,7 +259,7 @@ namespace GameSolution.Game
             */
 
             //Build movement moves
-            
+
             foreach (BoardPiece piece in board.boardPieces)
             {
                 //Do not move towards enemy heroes

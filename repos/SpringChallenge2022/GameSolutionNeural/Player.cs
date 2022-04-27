@@ -13,7 +13,19 @@ class Player
 {
     static void Main(string[] args)
     {
+        bool runNeural = false;
+        bool isLive = true;
         bool simulate = true;
+        string fileName = null;
+        if (args.Length > 0)
+        {
+            runNeural = args[0] == "1";
+            isLive = false;
+        }
+        if(args.Length > 1)
+        {
+            fileName = args[1];
+        }
 
         List<BoardPiece> pieces = new List<BoardPiece>();
         GameState state = new GameState();
@@ -57,7 +69,7 @@ class Player
                 BoardPiece p = null;
                 inputs = Console.ReadLine().Split(' ');
                 int id = int.Parse(inputs[0]); // Unique identifier
-                if (id >= BoardPiece.MaxEntityId - 2)
+                if (id >= 98)
                     throw new Exception("id larger than expected");
                 int type = int.Parse(inputs[1]); // 0=monster, 1=your hero, 2=opponent hero
                 int x = int.Parse(inputs[2]); // Position of this entity
@@ -97,11 +109,9 @@ class Player
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
+            state.SetNextTurn(new Board(pieces));
 
-
-            state.SetNextTurn(new Board(pieces), false);
-
-            int limit = isFirstRound ? 998 : 45;
+            int limit = isFirstRound ? 998 : 40;
 
             Move move;
             if (simulate)
@@ -109,12 +119,26 @@ class Player
                 Minimax search = new Minimax();
                 search.SetState(state, true, false);
                 Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
-                move = (Move)search.GetNextMove(watch, limit);
+                move = (Move)search.GetNextMove(watch, limit, 4);
             }
-            else
+            else if (!runNeural)
             {
                 GameHelper game = new GameHelper(state);
                 move = game.GetBestMove(state);
+            }
+            else
+            {
+                NeuralGameHelper game = new NeuralGameHelper(state);
+                if(!isLive && isFirstRound)
+                {
+                    game.ImportNetworkFromFile(fileName);
+                }
+                else if(isLive && isFirstRound)
+                {
+                    game.ImportNetworkFromByteLoader();
+                }
+
+                move = game.RunNeuralNetwork();
             }
             watch.Stop();
             Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
