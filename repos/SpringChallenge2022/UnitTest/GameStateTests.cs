@@ -1,8 +1,10 @@
-﻿using Algorithms.Space;
+﻿using Algorithms.GameComponent;
+using Algorithms.Space;
 using GameSolution.Entities;
 using GameSolution.Game;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -17,24 +19,13 @@ namespace UnitTest
             var converter = new Converter(output);
             Console.SetError(converter);
 
-            state = new GameState();
-
-            List<BoardPiece> boardPieces = new List<BoardPiece>();
-            boardPieces.Add(new Base(BoardPiece.MaxEntityId-1, 0, 0, true, 3, 0));
-            boardPieces.Add(new Base(BoardPiece.MaxEntityId - 2, 17630, 9000, false, 3, 0));
-            boardPieces.Add(new Hero(0, 0, 0, true, 0, false, 0, 0, true));
-            boardPieces.Add(new Hero(1, 0, 0, true, 0, false, 0, 0, true));
-            boardPieces.Add(new Hero(2, 0, 0, true, 0, false, 0, 0, true));
-            Board board = new Board(boardPieces);
-            state.SetNextTurn(board);
+            state = GameBuilder.BuildEmptyGame();
         }
 
         [Fact]
         public void GameState_Test_Monster_Movement()
         {
-            state.board.boardPieces.Add(new Monster(20, 0, 5000, null, 10, 0, false, 0, -300, true, true));
-
-            state.board.SetupBoard();
+            state = GameBuilder.BuildGameWithSingleMonster();
 
             state.SetNextTurn(state.board, true);
 
