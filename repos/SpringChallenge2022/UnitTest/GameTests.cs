@@ -14,9 +14,9 @@ using Xunit.Abstractions;
 
 namespace UnitTest
 {
+    
 
-
-    [Collection("MemoryAllocator")]
+    
     public class GameTests
     {
         private readonly GameState game;
@@ -24,7 +24,6 @@ namespace UnitTest
 
         public GameTests(ITestOutputHelper output)
         {
-            MemoryAllocator.Initialize();
             converter = new Converter(output);
             Console.SetError(converter);
 
@@ -49,7 +48,6 @@ namespace UnitTest
         [Fact]
         public void Minimax_SetState_Test()
         {
-            MemoryAllocator.AllowRecycle = true;
             for(int i = 0; i < 100; i++)
             {
                 Minimax search = new Minimax();
@@ -105,8 +103,6 @@ namespace UnitTest
             game.ApplyMove(move, true);
             watch.Stop();
 
-            MemoryAllocator.Reset();
-
             if (watch.ElapsedMilliseconds > timeout)
                 throw new Exception("timeout");
 
@@ -116,8 +112,6 @@ namespace UnitTest
             move = (Move)search.GetNextMove(watch, timeout, 1);
             game.ApplyMove(move, false);
             watch.Stop();
-
-            MemoryAllocator.Reset();
 
             if (watch.ElapsedMilliseconds > timeout)
                 throw new Exception("timeout");

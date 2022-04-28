@@ -12,21 +12,19 @@ namespace GameSolution.Entities
         public static int Range = 800;
         public static int SightRange = 2200;
 
-        public Hero() : base()
+        public Hero(int id, int x, int y, bool? isMax, int shieldLife, bool isControlled, int vx, int vy, bool isNearBase) : base(id, x, y, isMax, shieldLife, isControlled, vx, vy, isNearBase)
         {
 
         }
 
-        public Hero(int id, int x, int y, bool? isMax, int shieldLife, bool isControlled, int vx, int vy, bool isNearBase) : base(id, x, y, isMax, shieldLife, isControlled, vx, vy, isNearBase)
+        public Hero(Hero piece) : base(piece)
         {
 
         }
 
         public override BoardPiece Clone()
         {
-            var h = MemoryAllocator.GetHero();
-            h.Fill(this);
-            return h;
+            return new Hero(this);
         }
     }
 }

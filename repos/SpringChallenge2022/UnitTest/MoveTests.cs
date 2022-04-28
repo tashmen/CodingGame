@@ -6,7 +6,7 @@ using Xunit.Abstractions;
 
 namespace UnitTest
 {
-    [Collection("MemoryAllocator")]
+
     public class MoveTests
     {
         public MoveTests(ITestOutputHelper output)

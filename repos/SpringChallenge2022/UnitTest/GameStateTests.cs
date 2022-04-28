@@ -1,22 +1,19 @@
-﻿using Algorithms.GameComponent;
-using Algorithms.Space;
+﻿using Algorithms.Space;
 using GameSolution.Entities;
 using GameSolution.Game;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace UnitTest
 {
-    [Collection("MemoryAllocator")]
+
     public class GameStateTests
     {
         private GameState state;
         public GameStateTests(ITestOutputHelper output)
         {
-            MemoryAllocator.Initialize(true);
             var converter = new Converter(output);
             Console.SetError(converter);
 

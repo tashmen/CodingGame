@@ -11,7 +11,6 @@ namespace TestSimulation
     {
         static void Main(string[] args)
         {
-            MemoryAllocator.Initialize();
             GameState game = new GameState();
             List<BoardPiece> boardPieces = new List<BoardPiece>();
             boardPieces.Add(new Base(-1, 0, 0, true, 3, 0));
@@ -33,7 +32,6 @@ namespace TestSimulation
                 game.ApplyMove(move, true);
                 watch.Stop();
 
-                MemoryAllocator.Reset();
 
                 watch.Reset();
                 watch.Start();
@@ -41,8 +39,6 @@ namespace TestSimulation
                 move = (Move)search.GetNextMove(watch, 48000, 4);
                 game.ApplyMove(move, false);
                 watch.Stop();
-
-                MemoryAllocator.Reset();
             }
             while (!game.GetWinner().HasValue);
         }
