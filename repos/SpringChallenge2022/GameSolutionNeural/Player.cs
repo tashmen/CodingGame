@@ -69,8 +69,8 @@ class Player
                 BoardPiece p = null;
                 inputs = Console.ReadLine().Split(' ');
                 int id = int.Parse(inputs[0]); // Unique identifier
-                if (id >= 98)
-                    throw new Exception("id larger than expected");
+                if (id >= BoardPiece.MaxEntityId - 2)
+                    throw new Exception("id larger than expected: " + id);
                 int type = int.Parse(inputs[1]); // 0=monster, 1=your hero, 2=opponent hero
                 int x = int.Parse(inputs[2]); // Position of this entity
                 int y = int.Parse(inputs[3]);

@@ -1,19 +1,22 @@
-﻿using Algorithms.Space;
+﻿using Algorithms.GameComponent;
+using Algorithms.Space;
 using GameSolution.Entities;
 using GameSolution.Game;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace UnitTest
 {
-
+    [Collection("MemoryAllocator")]
     public class GameStateTests
     {
         private GameState state;
         public GameStateTests(ITestOutputHelper output)
         {
+            MemoryAllocator.Initialize(true);
             var converter = new Converter(output);
             Console.SetError(converter);
 
@@ -45,10 +48,15 @@ namespace UnitTest
         [Fact]
         public void GameState_Clone_Test()
         {
-            for (int i = 0; i < 100; i++)
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            IGameState[] states = new IGameState[100000];
+            for (int i = 0; i < states.Length; i++)
             {
-                state.Clone();
+                states[i] = state.Clone();
             }
+            watch.Stop();
+            Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
         }
     }
 }

@@ -5,21 +5,28 @@
         public static int SightRange = 6000;
         public int health { get; set; }
         public int mana { get; set; }
+
+        public Base() : base()
+        {
+        }
         public Base(int id, int x, int y, bool isMax, int health, int mana) : base(id, x, y, isMax, 0, false, 0, 0, false)
         {
             this.health = health;
             this.mana = mana;
         }
 
-        public Base(Base piece) : base(piece)
+        public void Fill(Base piece)
         {
+            base.Fill(piece);
             this.health = piece.health;
             this.mana = piece.mana;
         }
 
         public override BoardPiece Clone()
         {
-            return new Base(this);
+            var b = MemoryAllocator.GetBase();
+            b.Fill(this);
+            return b;
         }
     }
 }

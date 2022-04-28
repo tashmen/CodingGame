@@ -11,21 +11,29 @@ namespace GameSolution.Entities
 
         public int health { get; set; }
         public bool? threatForMax { get; set; }
+
+        public Monster() : base()
+        {
+
+        }
         public Monster(int id, int x, int y, bool? isMax, int health, int shieldLife, bool isControlled, int vx, int vy, bool isNearBase, bool? threatForMax) : base(id, x, y, isMax, shieldLife, isControlled, vx, vy, isNearBase)
         {
             this.health = health;
             this.threatForMax = threatForMax;
         }
 
-        public Monster(Monster piece) : base(piece)
+        public void Fill(Monster piece)
         {
+            base.Fill(piece);
             this.health = piece.health;
             this.threatForMax = piece.threatForMax;
         }
 
         public override BoardPiece Clone()
         {
-            return new Monster(this);
+            Monster m = MemoryAllocator.GetMonster();
+            m.Fill(this);
+            return m;
         }
 
         public void Move()

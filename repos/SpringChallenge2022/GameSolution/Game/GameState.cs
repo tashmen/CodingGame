@@ -22,7 +22,7 @@ namespace GameSolution.Game
 
         public GameState()
         {
-            turn = 0;
+            turn = -1;
             maxMove = null;
             minMove = null;
         }

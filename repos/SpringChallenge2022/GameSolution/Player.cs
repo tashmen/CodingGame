@@ -14,6 +14,7 @@ class Player
     static void Main(string[] args)
     {
         bool simulate = true;
+        MemoryAllocator.Initialize();
 
         List<BoardPiece> pieces = new List<BoardPiece>();
         GameState state = new GameState();
@@ -32,6 +33,7 @@ class Player
         // game loop
         while (true)
         {
+            MemoryAllocator.Reset();
             pieces.Clear();
 
             for (int i = 0; i < 2; i++)
@@ -58,7 +60,7 @@ class Player
                 inputs = Console.ReadLine().Split(' ');
                 int id = int.Parse(inputs[0]); // Unique identifier
                 if (id >= BoardPiece.MaxEntityId - 2)
-                    throw new Exception("id larger than expected");
+                    throw new Exception("id larger than expected: " + id);
                 int type = int.Parse(inputs[1]); // 0=monster, 1=your hero, 2=opponent hero
                 int x = int.Parse(inputs[2]); // Position of this entity
                 int y = int.Parse(inputs[3]);
