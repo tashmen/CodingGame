@@ -104,12 +104,24 @@ namespace Algorithms.Space
         /// <summary>
         /// Moves the point towards the targetPoint with maximum distance
         /// </summary>
-        /// <param name="point">Start point</param>
+        /// <param name="startPoint">Start point</param>
         /// <param name="targetPoint">Target point</param>
         /// <param name="maximumDistance">Maximum distance to translate</param>
         /// <returns>The translated point in direction of target point with maximum distance</returns>
-        public static Point2d TranslatePoint(Point2d point, Point2d targetPoint, double maximumDistance)
+        public static Point2d TranslatePoint(Point2d startPoint, Point2d targetPoint, double maximumDistance)
         {
+            var vector = CreateVector(startPoint, targetPoint);
+            if (vector.LengthSquared() <= (maximumDistance * maximumDistance))
+                return targetPoint;
+            else
+            {
+                vector.Normalize();
+                vector.Multiply(maximumDistance);
+
+                return new Point2d(startPoint.x + vector.x, startPoint.y + vector.y);
+            }
+
+            /*
             if (point.GetDistance(targetPoint) <= maximumDistance)
                 return targetPoint;
             else
@@ -119,6 +131,14 @@ namespace Algorithms.Space
                 var vy = Math.Sin(angle) * maximumDistance;
                 return new Point2d(point.x + vx, point.y + vy);
             }
+            */
+        }
+
+        public static Point2d CreateVector(Point2d startPoint, Point2d targetPoint)
+        {
+            var x = targetPoint.x - startPoint.x;
+            var y = targetPoint.y - startPoint.y;
+            return new Point2d(x, y);
         }
 
         private static bool IsInteger(double d)

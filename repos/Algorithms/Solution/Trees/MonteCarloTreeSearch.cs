@@ -86,7 +86,7 @@ namespace Algorithms.Trees
             }
 
             if(printErrors)
-                Console.Error.WriteLine($"Best: w: {bestChild.wins} l: {bestChild.loses} total: {bestChild.totalPlays}");
+                Console.Error.WriteLine($"Best: w: {bestChild.wins} l: {bestChild.loses} total: {bestChild.totalPlays} score: {bestScore} move: {bestChild.state.GetMove(RootNode.isMax)}");
 
             return bestChild.state.GetMove(RootNode.isMax);
         }
@@ -130,15 +130,13 @@ namespace Algorithms.Trees
             if (depth == 0)
             {
                 double eval = state.Evaluate(isMax);
-                if (eval > 0)
+                if (eval > 1)
                 {
                     return 1;
                 }
-                else if (eval == 0)
-                {
-                    return 0;
-                }
-                else return -1;
+                else if (eval < -1)
+                    return -1;
+                else return eval;
             }
 
             throw new InvalidOperationException("Could not find a winner for simulation!");

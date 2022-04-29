@@ -39,6 +39,11 @@ namespace Algorithms.Space
             return new Point2d(Math.Round(this.x), Math.Round(this.y));
         }
 
+        public Point2d GetCeilingPoint()
+        {
+            return new Point2d(Math.Ceiling(x), Math.Ceiling(y));
+        }
+
         public int GetTruncatedX()
         {
             return (int)x;
@@ -61,6 +66,71 @@ namespace Algorithms.Space
         public Point2d GetMidPoint(Point2d point)
         {
             return GetMidPoint(point.x, point.y, x, y);
+        }
+
+        public double LengthSquared()
+        {
+            return x * x + y * y;
+        }
+
+        public double Length()
+        {
+            return Math.Sqrt(LengthSquared());
+        }
+
+        public Point2d Normalize()
+        {
+            var length = Length();
+            if (length == 0)
+            {
+                x = 0;
+                y = 0;
+            }
+            else
+            {
+                x = x / length;
+                y = y / length;
+            }
+            return this;
+        }
+
+        public Point2d Multiply(double scalar)
+        {
+            x = x * scalar;
+            y = y * scalar;
+            return this;
+        }
+
+        public Point2d Add(Point2d vector)
+        {
+            x = x + vector.x;
+            y = y + vector.y;
+            return this;
+        }
+
+        public Point2d Subtract(Point2d vector)
+        {
+            x = x - vector.x;
+            y = y - vector.y;
+            return this;
+        }
+
+        public Point2d Truncate()
+        {
+            x = GetTruncatedX();
+            y = GetTruncatedY();
+            return this;
+        }
+
+        public Point2d SymmetricTruncate(Point2d origin)
+        {
+            Subtract(origin).Truncate().Add(origin);
+            return this;
+        }
+
+        public Point2d Clone()
+        {
+            return new Point2d(x, y);
         }
 
         public static double GetDistance(double x1, double y1, double x2, double y2)
