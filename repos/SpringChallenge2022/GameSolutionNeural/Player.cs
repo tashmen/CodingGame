@@ -116,7 +116,7 @@ class Player
             Move move;
             if (simulate)
             {
-                Minimax search = new Minimax();
+                MonteCarloTreeSearch search = new MonteCarloTreeSearch();
                 search.SetState(state, true, false);
                 Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
                 move = (Move)search.GetNextMove(watch, limit, 4);

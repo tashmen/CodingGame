@@ -37,11 +37,11 @@ namespace UnitTest
         }
 
         [Fact]
-        public void Minimax_SetState_Test()
+        public void MonteCarloTreeSearch_SetState_Test()
         {
             for(int i = 0; i < 100; i++)
             {
-                Minimax search = new Minimax();
+                MonteCarloTreeSearch search = new MonteCarloTreeSearch();
                 search.SetState(game, true, false);
             }
         }

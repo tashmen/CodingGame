@@ -66,8 +66,8 @@ namespace GameSolution.Game
                 board.ResetSpells();
             }
 
-            possibleMaxMoves = CalculateMoves(true);
-            possibleMinMoves = CalculateMoves(false);
+            //possibleMaxMoves = CalculateMoves(true);
+            //possibleMinMoves = CalculateMoves(false);
         }
 
         public void ApplyWindSpells()
@@ -229,14 +229,15 @@ namespace GameSolution.Game
             var opponentBase = board.opponentBase;
             var myHeroes = board.myHeroes;
 
-            var sightBonus = (CalculateSightArea() / totalSightArea) *  0.20 ;
-            var manaGainBonus = ((myManaGained - opponentManaGained) / 200) * 0.80;
+            var healthBonus = ((myBase.health - opponentBase.health) / 3) * 0.9;
+            var sightBonus = (CalculateSightArea() / totalSightArea) *  0.02 ;
+            var manaGainBonus = ((myManaGained - opponentManaGained) / 200) * 0.08;
 
-            value += sightBonus + manaGainBonus;
+            value += healthBonus + sightBonus + manaGainBonus;
             
             if(value < 0 || value > 1)
             {
-                Console.Error.WriteLine($"sight: {sightBonus}, mana gain: {manaGainBonus}");
+                Console.Error.WriteLine($"health: {healthBonus}, sight: {sightBonus}, mana gain: {manaGainBonus}");
             }
 
 

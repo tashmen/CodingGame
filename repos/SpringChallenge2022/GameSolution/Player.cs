@@ -13,8 +13,8 @@ class Player
 {
     static void Main(string[] args)
     {
-        bool simulate = true;
-        bool findStateDiscrepencies = true;
+        bool simulate = false;
+        bool findStateDiscrepencies = false;
         
         GameState state = new GameState();
 
@@ -120,7 +120,7 @@ class Player
                 MonteCarloTreeSearch search = new MonteCarloTreeSearch(false);
                 search.SetState(state, true, false);
                 Console.Error.WriteLine("state ms: " + watch.ElapsedMilliseconds);
-                move = (Move)search.GetNextMove(watch, limit, 12, 20);
+                move = (Move)search.GetNextMove(watch, limit, 6, 20);
 
                 if (findStateDiscrepencies)
                 {

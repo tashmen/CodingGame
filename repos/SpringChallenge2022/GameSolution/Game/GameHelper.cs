@@ -11,8 +11,9 @@ namespace GameSolution.Game
         public enum Strategy
         {
             Defense = 0,
-            Scout = 1,
-            Attack =  2
+            Guard = 1,
+            Scout = 2,
+            Attack = 3
         }
 
         public Board board { get; set; }
@@ -20,9 +21,12 @@ namespace GameSolution.Game
         public List<Tuple<double, Hero>> distToOpponentHeroes { get; set; }
         public List<Tuple<double, Hero>> distToMyHeroes { get; set; }
 
+        public int turn;
+
         public GameHelper(GameState state)
         {
             board = state.board.Clone();
+            turn = state.turn;
 
             CalculateHelper();
         }
@@ -52,9 +56,11 @@ namespace GameSolution.Game
             distToAllMonsters = new List<Tuple<double, Monster>>();
             foreach (Monster m in board.monsters)
             {
-                if (m.threatForMax.HasValue && !m.threatForMax.Value)
-                    continue;
-
+                if (turn < 80)
+                {
+                    if (m.threatForMax.HasValue && !m.threatForMax.Value)
+                        continue;
+                }
 
                 double dist = board.myBase.GetDistance(m);
 
@@ -102,6 +108,7 @@ namespace GameSolution.Game
         }
 
         public static bool bottomLeftScanner = false;
+        static bool attackMode = false;
         public Move DefenseStrategy()
         {
             Move move = new Move();
@@ -122,11 +129,21 @@ namespace GameSolution.Game
             var topRightPoint = new Point2d(myBase.x + (myBaseDirection) * (Hero.SightRange + Base.SightRange), myBase.y + (myBaseDirection) * Hero.SightRange);
             var bottomLeftPoint = new Point2d(myBase.x + (myBaseDirection) * Hero.SightRange, opponentBase.y + (opponentBaseDirection) * Hero.SightRange);
 
+            var topRightCorner = new Point2d(Board.MaxX - 500, 0);
+            var bottomLeftCorner = new Point2d(0, Board.MaxY - 500);
+            var windCorner = topRightCorner;
+
             if(myBaseDirection < 0)
             {
                 var swap = bottomLeftPoint;
                 bottomLeftPoint = topRightPoint;
                 topRightPoint = swap;
+
+                swap = bottomLeftCorner;
+                bottomLeftCorner = topRightCorner;
+                topRightCorner = swap;
+
+                windCorner = bottomLeftCorner;
             }
 
             /*
@@ -158,10 +175,11 @@ namespace GameSolution.Game
                 {
                     bool hero1CastWind = false;
                     var m = distToAllMonsters[0].Item2;
-                    if (CanCastWindOnNearBaseMonster(distToAllMonsters[0].Item2, goalie))
+                    if (CanCastWindOnNearBaseMonster(distToAllMonsters[0].Item2, goalie, 2))
                     {
                         hero1CastWind = true;
-                        move.AddWindSpellMove(opponentBase.x, opponentBase.y, goalie.id);
+                        var windTarget = FindWindTarget(goalie, windCorner, new Point2d(opponentBase.x, opponentBase.y));
+                        move.AddWindSpellMove((int)windTarget.x, (int)windTarget.y, goalie.id);
                     }
                     else
                     {
@@ -191,18 +209,19 @@ namespace GameSolution.Game
                 else
                 {
                     bottomLeftScanner = false;
-                    var monstersInBase = distToAllMonsters.Sum(m => m.Item1 < 3000 ? 1 : 0);
-                    var monstersHeroCanWind = distToAllMonsters.Sum(m => m.Item1 < 3000 && CanCastWind(m.Item2, goalie) ? 1 : 0);
+                    var monstersInBase = distToAllMonsters.Sum(m => m.Item1 < 3000 && m.Item2.health > 4 ? 1 : 0);
+                    var monstersHeroCanWind = distToAllMonsters.Sum(m => m.Item1 < 3000 && CanCastWind(m.Item2, goalie) ? 1 : 0 );
                     var m = distToAllMonsters[0].Item2;
                     bool goalieCastWind = false;
-                    if(monstersInBase > monstersHeroCanWind && goalie.GetDistance(myBase) > distToAllMonsters[0].Item1)
+                    if(monstersInBase > monstersHeroCanWind && goalie.GetDistance(myBase) > distToAllMonsters[0].Item1 && distToAllMonsters[0].Item1 > 400)
                     {
                         move.AddHeroMove(myBase.x, myBase.y, goalie.id);
                     }
-                    else if (CanCastWindOnNearBaseMonster(m, goalie))
+                    else if (CanCastWindOnNearBaseMonster(m, goalie, 2))
                     {
                         goalieCastWind = true;
-                        move.AddWindSpellMove(opponentBase.x, opponentBase.y, goalie.id);
+                        var windTarget = FindWindTarget(goalie, windCorner, new Point2d(opponentBase.x, opponentBase.y));
+                        move.AddWindSpellMove((int)windTarget.x, (int)windTarget.y, goalie.id);
                     }
                     else if (CanCastControlOnNearBaseMonster(m, goalie))
                     {
@@ -266,45 +285,106 @@ namespace GameSolution.Game
                             move.AddHeroMove(targetForTopRight.x, targetForTopRight.y, topRight.id);
                     }
 
-                    
-                    var windableMonsters = GetWindableMonstersInRange(bottomLeft);
-                    var controllableMonsters = GetControllableMonstersInRange(bottomLeft);
-                    for(int i = 0; i<controllableMonsters.Count; i++)
-                    {
-                        if(controllableMonsters[i].GetDistance(myBase) < 5000)
-                        {
-                            controllableMonsters.RemoveAt(i);
-                        }
-                    }
-                    if(windableMonsters.Count > 3 && myBase.mana > 60)
-                    {
-                        move.AddWindSpellMove(opponentBase.x, opponentBase.y, bottomLeft.id);
-                    }
-                    else if (myBase.mana > 100 && controllableMonsters.Count > 0)
-                    {
-                        var monster = controllableMonsters[0];
-                        var target = GetControlTargetingPointForMonster(monster);
-                        move.AddControlSpellMove(target.GetTruncatedX(), target.GetTruncatedY(), monster.id, bottomLeft.id);
-                    }
-                    else
-                    {
-                        var maximumTarget3 = MaximizeTargetsOnAllMonstersInRange(bottomLeft);
+                    if (myBase.mana < 30)
+                        attackMode = false;
 
-                        if (maximumTarget3 != null)
+                    if(attackMode)
+                    {
+                        var farthestMonster = distToAllMonsters[distToAllMonsters.Count - 1].Item2;
+                        var windableMonsters = GetWindableMonstersInRange(bottomLeft);
+                        if (bottomLeft.GetDistance(opponentBase) > 5000 && windableMonsters.Count == 0)
                         {
-                            move.AddHeroMove(maximumTarget3.GetTruncatedX(), maximumTarget3.GetTruncatedY(), bottomLeft.id);
+                            var controllableMonsters = GetControllableMonstersInRange(bottomLeft);
+                            if (controllableMonsters.Count > 0)
+                            {
+                                var monster = controllableMonsters[0];
+                                var target = GetControlTargetingPointForMonster(monster);
+                                move.AddControlSpellMove(target.GetTruncatedX(), target.GetTruncatedY(), monster.id, bottomLeft.id);
+                            }
+                            else
+                            {
+                                var vector = Space2d.CreateVector(farthestMonster.point, myBase.point);
+                                vector.Normalize().Multiply(Hero.Range + 100).Add(farthestMonster.point);
+                                move.AddHeroMove(vector.GetTruncatedX(), vector.GetTruncatedY(), bottomLeft.id);
+                            }
                         }
                         else
                         {
-                            move.AddHeroMove(targetForBottomLeft.x, targetForBottomLeft.y, bottomLeft.id);
+                            var monsterVector = Space2d.CreateVector(farthestMonster.point, opponentBase.point);
+                            monsterVector.Normalize().Multiply(Board.WindPushDistance).Add(bottomLeft.point);
+
+                            move.AddWindSpellMove(monsterVector.GetTruncatedX(), monsterVector.GetTruncatedY(), bottomLeft.id);
+                        }
+                        
+                    }
+                    else
+                    {
+                        var windableMonsters = GetWindableMonstersInRange(bottomLeft);
+                        var controllableMonsters = GetControllableMonstersInRange(bottomLeft);
+                        for (int i = 0; i < controllableMonsters.Count; i++)
+                        {
+                            if (controllableMonsters[i].GetDistance(myBase) < 5000)
+                            {
+                                controllableMonsters.RemoveAt(i);
+                            }
+                        }
+                        if (windableMonsters.Count > 3 && myBase.mana > 60)
+                        {
+                            move.AddWindSpellMove(opponentBase.x, opponentBase.y, bottomLeft.id);
+                        }
+                        else if (myBase.mana > 60 && controllableMonsters.Count > 0)
+                        {
+                            //attackMode = true;
+                            var monster = controllableMonsters[0];
+                            var target = GetControlTargetingPointForMonster(monster);
+                            move.AddControlSpellMove(target.GetTruncatedX(), target.GetTruncatedY(), monster.id, bottomLeft.id);
+                        }
+                        else
+                        {
+                            var maximumTarget3 = MaximizeTargetsOnAllMonstersInRange(bottomLeft);
+
+                            if (maximumTarget3 != null)
+                            {
+                                move.AddHeroMove(maximumTarget3.GetTruncatedX(), maximumTarget3.GetTruncatedY(), bottomLeft.id);
+                            }
+                            else
+                            {
+                                move.AddHeroMove(targetForBottomLeft.x, targetForBottomLeft.y, bottomLeft.id);
+                            }
                         }
                     }
-                    
-                    
                 }
             }
 
             return move;
+        }
+
+        public Point2d FindWindTarget(Hero hero, Point2d farthestSideCorner, Point2d opponentBase)
+        {
+            List<Monster> monstersInRange = board.monsters.Where(m => CanCastWind(m, hero)).ToList();
+            
+            if(monstersInRange.Count == 1)
+            {
+                var m = monstersInRange[0];
+                var vector = Space2d.CreateVector(m.point, board.myBase.point);
+                vector.Normalize().Multiply(-1 * Board.WindPushDistance);
+                return vector.Add(hero.point);
+            }
+            else
+            {
+                foreach(Monster monster in monstersInRange)
+                {
+                    foreach(Hero opponent in board.opponentHeroes)
+                    {
+                        if(CanCastWind(monster, opponent))
+                        {
+                            return opponentBase;
+                        }
+                    }
+                }
+            }
+
+            return farthestSideCorner;
         }
 
         public Hero GetHeroClosestToPoint(IList<Hero> heroes, Point2d point)
@@ -344,9 +424,18 @@ namespace GameSolution.Game
             return hero.isNearBase && board.myBase.mana >= 20 && countCloseMonsters > 1 && CanCastControlOrShield(piece, hero);
         }
 
-        public bool CanCastWindOnNearBaseMonster(Monster monster, Hero hero)
+        public bool CanCastWindOnNearBaseMonster(Monster monster, Hero hero, int maxHealth = 4)
         {
-            return monster.GetDistance(board.myBase) < 6500 && CanCastWind(monster, hero) && monster.health > 4;
+            var distance = 3000;
+            foreach(var opponentHero in board.opponentHeroes)
+            {
+                if (opponentHero.GetDistance(monster) <= Board.WindCastDistance)
+                {
+                    distance = 6500;
+                    break;
+                }
+            }
+            return monster.GetDistance(board.myBase) < distance && CanCastWind(monster, hero) && monster.health > maxHealth;
         }
 
 
@@ -433,6 +522,7 @@ namespace GameSolution.Game
         static bool alternate = true;
         public Point2d GetControlTargetingPointForMonster(Monster monster)
         {
+            Console.Error.WriteLine(alternate);
             int x, x1, x2;
             int y, y1, y2;
             Base b = board.opponentBase;
@@ -446,14 +536,17 @@ namespace GameSolution.Game
             x2 = b.x;
             y2 = b.y + direction * targetingDifference;
 
+            /*
             double dist1, dist2;
 
             dist1 = DistanceHash.GetDistance(x1, y1, monster.x, monster.y);
             dist2 = DistanceHash.GetDistance(x2, y2, monster.x, monster.y);
 
+            */
+
             //Console.Error.WriteLine($"Targeting distances dist1, dist2: {dist1}, {dist2}");
 
-            if (dist1 < dist2 && alternate) 
+            if (alternate) 
             {
                 alternate = false;
                 x = x1;
@@ -465,7 +558,7 @@ namespace GameSolution.Game
                 x = x2;
                 y = y2;
             }
-
+            Console.Error.WriteLine(alternate);
             return new Point2d(x, y);
         }
 
@@ -489,6 +582,7 @@ namespace GameSolution.Game
             {
                 if (monster.threatForMax.HasValue && !monster.threatForMax.Value)
                     continue;
+
                 if (monster.health > 15 && CanCastControlOrShield(monster, hero))
                 {
                     monsters.Add(monster);
