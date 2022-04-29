@@ -14,8 +14,8 @@ class Player
     static void Main(string[] args)
     {
         bool simulate = true;
-
-        List<BoardPiece> pieces = new List<BoardPiece>();
+        bool findStateDiscrepencies = true;
+        
         GameState state = new GameState();
 
         string[] inputs;
@@ -26,13 +26,14 @@ class Player
         int enemyX = baseX == 0 ? 17630 : 0;
         int enemyY = baseY == 0 ? 9000 : 0;
 
-        bool isFirstRound = true;
+        int turnCounter = 0;
 
 
         // game loop
         while (true)
         {
-            pieces.Clear();
+            turnCounter++;
+            List<BoardPiece> pieces = new List<BoardPiece>();
 
             for (int i = 0; i < 2; i++)
             {
@@ -97,31 +98,68 @@ class Player
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
+            GC.Collect();
 
+            
+            if (turnCounter != 1 && findStateDiscrepencies)
+            {
+                if(turnCounter - 1 != state.turn)
+                    Console.Error.WriteLine($"current turn: {turnCounter}, f: {state.turn}");
+                Console.Error.WriteLine($"Evaluating pieces for turn: {state.turn}");
+                CheckPieces(pieces, state.board.boardPieces);
+            }
 
-            state.SetNextTurn(new Board(pieces), false);
+            var board = new Board(pieces);
+            state.SetNextTurn(board, false);
 
-            int limit = isFirstRound ? 998 : 45;
+            int limit = turnCounter == 1 ? 995 : 45;
 
             Move move;
             if (simulate)
             {
-                Minimax search = new Minimax();
+                MonteCarloTreeSearch search = new MonteCarloTreeSearch(false);
                 search.SetState(state, true, false);
-                Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
-                move = (Move)search.GetNextMove(watch, limit);
+                Console.Error.WriteLine("state ms: " + watch.ElapsedMilliseconds);
+                move = (Move)search.GetNextMove(watch, limit, 12, 20);
+
+                if (findStateDiscrepencies)
+                {
+                    state.enableLogging = true;
+                    CheckPieces(pieces, state.board.boardPieces);
+                    state.ApplyMove(move, true);
+                    var minMove = new Move();
+                    minMove.AddWaitMove(0);
+                    minMove.AddWaitMove(1);
+                    minMove.AddWaitMove(2);
+                    state.ApplyMove(minMove, false);
+                    state.turn--;
+                    state.enableLogging = false;
+                }
             }
             else
             {
                 GameHelper game = new GameHelper(state);
-                move = game.GetBestMove(state);
+                move = game.GetBestMove();
             }
             watch.Stop();
-            Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
+            Console.Error.WriteLine("total ms: " + watch.ElapsedMilliseconds);
 
             Console.Write(move);
+        }
+    }
 
-            isFirstRound = false;
+    public static void CheckPieces(IList<BoardPiece> pieces, IList<BoardPiece> pieces1)
+    {
+        foreach (var piece in pieces)
+        {
+            foreach (var p in pieces1)
+            {
+                if (piece.id == p.id)
+                {
+                    if (!piece.Equals(p))
+                        Console.Error.WriteLine($"F: {piece} \nE: {p}");
+                }
+            }
         }
     }
 }

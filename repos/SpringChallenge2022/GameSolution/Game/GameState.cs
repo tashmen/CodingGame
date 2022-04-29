@@ -4,15 +4,18 @@ using GameSolution.Entities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GameSolution.Game
 {
     public class GameState : IGameState
     {
+        public bool enableLogging = false;
         public Board board { get; set; }
 
         public int turn { get; set; }
+
+        public int myManaGained = 0;
+        public int opponentManaGained = 0;
 
         public Move? maxMove { get; set; }
         public Move? minMove { get; set; }
@@ -22,7 +25,7 @@ namespace GameSolution.Game
 
         public GameState()
         {
-            turn = -1;
+            turn = 0;
             maxMove = null;
             minMove = null;
         }
@@ -33,6 +36,8 @@ namespace GameSolution.Game
             turn = state.turn;
             maxMove = state.maxMove;
             minMove = state.minMove;
+            myManaGained = state.myManaGained;
+            opponentManaGained = state.opponentManaGained;
 
             possibleMaxMoves = state.possibleMaxMoves;
             possibleMinMoves = state.possibleMinMoves;
@@ -47,16 +52,32 @@ namespace GameSolution.Game
             {
                 bool boardPiecesChanged = false;
                 boardPiecesChanged |= DamageMonsters();
+
+                ApplyWindSpells();
+
                 boardPiecesChanged |= MoveMonsters();
+
+                ApplyControlAndShieldSpells();
 
                 if (boardPiecesChanged)
                 {
                     board.SetupBoard();
                 }
+                board.ResetSpells();
             }
 
             possibleMaxMoves = CalculateMoves(true);
             possibleMinMoves = CalculateMoves(false);
+        }
+
+        public void ApplyWindSpells()
+        {
+            board.ApplyWindSpells();
+        }
+
+        public void ApplyControlAndShieldSpells()
+        {
+            board.ApplyControlAndShieldSpells();
         }
 
         public bool DamageMonsters()
@@ -68,8 +89,11 @@ namespace GameSolution.Game
                 {
                     if(hero.GetDistance(monster) <= Hero.Range)
                     {
+                        if(enableLogging)
+                            Console.Error.WriteLine($"Hit: {monster.id}");
                         monster.health -= 2;
-                        board.myBase.mana += 1;
+                        board.myBase.mana+=2;
+                        myManaGained+=2;
                     }
                 }
             }
@@ -81,7 +105,8 @@ namespace GameSolution.Game
                     if (hero.GetDistance(monster) <= Hero.Range)
                     {
                         monster.health -= 2;
-                        board.opponentBase.mana += 1;
+                        board.opponentBase.mana++;
+                        opponentManaGained++;
                     }
                 }
             }
@@ -104,7 +129,8 @@ namespace GameSolution.Game
             bool boardPiecesChanged = false;
             foreach (Monster monster in board.monsters)
             {
-                monster.Move();
+                if(!monster.isWinded)
+                    monster.Move();
 
                 if (!monster.isNearBase)
                 {
@@ -131,15 +157,32 @@ namespace GameSolution.Game
                 b.health--;
                 board.boardPieces.Remove(monster);
                 boardPiecesChanged = true;
+                if (enableLogging)
+                {
+                    Console.Error.WriteLine($"Monster ran into base: {b.id}, {monster}");
+                }
             }
 
-            if (!monster.isNearBase && distance <= Monster.TargetingRange)
+            if (distance <= Monster.TargetingRange)
             {
+                /*
+                if (enableLogging)
+                {
+                    Console.Error.WriteLine($"Monster targeting base was moving: {monster}");
+                }
+                */
                 monster.isNearBase = true;
-                var point = Space2d.TranslatePoint(monster.point, b.point, Monster.Speed);
-                monster.vx = point.GetTruncatedX() - monster.x;
-                monster.vy = point.GetTruncatedY() - monster.y;
-            }
+                Point2d vector = Space2d.CreateVector(monster.point, b.point);
+                vector.Normalize().Multiply(Monster.Speed).SymmetricTruncate(Board.Origin);
+                monster.vx = (int)vector.x;
+                monster.vy = (int)vector.y;
+                /*
+                if (enableLogging)
+                {
+                    Console.Error.WriteLine($"Monster targeting base: {b.id}, {monster}");
+                }
+                */
+            }            
 
             return boardPiecesChanged;
         }
@@ -177,6 +220,7 @@ namespace GameSolution.Game
             throw new NotImplementedException();
         }
 
+        public static double totalSightArea = 3 * Math.PI* Hero.SightRange * Hero.SightRange;
         public double Evaluate(bool isMax)
         {
             double value = 0;
@@ -185,32 +229,43 @@ namespace GameSolution.Game
             var opponentBase = board.opponentBase;
             var myHeroes = board.myHeroes;
 
-            value += (myBase.health - opponentBase.health) * 2000;//lots of points per base health since this is how we stay alive to win the game
+            var sightBonus = (CalculateSightArea() / totalSightArea) *  0.20 ;
+            var manaGainBonus = ((myManaGained - opponentManaGained) / 200) * 0.80;
 
-            value += myBase.mana * 0.1;//Small amount of bonus for mana as this give us potential to cast spells
-
+            value += sightBonus + manaGainBonus;
             
-            foreach(Hero hero in myHeroes)
+            if(value < 0 || value > 1)
             {
-                foreach(Hero hero2 in myHeroes)
-                {
-                    if (hero.id == hero2.id)
-                        continue;
-
-                    var d = hero.GetDistance(hero2);
-                    if (d >= Hero.SightRange)
-                    {
-                        value += 50;//Small bonus for being spread out.
-                    }
-                }
+                Console.Error.WriteLine($"sight: {sightBonus}, mana gain: {manaGainBonus}");
             }
+
 
             return value;
         }
 
+        public double CalculateSightArea()
+        {
+            var sightArea = totalSightArea;
+            foreach(Hero hero in board.myHeroes)
+            {
+                foreach(Hero hero1 in board.myHeroes)
+                {
+                    if(hero.id == hero1.id)
+                        continue;
+
+                    sightArea -= Space2d.CalculateOverlappingArea(new Circle2d(hero.x, hero.y, Hero.SightRange), new Circle2d(hero1.x, hero1.y, Hero.SightRange));
+                }
+
+                sightArea -= Space2d.CalculateOverlappingArea(new Circle2d(hero.x, hero.y, Hero.SightRange), new Circle2d(board.myBase.x, board.myBase.y, Base.SightRange));
+            }
+
+
+            return sightArea < 0 ? 0 : sightArea;
+        }
+
         public object GetMove(bool isMax)
         {
-            return null;
+            return isMax ? maxMove : minMove;
         }
 
         private IList<Move> CalculateMoves(bool isMax)
@@ -227,17 +282,15 @@ namespace GameSolution.Game
             IList<long>[] heroMoves = new List<long>[3];
             long heroMove;
 
-            //Initialize with wait move
+            //Initialize 
             for (int i = 0; i < 3; i++)
             {
-                heroMove = HeroMove.CreateWaitMove();
                 heroMoves[i] = new List<long>();
-                heroMoves[i].Add(heroMove);
             }
 
             if (isMax)
             {
-                var move = gameHelper.GetBestMove(this);
+                var move = gameHelper.GetBestMove();
                 for (int i = 0; i < 3; i++)
                 {
                     heroMoves[i].Add(move.GetMove(i));
@@ -260,11 +313,9 @@ namespace GameSolution.Game
 
             //Build movement moves
 
+            
             foreach (BoardPiece piece in board.boardPieces)
             {
-                //Do not move towards enemy heroes
-                if (piece is Hero && piece.isMax.Value != isMax)
-                    continue;
                 //Do not move towards monsters that are targeting the enemy
                 if (piece is Monster && ((Monster)piece).threatForMax.HasValue && ((Monster)piece).threatForMax.Value != isMax)
                     continue;
@@ -280,10 +331,44 @@ namespace GameSolution.Game
                     }
                 }
             }
-            
+
+
 
 
             //Build spell moves
+
+            for (int i = 0; i < myHeroes.Count; i++)
+            {
+                Hero h = myHeroes[i];
+
+                foreach (BoardPiece piece in board.boardPieces)
+                {
+                    if (piece is Base)
+                    {
+                        //do nothing
+                    }
+                    else
+                    {
+                        if (myBase.mana >= 10 && piece.shieldLife == 0)
+                        {
+                            //do not wind friendly heroes
+                            if (!(piece is Hero && piece.isMax.Value == isMax))
+                            {//Wind spell
+                                //Check range 
+                                if (h.GetDistance(piece) <= Board.WindCastDistance)
+                                {
+                                    //heroMove = HeroMove.CreateWindSpellMove(myBase.x, myBase.y);
+                                    //heroMoves[i].Add(heroMove);
+                                    heroMove = HeroMove.CreateWindSpellMove(opponentBase.x, opponentBase.y);
+                                    heroMoves[i].Add(heroMove);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             /*
             foreach (BoardPiece piece in board.boardPieces)
             {
@@ -295,23 +380,7 @@ namespace GameSolution.Game
                 {
                     if (myBase.mana >= 10 && piece.shieldLife == 0)
                     {
-                        //do not wind friendly heroes
-                        if (!(piece is Hero && piece.isMax.Value == isMax))
-                        {//Wind spell
-                            for (int i = 0; i < 3; i++)
-                            {
-                                Hero h = myHeroes[i];
-                                //Console.Error.WriteLine("Piece: " + piece.ToString());
-                                //Check range and shield, 
-                                if (h.GetDistance(piece) < 1280)
-                                {
-                                    heroMove = HeroMove.CreateWindSpellMove(myBase.x, myBase.y);
-                                    heroMoves[i].Add(heroMove);
-                                    heroMove = HeroMove.CreateWindSpellMove(opponentBase.x, opponentBase.y);
-                                    heroMoves[i].Add(heroMove);
-                                }
-                            }
-                        }
+                        
                         //do not shield opponent heroes
                         if (!(piece is Hero && piece.isMax.Value != isMax))
                         {//Shield spell
@@ -348,6 +417,12 @@ namespace GameSolution.Game
             }
             */
 
+            for (int i = 0; i < 3; i++)
+            {
+                heroMove = HeroMove.CreateWaitMove();
+                if(heroMoves[i].Count == 0)
+                    heroMoves[i].Add(heroMove);
+            }
 
             //Take each single hero move and combine them into a set of 3 hero moves using all permutations
             foreach (long heroMove1 in heroMoves[0])

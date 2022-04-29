@@ -49,7 +49,7 @@ namespace UnitTest
         [Fact]
         public void PlaySelf_One_Monster()
         {
-            Minimax search = new Minimax();
+            MonteCarloTreeSearch search = new MonteCarloTreeSearch();
             
             game = GameBuilder.BuildGameWithSingleMonsterHeadingTowardMax();
             do
@@ -62,7 +62,7 @@ namespace UnitTest
         [Fact]
         public void PlaySelf_No_Monsters()
         {
-            Minimax search = new Minimax();
+            MonteCarloTreeSearch search = new MonteCarloTreeSearch();
 
             do
             {
@@ -81,30 +81,27 @@ namespace UnitTest
             Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
         }
 
-        private void PlayGame(Minimax search)
+        private void PlayGame(MonteCarloTreeSearch search)
         {
-            int timeout = 5000000;
+            int timeout = 50;
 
             Stopwatch watch = new Stopwatch();
             watch.Start();
+            GC.Collect();
             search.SetState(game, true, false);
-            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-            Move move = (Move)search.GetNextMove(watch, timeout, 1);
+            //Console.Error.WriteLine($"max ms: {watch.ElapsedMilliseconds}");
+            Move move = (Move)search.GetNextMove(watch, 45, 12, 20);
             game.ApplyMove(move, true);
             watch.Stop();
 
-            if (watch.ElapsedMilliseconds > timeout)
-                throw new Exception("timeout");
-
+            watch.Reset();
             watch.Start();
+            GC.Collect();
             search.SetState(game, false, false);
-            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-            move = (Move)search.GetNextMove(watch, timeout, 1);
+            //Console.Error.WriteLine($"min ms: {watch.ElapsedMilliseconds}");
+            move = (Move)search.GetNextMove(watch, 45, 12, 20);
             game.ApplyMove(move, false);
             watch.Stop();
-
-            if (watch.ElapsedMilliseconds > timeout)
-                throw new Exception("timeout");
         }
     }
 }

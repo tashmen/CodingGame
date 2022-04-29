@@ -13,6 +13,7 @@ namespace GameSolution.Entities
     public class BoardPiece
     {
         public Point2d point { get; set; }
+        public bool isWinded { get; set; } = false;
         public int x
         {
             get
@@ -79,7 +80,7 @@ namespace GameSolution.Entities
             {
                 var isNegative = value < 0;
                 bitboard &= ~vxMask;
-                bitboard += ((isNegative ? 1 : 0) << 18) + ((long)value << 19);
+                bitboard += ((isNegative ? (long)1 : 0) << 18) + (((long)Math.Abs(value)) << 19);
             }
         }
         public int vy
@@ -95,7 +96,7 @@ namespace GameSolution.Entities
             {
                 var isNegative = value < 0;
                 bitboard &= ~vyMask;
-                bitboard += ((isNegative ? 1 : 0) << 32) + ((long)value << 33);
+                bitboard += ((isNegative ? (long)1 : 0) << 32) + (((long)Math.Abs(value)) << 33);
             }
         }
         public bool isNearBase
@@ -139,19 +140,24 @@ namespace GameSolution.Entities
 
         public BoardPiece(int id, int x, int y, bool? isMax, int shieldLife, bool isControlled, int vx, int vy, bool isNearBase)
         {
-            this.point = new Point2d(x, y);
-            bitboard = id + ((isMax.HasValue ? isMax.Value ? (long)1 : 0 : 2) << 10) + ((long)shieldLife << 12) + ((isNearBase ? 1 : 0) << 16) + ((isControlled ? 1 : 0) << 17) + ((vx < 0 ? (long)1 : 0) << 18) + (((vx < 0) ? -1 * (long)vx : vx) << 19) + ((vy < 0 ? (long)1 : 0) << 32) + (((vy < 0) ? -1 * (long)vy : vy) << 33);
+            point = new Point2d(x, y);
+            bitboard = id + ((isMax.HasValue ? isMax.Value ? (long)1 : 0 : 2) << 10) + ((long)shieldLife << 12) + ((isNearBase ? 1 : 0) << 16) + ((isControlled ? 1 : 0) << 17) + ((vx < 0 ? (long)1 : 0) << 18) + (((long)Math.Abs(vx)) << 19) + ((vy < 0 ? (long)1 : 0) << 32) + (((long)Math.Abs(vy)) << 33);
         }
 
         public BoardPiece(BoardPiece piece)
         {
-            this.point = new Point2d(piece.x, piece.y);
+            point = new Point2d(piece.x, piece.y);
             bitboard = piece.bitboard;
         }
 
         public virtual BoardPiece Clone()
         {
             return new BoardPiece(this);
+        }
+
+        public bool Equals(BoardPiece piece)
+        {
+            return bitboard == piece.bitboard && x == piece.x && y == piece.y;
         }
 
 
@@ -162,7 +168,7 @@ namespace GameSolution.Entities
 
         public override string ToString()
         {
-            return $"{id}, {x}, {y}, {isMax}, {GetType()}";
+            return $"{id}, {x}, {y}, m? {isMax}, s: {shieldLife}, b? {isNearBase}, {vx}, {vy}, c? {isControlled}, bb: {bitboard}";
         }
     }
 }

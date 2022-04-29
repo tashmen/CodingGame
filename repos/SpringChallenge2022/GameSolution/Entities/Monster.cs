@@ -62,5 +62,10 @@ namespace GameSolution.Entities
         {
             point = new Point2d(x + vx, y + vy);
         }
+
+        public override string ToString()
+        {
+            return base.ToString() + $", h: {health}, t? {threatForMax}";
+        }
     }
 }

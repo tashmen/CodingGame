@@ -69,66 +69,145 @@ namespace Algorithms.Space
     }
 }
 //*** SourceCombiner -> original file Point2d.cs ***
-namespace Algorithms.Space
+public class Point2d
 {
-    public class Point2d
+    public double x { get; private set; }
+    public double y { get; private set; }
+
+    public Point2d(double x, double y)
     {
-        public double x { get; private set; }
-        public double y { get; private set; }
-        public Point2d(double x, double y)
+        this.x = x;
+        this.y = y;
+    }
+
+    public Point2d(Point2d point)
+    {
+        x = point.x;
+        y = point.y;
+    }
+
+    public override string ToString()
+    {
+        return $"({x},{y})";
+    }
+
+    public bool Equals(Point2d point)
+    {
+        return point.x == this.x && point.y == this.y;
+    }
+
+    public Point2d GetTruncatedPoint()
+    {
+        return new Point2d(Math.Truncate(this.x), Math.Truncate(this.y));
+    }
+
+    public Point2d GetRoundedPoint()
+    {
+        return new Point2d(Math.Round(this.x), Math.Round(this.y));
+    }
+
+    public Point2d GetCeilingPoint()
+    {
+        return new Point2d(Math.Ceiling(x), Math.Ceiling(y));
+    }
+
+    public int GetTruncatedX()
+    {
+        return (int)x;
+    }
+    public int GetTruncatedY()
+    {
+        return (int)y;
+    }
+
+    public double GetAngle(Point2d point)
+    {
+        return Math.Atan2(point.y - y, point.x - x);
+    }
+
+    public double GetDistance(Point2d point)
+    {
+        return GetDistance(point.x, point.y, x, y);
+    }
+
+    public Point2d GetMidPoint(Point2d point)
+    {
+        return GetMidPoint(point.x, point.y, x, y);
+    }
+
+    public double LengthSquared()
+    {
+        return x * x + y * y;
+    }
+
+    public double Length()
+    {
+        return Math.Sqrt(LengthSquared());
+    }
+
+    public Point2d Normalize()
+    {
+        var length = Length();
+        if (length == 0)
         {
-            this.x = x; 
-            this.y = y;
+            x = 0;
+            y = 0;
         }
-        public Point2d(Point2d point)
+        else
         {
-            x = point.x;
-            y = point.y;
+            x = x / length;
+            y = y / length;
         }
-        public override string ToString()
-        {
-            return $"({x},{y})";
-        }
-        public bool Equals(Point2d point)
-        {
-            return point.x == this.x && point.y == this.y;
-        }
-        public Point2d GetTruncatedPoint()
-        {
-            return new Point2d(Math.Truncate(this.x), Math.Truncate(this.y));
-        }
-        public Point2d GetRoundedPoint()
-        {
-            return new Point2d(Math.Round(this.x), Math.Round(this.y));
-        }
-        public int GetTruncatedX()
-        {
-            return (int)x;
-        }
-        public int GetTruncatedY()
-        {
-            return (int)y;
-        }
-        public double GetAngle(Point2d point)
-        {
-            return Math.Atan2(point.y - y, point.x - x);
-        }
-        public double GetDistance(Point2d point)
-        {
-            return GetDistance(point.x, point.y, x, y);
-        }
-        public Point2d GetMidPoint(Point2d point)
-        {
-            return GetMidPoint(point.x, point.y, x, y);
-        }
-        public static double GetDistance(double x1, double y1, double x2, double y2)
-        {
-            return Math.Sqrt(Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2));
-        }
-        public static Point2d GetMidPoint(double x1, double y1, double x2, double y2)
-        {
-            return new Point2d(Math.Abs(x1 - x2) / 2, Math.Abs(y1 - y2) / 2);
-        }
+        return this;
+    }
+
+    public Point2d Multiply(double scalar)
+    {
+        x = x * scalar;
+        y = y * scalar;
+        return this;
+    }
+
+    public Point2d Add(Point2d vector)
+    {
+        x = x + vector.x;
+        y = y + vector.y;
+        return this;
+    }
+
+    public Point2d Subtract(Point2d vector)
+    {
+        x = x - vector.x;
+        y = y - vector.y;
+        return this;
+    }
+
+    public Point2d Truncate()
+    {
+        x = GetTruncatedX();
+        y = GetTruncatedY();
+        return this;
+    }
+
+    public Point2d SymmetricTruncate(Point2d origin)
+    {
+        Subtract(origin).Truncate().Add(origin);
+        return this;
+    }
+
+    public Point2d Clone()
+    {
+        return new Point2d(x, y);
+    }
+
+    public static double GetDistance(double x1, double y1, double x2, double y2)
+    {
+        return Math.Sqrt(Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2));
+    }
+
+    public static Point2d GetMidPoint(double x1, double y1, double x2, double y2)
+    {
+        return new Point2d(Math.Abs(x1 - x2) / 2, Math.Abs(y1 - y2) / 2);
     }
 }
 //*** SourceCombiner -> original file Space2d.cs ***
@@ -149,6 +228,7 @@ namespace Algorithms.Space
                 return null;
             if (radius <= 0)
                 return null;
+
             var numberOfPoints = points.Count();
             double[,] distance = new double[numberOfPoints, numberOfPoints];
             for (int i = 0; i < numberOfPoints - 1; i++)
@@ -158,6 +238,7 @@ namespace Algorithms.Space
                     distance[i, j] = distance[j, i] = points[i].GetDistance(points[j]);
                 }
             }
+
             for (int i = 0; i < numberOfPoints; i++)
             {
                 var currentAnswer = GetPointsInside(distance, points, i, radius, numberOfPoints);
@@ -166,9 +247,12 @@ namespace Algorithms.Space
                 {
                     maxPoint = nextPoint;
                 }
+
             }
+
             return maxPoint;
         }
+
         /// <summary>
         /// Given a list of points and a circle radius, find the circle location that covers the maximum number of points, at point i.
         /// </summary>
@@ -183,30 +267,39 @@ namespace Algorithms.Space
                 return null;
             if (radius <= 0)
                 return null;
+
             var numberOfPoints = points.Count();
             double[,] distance = new double[numberOfPoints, numberOfPoints];
+
             for (int j = 0; j < numberOfPoints; j++)
             {
                 distance[i, j] = distance[j, i] = points[i].GetDistance(points[j]);
             }
+
             var currentAnswer = GetPointsInside(distance, points, i, radius, numberOfPoints);
             maxPoint = new Tuple<int, Point2d>(currentAnswer.Item1, new Point2d(points[i].x + (radius * Math.Round(Math.Cos(currentAnswer.Item2), 15)), points[i].y + (radius * Math.Round(Math.Sin(currentAnswer.Item2), 15))));
+
             return maxPoint;
         }
+
         public static double CalculateAreaOfCircle(double radius)
         {
             return Math.PI * Math.Pow(radius, 2);
         }
+
         public static double CalculateOverlappingArea(Circle2d circle, Circle2d circle2)
         {
             var d = circle.GetDistance(circle2);
+
             if (d < circle.radius + circle2.radius)
             {
                 var a = circle.radius * circle.radius;
                 var b = circle2.radius * circle2.radius;
+
                 var x = (a - b + d * d) / (2 * d);
                 var z = x * x;
                 var y = Math.Sqrt(a - z);
+
                 if (d <= Math.Abs(circle2.radius - circle.radius))
                 {
                     return Math.PI * Math.Min(a, b);
@@ -215,15 +308,28 @@ namespace Algorithms.Space
             }
             return 0;
         }
+
         /// <summary>
         /// Moves the point towards the targetPoint with maximum distance
         /// </summary>
-        /// <param name="point">Start point</param>
+        /// <param name="startPoint">Start point</param>
         /// <param name="targetPoint">Target point</param>
         /// <param name="maximumDistance">Maximum distance to translate</param>
         /// <returns>The translated point in direction of target point with maximum distance</returns>
-        public static Point2d TranslatePoint(Point2d point, Point2d targetPoint, double maximumDistance)
+        public static Point2d TranslatePoint(Point2d startPoint, Point2d targetPoint, double maximumDistance)
         {
+            var vector = CreateVector(startPoint, targetPoint);
+            if (vector.LengthSquared() <= (maximumDistance * maximumDistance))
+                return targetPoint;
+            else
+            {
+                vector.Normalize();
+                vector.Multiply(maximumDistance);
+
+                return new Point2d(startPoint.x + vector.x, startPoint.y + vector.y);
+            }
+
+            /*
             if (point.GetDistance(targetPoint) <= maximumDistance)
                 return targetPoint;
             else
@@ -233,11 +339,21 @@ namespace Algorithms.Space
                 var vy = Math.Sin(angle) * maximumDistance;
                 return new Point2d(point.x + vx, point.y + vy);
             }
+            */
         }
+
+        public static Point2d CreateVector(Point2d startPoint, Point2d targetPoint)
+        {
+            var x = targetPoint.x - startPoint.x;
+            var y = targetPoint.y - startPoint.y;
+            return new Point2d(x, y);
+        }
+
         private static bool IsInteger(double d)
         {
             return Math.Abs(d % 1) <= (Double.Epsilon * 100);
         }
+
         private static Tuple<int, double> GetPointsInside(double[,] distance, Point2d[] points, int i, double radius, int numberOfPoints)
         {
             List<Tuple<double, bool>> angles = new List<Tuple<double, bool>>();
@@ -268,6 +384,7 @@ namespace Algorithms.Space
                     res = count;
                     maxAngle = angle.Item1;
                 }
+
             }
             return new Tuple<int, double>(res, maxAngle);
         }
@@ -353,6 +470,7 @@ namespace Algorithms.Trees
             object bestMove = null;
             foreach (object move in RootNode.moves)
             {
+
                 GameTreeNode child = Expand(RootNode, move);
                 double currentVal = RunMinimax(child, depth, -999999, 999999, watch, timeLimit);
                 if ((RootNode.isMax && currentVal > val) || (!RootNode.isMax && currentVal < val))
@@ -365,10 +483,13 @@ namespace Algorithms.Trees
                     break;
                 }
             }
+
             return bestMove;
         }
+
         public double RunMinimax(GameTreeNode currentNode, int depth, double alpha, double beta, Stopwatch watch, int timeLimit)
         {
+            Console.Error.WriteLine($"minimax start ms: {watch.ElapsedMilliseconds}");
             if (depth == 0 || watch.ElapsedMilliseconds >= timeLimit)
             {
                 double eval = currentNode.Evaluate();
@@ -379,55 +500,62 @@ namespace Algorithms.Trees
             {
                 return winner.Value;
             }
+
             if (currentNode.isMax)
             {
                 double value = -99999;
                 double minMax;
+                List<GameTreeNode> childNodes = new List<GameTreeNode>();
                 foreach (object move in currentNode.moves)
                 {
                     GameTreeNode childNode = Expand(currentNode, move);
+                    childNodes.Add(childNode);
+                }
+
+                foreach (GameTreeNode childNode in childNodes)
+                {
                     minMax = RunMinimax(childNode, depth - 1, alpha, beta, watch, timeLimit);
+
                     value = Math.Max(value, minMax);
                     alpha = Math.Max(alpha, value);
-
-                    if (watch.ElapsedMilliseconds >= timeLimit)
-                    {
-                        return value;
-                    }
 
                     if (alpha >= beta)
                     {
                         break;
                     }
                 }
+
                 return value;
             }
             else
             {
                 double value = 99999;
                 double minMax;
+                List<GameTreeNode> childNodes = new List<GameTreeNode>();
                 foreach (object move in currentNode.moves)
                 {
                     GameTreeNode childNode = Expand(currentNode, move);
+                    childNodes.Add(childNode);
+                }
+
+                foreach (GameTreeNode childNode in childNodes)
+                {
                     minMax = RunMinimax(childNode, depth - 1, alpha, beta, watch, timeLimit);
+
                     value = Math.Min(value, minMax);
                     beta = Math.Min(beta, value);
-
-                    if (watch.ElapsedMilliseconds >= timeLimit)
-                    {
-                        return value;
-                    }
-
                     if (beta <= alpha)
                     {
                         break;
                     }
                 }
+
                 return value;
             }
         }
     }
 }
+
 //*** SourceCombiner -> original file MonteCarloTreeSearch.cs ***
 namespace Algorithms.Trees
 {
@@ -505,7 +633,7 @@ namespace Algorithms.Trees
                     Console.Error.WriteLine($"w: {child.wins} l: {child.loses} total: {child.totalPlays} move: {child.state.GetMove(RootNode.isMax)} score: {score} isMax: {RootNode.isMax}");
             }
             if(printErrors)
-                Console.Error.WriteLine($"Best: w: {bestChild.wins} l: {bestChild.loses} total: {bestChild.totalPlays}");
+                Console.Error.WriteLine($"Best: w: {bestChild.wins} l: {bestChild.loses} total: {bestChild.totalPlays} score: {bestScore} move: {bestChild.state.GetMove(RootNode.isMax)}");
             return bestChild.state.GetMove(RootNode.isMax);
         }
         private void BackPropagate(GameTreeNode selectedNode, double? winner)
@@ -541,15 +669,13 @@ namespace Algorithms.Trees
             if (depth == 0)
             {
                 double eval = state.Evaluate(isMax);
-                if (eval > 0)
+                if (eval > 1)
                 {
                     return 1;
                 }
-                else if (eval == 0)
-                {
-                    return 0;
-                }
-                else return -1;
+                else if (eval < -1)
+                    return -1;
+                else return eval;
             }
             throw new InvalidOperationException("Could not find a winner for simulation!");
         }

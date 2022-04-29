@@ -19,17 +19,15 @@ namespace GameSolution.Game
         public List<Tuple<double, Monster>> distToAllMonsters { get; set; }
         public List<Tuple<double, Hero>> distToOpponentHeroes { get; set; }
         public List<Tuple<double, Hero>> distToMyHeroes { get; set; }
-        public int turn;
 
         public GameHelper(GameState state)
         {
-            turn = state.turn;
-            board = state.board;
+            board = state.board.Clone();
 
             CalculateHelper();
         }
 
-        public Move GetBestMove(GameState state)
+        public Move GetBestMove()
         {
             var strategy = DetermineStrategy();
             Move move = null;

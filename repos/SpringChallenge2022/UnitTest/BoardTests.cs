@@ -47,6 +47,10 @@ namespace UnitTest
             Assert.Equal(-6600, h.vy);
             Assert.True(h.isNearBase);
 
+            h.vx = h.vy = -400;
+            Assert.Equal(-400, h.vx);
+            Assert.Equal(-400, h.vy);
+
             Base b = new Base(BoardPiece.MaxEntityId - 1, 17620, 9000, true, 3, 2000);
 
             Assert.Equal(BoardPiece.MaxEntityId - 1, b.id);

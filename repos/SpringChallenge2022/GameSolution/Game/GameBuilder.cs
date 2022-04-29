@@ -11,7 +11,6 @@ namespace GameSolution.Game
         public static GameState BuildEmptyGame(bool setNextTurn = true)
         {
             GameState game = new GameState();
-            new GameState();
             List<BoardPiece> boardPieces = new List<BoardPiece>();
             boardPieces.Add(new Base(BoardPiece.MaxEntityId - 1, 0, 0, true, 3, 0));
             boardPieces.Add(new Base(BoardPiece.MaxEntityId - 2, 17630, 9000, false, 3, 0));
@@ -46,6 +45,24 @@ namespace GameSolution.Game
             game.board.SetupBoard();
 
             game.SetNextTurn(game.board);
+
+            return game;
+        }
+
+        public static GameState BuildGameForWindTest()
+        {
+            GameState game = new GameState();
+            List<BoardPiece> boardPieces = new List<BoardPiece>();
+            boardPieces.Add(new Base(BoardPiece.MaxEntityId - 1, 0, 0, true, 3, 10));
+            boardPieces.Add(new Base(BoardPiece.MaxEntityId - 2, 17630, 9000, false, 3, 10));
+            boardPieces.Add(new Hero(0, 5000, 5000, true, 0, false, 0, 0, true));
+            boardPieces.Add(new Hero(1, 0, 0, true, 0, false, 0, 0, true));
+            boardPieces.Add(new Hero(2, 0, 0, true, 0, false, 0, 0, true));
+            boardPieces.Add(new Hero(3, 5000, 6000, false, 0, false, 0, 0, true));
+            boardPieces.Add(new Monster(19, 5000, 5500, null, 10, 0, false, 0, -300, false, false));
+            boardPieces.Add(new Monster(20, 5000, 5500, null, 10, 12, false, 0, -300, false, false));
+            Board board = new Board(boardPieces);
+            game.SetNextTurn(board);
 
             return game;
         }

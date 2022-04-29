@@ -124,7 +124,7 @@ class Player
             else if (!runNeural)
             {
                 GameHelper game = new GameHelper(state);
-                move = game.GetBestMove(state);
+                move = game.GetBestMove();
             }
             else
             {

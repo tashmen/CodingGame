@@ -49,5 +49,10 @@ namespace GameSolution.Entities
         {
             return new Base(this);
         }
+
+        public override string ToString()
+        {
+            return base.ToString() + $", {health}, {mana}";
+        }
     }
 }
