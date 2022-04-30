@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Algorithms.Space;
+using GameSolution.Entities;
+using System;
+using System.Collections.Generic;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace UnitTest
@@ -15,6 +19,17 @@ namespace UnitTest
             converter = new Converter(output);
             Console.SetError(converter);
 
+        }
+
+        [Fact]
+        public void CollisionTest()
+        {
+            IList<Point2d> points = new List<Point2d>();
+            points.Add(new Point2d(0, 0));
+            points.Add(new Point2d(50, 0));
+            Board b = new Board(points);
+            Assert.True(b.ShipCollision(new Ship(25, -5, 0, 0, 0, 0, 0)));
+            Assert.False(b.ShipCollision(new Ship(25, 5, 0, 0, 0, 0, 0)));
         }
 
       
