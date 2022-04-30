@@ -13,7 +13,8 @@ namespace GameSolution.Game
             Defense = 0,
             Guard = 1,
             Scout = 2,
-            Attack = 3
+            Farm = 3,
+            Attack = 4
         }
 
         public Board board { get; set; }
@@ -31,24 +32,87 @@ namespace GameSolution.Game
             CalculateHelper();
         }
 
-        public Move GetBestMove()
+        public Move Attack()
         {
-            var strategy = DetermineStrategy();
-            Move move = null;
 
-            switch (strategy)
+        }
+
+        public Move Defense()
+        {
+            var move = new Move();
+
+            var myHeroes = board.myHeroes;
+            var myBase = board.myBase;
+
+            var hero1 = myHeroes[0];
+            var hero2 = myHeroes[1];
+            var hero3 = myHeroes[2];
+
+            var defendVector2 = new Point2d(3, 1).Normalize().Multiply(GetBaseDirectionality(myBase)).Multiply(Base.SightRange).Add(myBase.point);
+            var defendVector3 = new Point2d(1, 3).Normalize().Multiply(GetBaseDirectionality(myBase)).Multiply(Base.SightRange).Add(myBase.point);
+
+            if (distToAllMonsters.Count == 0)
             {
-                case Strategy.Defense:
-                    move = DefenseStrategy();
-                    break;
-                case Strategy.Attack:
-                    break;
-                case Strategy.Scout:
-                    break;
+                var target = GetOutterMidPointOfBase(myBase);
+                move.AddHeroMove(target.Item1, target.Item2, hero1.id);
+
+                
+                move.AddHeroMove(defendVector2.GetTruncatedX(), defendVector2.GetTruncatedY(), hero2.id);
+                move.AddHeroMove(defendVector3.GetTruncatedX(), defendVector3.GetTruncatedY(), hero3.id);
+            }
+            else if(distToAllMonsters.Count == 1)
+            {
+                var monster = distToAllMonsters[0].Item2;
+                var vector = Space2d.CreateVector(monster.point, myBase.point).Normalize().Multiply(Hero.Range - Monster.Speed).Add(monster.point);
+                
+                move.AddHeroMove(vector.x, vector.y, hero1.id);
+                move.AddHeroMove(vector.x, vector.y, hero2.id);
+                move.AddHeroMove(vector.x, vector.y, hero3.id);
+            }
+            else
+            {
+                var monster = distToAllMonsters[1].Item2;
+                var closestHero = GetClosestHero(myHeroes, monster);
+
+                var vector = Space2d.CreateVector(monster.point, myBase.point).Normalize().Multiply(Hero.Range - Monster.Speed).Add(monster.point);
+                move.AddHeroMove(vector.x, vector.y, closestHero.id);
+
+                monster = distToAllMonsters[0].Item2;
+                vector = Space2d.CreateVector(monster.point, myBase.point).Normalize().Multiply(Hero.Range - Monster.Speed).Add(monster.point);
+
+                foreach(Hero hero in myHeroes)
+                {
+                    if (hero.id == closestHero.id)
+                        continue;
+                    move.AddHeroMove(vector.x, vector.y, hero.id);
+                    move.AddHeroMove(vector.x, vector.y, hero.id);
+                }
             }
 
-
             return move;
+        }
+
+        public Hero GetClosestHero(IList<Hero> heroes, BoardPiece piece)
+        {
+            double minDist = 999999;
+            Hero minHero = null;
+            foreach (Hero hero in heroes)
+            {
+                var distance = hero.GetDistance(piece);
+                if(distance < minDist)
+                {
+                    minHero = hero;
+                    minDist = distance;
+                }
+            }
+
+            return minHero;
+        }
+
+
+        public Move GetBestMove()
+        {
+            return AllInOneStrategy();
         }
 
         public void CalculateHelper()
@@ -109,7 +173,7 @@ namespace GameSolution.Game
 
         public static bool bottomLeftScanner = false;
         static bool attackMode = false;
-        public Move DefenseStrategy()
+        public Move AllInOneStrategy()
         {
             Move move = new Move();
 

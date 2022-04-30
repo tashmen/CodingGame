@@ -139,7 +139,7 @@ class Player
             else
             {
                 GameHelper game = new GameHelper(state);
-                move = game.GetBestMove();
+                move = game.Defense();
             }
             watch.Stop();
             Console.Error.WriteLine("total ms: " + watch.ElapsedMilliseconds);

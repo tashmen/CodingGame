@@ -125,6 +125,11 @@ namespace GameSolution.Entities
             heroMoves[ConvertHeroIdToIndex(heroId)] = heroMove;
         }
 
+        public void AddHeroMove(double x, double y, int heroId)
+        {
+            AddHeroMove((int)x, (int)y, heroId);
+        }
+
         public void AddHeroMove(int x, int y, int heroId)
         {
             heroMoves[ConvertHeroIdToIndex(heroId)] = HeroMove.CreateHeroMove(x, y);
