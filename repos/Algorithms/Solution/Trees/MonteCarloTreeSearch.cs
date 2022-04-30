@@ -30,6 +30,7 @@ namespace Algorithms.Trees
         /// </summary>
         /// <param name="watch">timer</param>
         /// <param name="timeLimit">The amount of time to give to the search in milliseconds</param>
+        /// <param name="depth">How deep to run the simulations; does not impact how deep it goes in the game tree.</param>
         /// <param name="numRollouts">The number of roll outs to play per expansion</param>
         /// <returns></returns>
         public object GetNextMove(Stopwatch watch, int timeLimit, int depth = -1, int numRollouts = 1, double? exploration = null)
@@ -61,6 +62,8 @@ namespace Algorithms.Trees
                     {
                         var clonedState = childNode.state.Clone();
                         winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
+                        if (!winner.HasValue)
+                            break;//We simulated a game, but it didn't end so we are out of time...
                         BackPropagate(childNode, winner);
                         count++;
                     }

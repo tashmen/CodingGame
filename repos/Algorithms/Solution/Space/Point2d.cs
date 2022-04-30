@@ -140,7 +140,7 @@ namespace Algorithms.Space
 
         public static Point2d GetMidPoint(double x1, double y1, double x2, double y2)
         {
-            return new Point2d(Math.Abs(x1 - x2) / 2, Math.Abs(y1 - y2) / 2);
+            return new Point2d((x1 + x2)/2, (y1+y2)/2);
         }
     }
 }
