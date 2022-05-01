@@ -37,11 +37,14 @@ namespace GameSolution.Entities
         public void AdvanceTurn()
         {
             double radians = RotationAngle * Math.PI / 180;
-            Point2d directionVector = new Point2d(Math.Sin(radians), Math.Cos(radians));
-            directionVector.Multiply(Power).Add(GravityVector).Add(VelocityVector);
-            VelocityVector = new Point2d((int)directionVector.x, (int)directionVector.y);
+            Point2d directionVector = new Point2d(Math.Sin(-radians), Math.Cos(-radians));
+            directionVector = directionVector.Multiply(Power).Add(GravityVector).Add(VelocityVector);
+
+            Point2d speedVector = directionVector.Clone().Add(VelocityVector).Multiply(0.5);
+
+            VelocityVector = directionVector;
             Fuel -= Power;
-            Location = Location.Add(VelocityVector);
+            Location = Location.Add(speedVector);
         }
 
         public void SetPower(int newPower)
@@ -71,7 +74,7 @@ namespace GameSolution.Entities
 
         public bool Equals(Ship ship)
         {
-            return ship.Location.Equals(Location) && ship.VelocityVector.Equals(VelocityVector) && ship.Fuel == Fuel && ship.RotationAngle == RotationAngle;
+            return ship.Location.GetRoundedAwayFromZeroPoint().Equals(Location.GetRoundedAwayFromZeroPoint()) && ship.VelocityVector.GetRoundedAwayFromZeroPoint().Equals(VelocityVector.GetRoundedAwayFromZeroPoint()) && ship.Fuel == Fuel && ship.RotationAngle == RotationAngle;
         }
 
         public Ship Clone()

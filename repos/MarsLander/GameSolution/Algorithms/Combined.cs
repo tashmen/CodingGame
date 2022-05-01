@@ -1266,6 +1266,12 @@ namespace Algorithms.Space
             Subtract(origin).Truncate().Add(origin);
             return this;
         }
+
+        public Point2d GetRoundedAwayFromZeroPoint()
+        {
+            return new Point2d(Math.Round(x, MidpointRounding.AwayFromZero), Math.Round(y, MidpointRounding.AwayFromZero));
+        }
+
         public Point2d Clone()
         {
             return new Point2d(x, y);

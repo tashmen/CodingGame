@@ -25,7 +25,7 @@ namespace TestSimulation
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
 
-                var move = search.GetNextMove(watch, 980000, 1, 5);
+                var move = search.GetNextMove(watch, 98, -1, 30);
                 state.ApplyMove(move, true);
 
                 watch.Stop();

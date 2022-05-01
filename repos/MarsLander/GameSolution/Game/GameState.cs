@@ -68,21 +68,12 @@ namespace GameSolution
             var xDiff2 = midPoint.x - Ship.Location.x;
 
             double value = 0;
-            //value += (1 - (xDiff * xDiff / 49000000.0)) * 1;
+            value += (1 - (xDiff * xDiff / 49000000.0)) * 0.5;
             //value += (1 - (yDiff * yDiff / 9000000.0)) * 0.0001;
-            //value += (1 - (Math.Abs(Ship.RotationAngle) / 90.0)) * 0.0001;
-            //value += (1 - (distance / 7615.0)) * 1;
-            //value += (1 - (vx * vx) / 40000.0) * 5000;
-            //value += (1 - (vy * vy) / 40000.0) * 5000;
-
-            if (vx < 30 && Ship.RotationAngle == 0 && Ship.Power == 4)
-                return 2;
-            if (xDiff2 > 900 && Ship.RotationAngle == -15)
-                return (1 - ((4 - Ship.Power) / 4.0));
-            if (xDiff2 < 900 && xDiff2 > 800 && Ship.RotationAngle == 0 && Ship.Power == 3)
-                return 1;
-            if (xDiff2 < 800 && Ship.RotationAngle == 15 && Ship.Power == 4)
-                return 1;
+            value += (1 - (Math.Abs(Ship.RotationAngle) / 90.0)) * 0.0001;
+            value += (1 - (distance / 7615.0)) * 0.005;
+            value += (1 - (vx * vx) / 40000.0) * 0.05;
+            value += (1 - (vy * vy) / 40000.0) * 0.05;
 
             //Console.Error.WriteLine(value);
 
@@ -121,7 +112,6 @@ namespace GameSolution
         {
             if (Board.ShipLanded(Ship))
             {
-                Console.Error.WriteLine($"Ship Landed! {Ship}");
                 return Ship.Fuel;
             }
             else if (Board.ShipCollision(Ship))

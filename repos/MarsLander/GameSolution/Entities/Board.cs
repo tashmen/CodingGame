@@ -45,11 +45,10 @@ namespace GameSolution.Entities
             var landingSpot = GetLandingSpot();
             if (landingSpot.Item1.x <= ship.Location.x && ship.Location.x <= landingSpot.Item2.x)
             {
-                if (ship.Location.y + ship.VelocityVector.y <= landingSpot.Item1.y)
+                if (ship.Location.y <= landingSpot.Item1.y)
                 {
                     if (Math.Abs(ship.VelocityVector.x) <= 19 && Math.Abs(ship.VelocityVector.y) <= 39 && ship.RotationAngle == 0)
                     {
-                        Console.Error.WriteLine("Ship landed!");
                         return true;
                     }
                 }

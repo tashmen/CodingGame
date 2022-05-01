@@ -52,22 +52,20 @@ class Player
             watch.Start();
             Ship ship = new Ship(X, Y, hSpeed, vSpeed, fuel, rotate, power);
 
-            if (!isFirstTurn && !state.Ship.Equals(ship))
+            if (!isFirstTurn && (true || !state.Ship.Equals(ship)))
             {
+                Console.Error.WriteLine($"Matches: {state.Ship.Equals(ship)}");
                 Console.Error.WriteLine($"F: {state.Ship} \nE: {ship}");
             }
 
-            state.SetShip(ship);
+            if(isFirstTurn)
+                state.SetShip(ship);
 
 
             MonteCarloTreeSearch search = new MonteCarloTreeSearch(true);
-            search.SetState(state, true, false);
-            var move = search.GetNextMove(watch, 98, 1, 100);
+            search.SetState(state, true, true);
+            var move = search.GetNextMove(watch, 98, -1, 30);
             state.ApplyMove(move, true);
-            if(state.GetWinner() < 0)
-            {
-                Console.Error.WriteLine("Collision detected!");
-            }
 
             watch.Stop();
 
