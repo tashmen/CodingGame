@@ -1,133 +1,140 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Algorithms.Genetic
 {
-    public class Population
+    public class Population : IEnumerable<Individual>, IList<Individual>
     {
-        //The individuals within this population
-        private Individual[] individuals;
-        //The size of the population
-        public int size { get; private set; }
-        Random rand;
+        private List<Individual> Individuals { get; set; }
+        private Random Rand { get; set; }
 
-        /**Creates an empty population
-          * @param size- The size of the population
+        public int Count => Individuals.Count;
+
+        public bool IsReadOnly => throw new NotImplementedException();
+
+        public Individual this[int index] { get { return Individuals[index]; }  set { Individuals[index] = value; } }
+
+        /**
+         * Creates an empty population
           * */
-        public Population(int size)
+        public Population()
         {
-            individuals = new Individual[size];
-            size = 0;
-            rand = new Random();
+            Individuals = new List<Individual>();
+            Rand = new Random();
         }
 
-        /**Sorts the population based on the individuals Fitness
-          * Sorts using a simple insertion sort.  Could probably exchange this
-          * sort for another one at a later point in time.
-          * */
-        public void sortPopulation()
+        /// <summary>
+        /// Sort the population based on fitness
+        /// </summary>
+        public void SortPopulationByFitness()
         {
-            Individual temp;
-            for (int x = 1; x < size; x++)
+            Individuals.Sort(delegate (Individual i1, Individual i2)
             {
-                for (int y = 0; y < x; y++)
-                {
-                    if (individuals[x].GetFitness() > individuals[y].GetFitness())
-                    {
-                        temp = individuals[x];
-                        for (int z = x; z > y; z--)
-                        {
-                            individuals[z] = individuals[z - 1];
-                        }
-                        individuals[y] = temp;
-                        y = x;
-                    }
-                }
-            }
+                if (i1 == null && i2 == null) return 0;
+                else if (i1 == null) return -1;
+                else if (i2 == null) return 1;
+                else if (i2.Fitness == i1.Fitness) return 0;
+                else return i1.Fitness > i2.Fitness ? 1 : -1;
+            });
         }
 
-        /**Selects a random Individual from the population in a roulette wheel fashion with individuals
-          * who have a higher fitness having a higher chance of being selected.
-          * @return The selected Individual
-          * */
-        public Individual selectRandomFromPopulation()
+
+
+        /// <summary>
+        /// Selects a random Individual from the population in a roulette wheel fashion with individuals who have a higher fitness having a higher chance of being selected.
+        /// </summary>
+        /// <returns>The selected Individual</returns>
+        public Individual SelectRandomFromPopulation()
         {
             double totalFit = 0;
-            for (int x = 0; x < this.size; x++)
+            foreach (Individual i in Individuals)
             {
-                totalFit = totalFit + Math.Abs(individuals[x].GetFitness());
+                totalFit = totalFit + Math.Abs(i.Fitness);
             }
-            double randNum = (rand.NextDouble() * totalFit);
+            double randNum = Rand.NextDouble() * totalFit;
             int y = 0;
-            double totalFitSoFar = Math.Abs(individuals[y].GetFitness());
+            double totalFitSoFar = Math.Abs(Individuals[y].Fitness);
             while (totalFitSoFar < randNum)
             {
                 y++;
-                totalFitSoFar = totalFitSoFar + Math.Abs(individuals[y].GetFitness());
+                totalFitSoFar += Math.Abs(Individuals[y].Fitness);
             }
-            return individuals[y];
+            return Individuals[y];
         }
 
-        /**Calculates the maximum fitness of the population
-          * @return the highest fitness value of the population
-          * */
-        public double maxFitness()
+        public Individual GetBestIndividual()
         {
-            double maxFit = individuals[0].GetFitness();
-            for (int x = 1; x < size; x++)
-            {
-                if (maxFit < individuals[x].GetFitness())
-                    maxFit = individuals[x].GetFitness();
-            }
-            return maxFit;
+            SortPopulationByFitness();
+            return Individuals.First();
         }
 
-        /**Calculates the minimum fitness value of the population
-          * @return The lowest fitness value of the population
-          * */
-        public double minFitness()
+        public double MaximumFitness()
         {
-            double minFit = individuals[0].GetFitness();
-            for (int x = 1; x < size; x++)
-            {
-                if (minFit > individuals[x].GetFitness())
-                    minFit = individuals[x].GetFitness();
-            }
-            return minFit;
+            SortPopulationByFitness();
+            return Individuals[0].Fitness;
         }
 
-        /**Calculates the average fitness of the population
-          * @return The average fitness of the population
-          * */
-        public double avgFitness()
+        public double MinimumFitness()
         {
-            double avgFit = 0;
-            for (int x = 0; x < size; x++)
-            {
-                avgFit = avgFit + individuals[x].GetFitness();
-            }
-            return avgFit / size;
+            SortPopulationByFitness();
+            return Individuals.Last().Fitness;
         }
 
-        /**Gets an individual at index location
-          * @param location- The location of the desired Individual
-          * @return The desired individual from index location
-          * */
-        public Individual getIndividual(int location)
+        public double AverageFitness()
         {
-            return individuals[location];
+            return Individuals.Average(i => i.Fitness);
         }
 
-        /**Adds an individual to the population
-          * @param i- The individual to add
-          * */
-        public void addIndividual(Individual i)
+        public IEnumerator<Individual> GetEnumerator()
         {
-            individuals[size] = i;
-            size++;
+            return Individuals.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return Individuals.GetEnumerator();
+        }
+
+        public int IndexOf(Individual item)
+        {
+            return Individuals.IndexOf(item);
+        }
+
+        public void Insert(int index, Individual item)
+        {
+            Individuals.Insert(index, item);
+        }
+
+        public void RemoveAt(int index)
+        {
+            Individuals.RemoveAt(index);
+        }
+
+        public void Add(Individual item)
+        {
+            Individuals.Add(item);
+        }
+
+        public void Clear()
+        {
+            Individuals.Clear();
+        }
+
+        public bool Contains(Individual item)
+        {
+            return Individuals.Contains(item);
+        }
+
+        public void CopyTo(Individual[] array, int arrayIndex)
+        {
+            Individuals.CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(Individual item)
+        {
+            return Individuals.Remove(item);
         }
     }
 }

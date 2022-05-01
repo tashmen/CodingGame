@@ -21,23 +21,23 @@ namespace UnitTest.Algorithms
         public void Test_Play_21_Game_Neural()
         {
             
-            Population population = new Population(100);
+            Population population = new Population();
             for(int i =0; i<100; i++)
             {
-                population.addIndividual(new NeuralNetwork(4, new int[] { 1, 16, 16, 3, 1 }, 1));
+                population.Add(new NeuralNetwork(4, new int[] { 1, 16, 16, 3, 1 }, 1));
             }
 
             GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.7);
             
             do
             {
-                population = genetic.runOnce();
+                population = genetic.GenerateNextGeneration();
                 Parallel.For(0, 100, (p) =>
                 {
                     Random rand = new Random();
                     for (int g = 0; g < 50; g++)
                     {
-                        NeuralNetwork network = (NeuralNetwork)population.getIndividual(p);
+                        NeuralNetwork network = (NeuralNetwork)population[p];
                         GameState state = new GameState();
                         bool isMax = true;
                         do
@@ -52,7 +52,7 @@ namespace UnitTest.Algorithms
                             {
                                 int sticks;
 
-                                if (false && rand.Next(0, 45) < network.GetFitness())
+                                if (false && rand.Next(0, 45) < network.Fitness)
                                 {
                                     sticks = state.Total % 4;
                                     if (sticks == 3)
@@ -69,16 +69,15 @@ namespace UnitTest.Algorithms
                             }
                         } while (!state.GetWinner().HasValue);
 
-                        network.SetFitness(network.GetFitness() + (int)(state.GetWinner().Value) + 1);
+                        network.Fitness = network.Fitness + (int)(state.GetWinner().Value) + 1;
                     }
                 });
             }
-            while (population.avgFitness() < 60);
+            while (population.AverageFitness() < 60);
 
-            population.sortPopulation();
-            Individual individual = population.getIndividual(0);
-            Console.Error.WriteLine(genetic.generationCounter);
-            Console.Error.WriteLine(individual.GetFitness());
+            Individual individual = population.GetBestIndividual();
+            Console.Error.WriteLine(genetic.GenerationCounter);
+            Console.Error.WriteLine(individual.Fitness);
         }
 
         [Fact]

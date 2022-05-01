@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,71 +10,98 @@ namespace Algorithms.Genetic
     public class GeneticAlgorithm
     {
         /**The population for the genetic algorithm to choose from*/
-        private Population population;
+        private Population Population { get; set; }
         /**The rate at which mutations occur*/
-        private double mutationRate;
+        private double MutationRate { get; set; }
         /**The percent of the original population that will be in the new population*/
-        private double elitePercent;
+        private double ElitePercent { get; set; }
         /**The percent of the chromosome to use from the first parent*/
-        private double crossOver;
-
-        public int generationCounter {get; set;}
-        Random rand;
+        private double CrossOver { get; set; }
+        public int GenerationCounter {get; set;}
 
         /**Sets the initial population and the mutation rate*/
         public GeneticAlgorithm(Population initialPopulation, double mRate, double eP, double cO)
         {
-            population = initialPopulation;
-            mutationRate = mRate;
-            elitePercent = eP;
-            crossOver = cO;
-            rand = new Random();
-            generationCounter = 0;
+            Population = initialPopulation;
+            MutationRate = mRate;
+            ElitePercent = eP;
+            CrossOver = cO;
+            GenerationCounter = 0;
         }
 
-        /** Method to run the genetic algorithm once so that it does the following:
-         * 1) Sorts the population based on the fitness of each individual 
-         * 2) Kills off all of the population except for those that were in the top 5%
-         * 3) Select two parents from the population
-         * 4) Create a baby and add him to the new population
-         * 5) Set the old population to the new one
-         * @returns the new population
-         */
-        public Population runOnce()
+        /// <summary>
+        /// Retrieves the next best move
+        /// </summary>
+        /// <param name="watch">Timer that is counting the time limit</param>
+        /// <param name="timeLimit">How long to run the algorithm for</param>
+        /// <param name="maxGeneration">The highest generation to reach</param>
+        /// <returns>The best move</returns>
+        public object GetNextMove(Stopwatch watch, int timeLimit, int maxGeneration = -1)
         {
-            generationCounter++;
-            Population newPopulation = new Population(population.size);
+            do
+            {
+                var counter = 0;
+                foreach(Individual i in Population)
+                {
+                    if (watch.ElapsedMilliseconds >= timeLimit && counter > 1)
+                    {
+                        break;
+                    }
+                    i.CalculateFitness();
+                    counter++;
+                }
+                GenerateNextGeneration();
+            }
+            while (watch.ElapsedMilliseconds < timeLimit && GenerationCounter != maxGeneration);
+            
+            var bestIndividual = Population.GetBestIndividual();
+            return bestIndividual.GetNextMove();
+        }
+
+        /// <summary>
+        /// Method to run the genetic algorithm once so that it does the following:
+        /// 1) Sorts the population based on the fitness of each individual 
+        /// 2) Kills off all of the population except for those that were in the top ElitePercent
+        /// 3) Select two parents from the population
+        /// 4) Create a baby and add him to the new population
+        /// 5) Set the old population to the new one
+        /// </summary>
+        /// <returns>the new population</returns>
+        public Population GenerateNextGeneration()
+        {
+            GenerationCounter++;
+            Population newPopulation = new Population();
             Individual individual1;
             Individual individual2;
             Individual child;
             //1) Sorts the population based on the fitness of each individual
-            population.sortPopulation();
+            Population.SortPopulationByFitness();
             //2) keep the top elite percent that are performing well
-            for (int x = 0; x < (int)(population.size * elitePercent); x++)
+            for (int x = 0; x < (int)(Population.Count * ElitePercent); x++)
             {
-                population.getIndividual(x).SetFitness(0);
-                newPopulation.addIndividual(population.getIndividual(x));
+                Population[x].Fitness = 0;
+                newPopulation.Add(Population[x]);
             }
-            for (int x = (int)(population.size * elitePercent); x < population.size; x++)
+            for (int x = (int)(Population.Count * ElitePercent); x < Population.Count; x++)
             {
                 //3) Select two parents from the population
-                individual1 = population.selectRandomFromPopulation();
-                individual2 = population.selectRandomFromPopulation();
+                individual1 = Population.SelectRandomFromPopulation();
+                individual2 = Population.SelectRandomFromPopulation();
 
                 //4)Create a baby and add him to the new population
-                child = individual1.CreateBaby(individual2, crossOver);
-                child.Mutate(mutationRate);
-                newPopulation.addIndividual(child);
+                child = individual1.CreateBaby(individual2, CrossOver);
+                child.Mutate(MutationRate);
+                newPopulation.Add(child);
                 x++;
-                if (x < population.size)
+                if (x < Population.Count)
                 {
-                    child = individual2.CreateBaby(individual1, crossOver);
-                    child.Mutate(mutationRate);
-                    newPopulation.addIndividual(child);
+                    child = individual2.CreateBaby(individual1, CrossOver);
+                    child.Mutate(MutationRate);
+                    newPopulation.Add(child);
                 }
             }
             //5) Set the old population to the new one
-            population = newPopulation;
+            Population = newPopulation;
             return newPopulation;
         }
     }

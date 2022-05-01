@@ -20,7 +20,7 @@ namespace Algorithms.NeuralNetwork
         //The total number of weights within the network
         private int totalNumWeightsInNetwork;
         //The fitness of the neural network
-        private double fitness;
+        public double Fitness { get; set; }
 
         Random rand;
 
@@ -50,7 +50,7 @@ namespace Algorithms.NeuralNetwork
                 neuronLayers[x] = new NeuronLayer(numNeurons[x], numInputs[x]);
                 totalNumWeightsInNetwork += numNeurons[x] * numInputs[x];
             }
-            fitness = 0;
+            Fitness = 0;
         }
 
         public NeuralNetwork(BinaryReader reader)
@@ -79,7 +79,7 @@ namespace Algorithms.NeuralNetwork
                 weights[i] = reader.ReadDouble();
             }
             setWeights(weights);
-            fitness = reader.ReadDouble();
+            Fitness = reader.ReadDouble();
         }
 
         public void Save(BinaryWriter writer)
@@ -98,7 +98,7 @@ namespace Algorithms.NeuralNetwork
             {
                 writer.Write(weight);
             }
-            writer.Write(fitness);
+            writer.Write(Fitness);
         }
 
         /**Gets the NeuronLayer at a specified location
@@ -255,14 +255,14 @@ namespace Algorithms.NeuralNetwork
             return true;
         }
 
-        public double GetFitness()
+        public double CalculateFitness()
         {
-            return fitness;
+            throw new NotImplementedException();
         }
 
-        public void SetFitness(double fit)
+        public object GetNextMove()
         {
-            fitness = fit;
+            throw new NotImplementedException();
         }
     }
 }

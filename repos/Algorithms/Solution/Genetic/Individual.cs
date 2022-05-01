@@ -9,16 +9,15 @@ namespace Algorithms.Genetic
     /* Interface for the individuals within the population for a genetic algorithm */
     public interface Individual
     {
+        public double Fitness { get; set; }
         /** Creates an individual from two parents*/
         Individual CreateBaby(Individual parent2, double crossOver);
 
         /** Mutates the individual */
         void Mutate(double mutationRate);
 
-        /** Returns the fitness of the individual */
-        double GetFitness();
+        double CalculateFitness();
 
-        /** Sets the fitness of the individual */
-        void SetFitness(double fit);
+        object GetNextMove();
     }
 }
