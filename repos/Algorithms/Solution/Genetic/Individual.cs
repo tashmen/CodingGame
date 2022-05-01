@@ -20,8 +20,5 @@ namespace Algorithms.Genetic
 
         /** Sets the fitness of the individual */
         void SetFitness(double fit);
-
-        /** Determines if two individuals are the same */
-        bool Equals(Individual i);
     }
 }
