@@ -47,7 +47,8 @@ namespace Algorithms.Genetic
                     {
                         break;
                     }
-                    i.CalculateFitness();
+                    if(i.Fitness == 0)
+                        i.CalculateFitness();
                     counter++;
                 }
                 GenerateNextGeneration();
@@ -79,7 +80,6 @@ namespace Algorithms.Genetic
             //2) keep the top elite percent that are performing well
             for (int x = 0; x < (int)(Population.Count * ElitePercent); x++)
             {
-                Population[x].Fitness = 0;
                 newPopulation.Add(Population[x]);
             }
             for (int x = (int)(Population.Count * ElitePercent); x < Population.Count; x++)
@@ -91,12 +91,14 @@ namespace Algorithms.Genetic
                 //4)Create a baby and add him to the new population
                 child = individual1.CreateBaby(individual2, CrossOver);
                 child.Mutate(MutationRate);
+                child.Fitness = 0;
                 newPopulation.Add(child);
                 x++;
                 if (x < Population.Count)
                 {
                     child = individual2.CreateBaby(individual1, CrossOver);
                     child.Mutate(MutationRate);
+                    child.Fitness = 0;
                     newPopulation.Add(child);
                 }
             }
