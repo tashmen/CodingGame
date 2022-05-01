@@ -9,6 +9,7 @@ using GameSolution.Entities;
 using GameSolution;
 using Algorithms.Trees;
 using System.Diagnostics;
+using Algorithms.Genetic;
 
 /**
  * Auto-generated code below aims at helping you parse
@@ -18,6 +19,7 @@ class Player
 {
     static void Main(string[] args)
     {
+        bool monte = false;
         string[] inputs;
         int surfaceN = int.Parse(Console.ReadLine()); // the number of points used to draw the surface of Mars.
         IList<Point2d> points = new List<Point2d>();
@@ -33,6 +35,14 @@ class Player
         Console.Error.WriteLine($"landing spot: {board.GetLandingSpot()}");
 
         GameState state = new GameState(board);
+
+        Population population = new Population(100);
+        for (int i = 0; i < 100; i++)
+        {
+            population.addIndividual(new MarsLanderSolution());
+        }
+        MarsLanderSolution? winningSolution = null;
+
 
         bool isFirstTurn = true;
         // game loop
@@ -60,11 +70,61 @@ class Player
 
             if(isFirstTurn)
                 state.SetShip(ship);
+            
+            Move move;
 
+            var limit = isFirstTurn ? 998 : 98;
 
-            MonteCarloTreeSearch search = new MonteCarloTreeSearch(true);
-            search.SetState(state, true, true);
-            var move = search.GetNextMove(watch, 98, -1, 30);
+            if (monte)
+            {
+                MonteCarloTreeSearch search = new MonteCarloTreeSearch(true);
+                search.SetState(state, true, true);
+                move = (Move)search.GetNextMove(watch, limit, -1, 30);
+            }
+            else
+            {
+                GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.7);
+                do
+                {   
+                    for (int i = 0; i < population.size; i++)
+                    {
+                        if(watch.ElapsedMilliseconds >= limit && i > 10)
+                        {
+                            break;
+                        }
+                        MarsLanderSolution solution = (MarsLanderSolution)population.getIndividual(i);
+                        var cloneState = state.Clone();
+                        double? winner;
+                        int counter = 0;
+                        do
+                        {
+                            cloneState.ApplyMove(solution.Moves[counter++], true);
+                            winner = cloneState.GetWinner();
+                        }
+                        while (winner == null);
+                        solution.SetFitness(winner.Value);
+                        if (winner.Value > 1)
+                        {
+                            winningSolution = solution;
+                            Console.Error.WriteLine("Found solution!!");
+                            break;
+                        }
+                    }
+                    genetic.runOnce();
+                }
+                while(winningSolution == null && watch.ElapsedMilliseconds < limit);
+                if(winningSolution != null)
+                {
+                    move = winningSolution.Moves[0];
+                }
+                else
+                {
+                    population.sortPopulation();
+                    var solution = (MarsLanderSolution)population.getIndividual(0);
+                    move = solution.Moves[0];
+                }
+            }
+            
             state.ApplyMove(move, true);
 
             watch.Stop();
