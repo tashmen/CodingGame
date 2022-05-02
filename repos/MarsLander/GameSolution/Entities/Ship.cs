@@ -36,6 +36,11 @@ namespace GameSolution.Entities
 
         public void AdvanceTurn()
         {
+            if (Fuel < Power)
+            {
+                Power = Fuel;
+            }
+
             double radians = RotationAngle * Math.PI / 180;
             Point2d directionVector = new Point2d(Math.Sin(-radians), Math.Cos(-radians));
             directionVector = directionVector.Multiply(Power).Add(GravityVector).Add(VelocityVector);

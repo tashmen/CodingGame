@@ -47,7 +47,7 @@ namespace GameSolution.Entities
             {
                 if (ship.Location.y <= landingSpot.Item1.y)
                 {
-                    if (Math.Abs(ship.VelocityVector.x) <= 19 && Math.Abs(ship.VelocityVector.y) <= 39 && ship.RotationAngle == 0)
+                    if (Math.Abs(ship.VelocityVector.x) <= 20 && Math.Abs(ship.VelocityVector.y) <= 40 && ship.RotationAngle == 0)
                     {
                         return true;
                     }

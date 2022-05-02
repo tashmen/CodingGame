@@ -61,19 +61,32 @@ namespace GameSolution
             var distance = Ship.Location.GetDistance(midPoint);
 
 
-            var vx = Ship.VelocityVector.x;
-            var vy = Ship.VelocityVector.y;
+            var vx = Math.Abs(Ship.VelocityVector.x);
+            var vy = Math.Abs(Ship.VelocityVector.y);
 
             var xDiff = Math.Abs(Ship.Location.x - midPoint.x);
             var xDiff2 = midPoint.x - Ship.Location.x;
 
             double value = 0;
-            value += (1 - (xDiff * xDiff / 49000000.0)) * 0.5;
+            //value += (1 - (xDiff * xDiff / 49000000.0)) * 0.5;
             //value += (1 - (yDiff * yDiff / 9000000.0)) * 0.0001;
-            value += (1 - (Math.Abs(Ship.RotationAngle) / 90.0)) * 0.0001;
-            value += (1 - (distance / 7615.0)) * 0.005;
-            value += (1 - (vx * vx) / 40000.0) * 0.05;
-            value += (1 - (vy * vy) / 40000.0) * 0.05;
+
+            value += (1 - (distance / 7615.0)) * 0.4;
+
+            if (landingSpot.Item1.x <= Ship.Location.x && Ship.Location.x <= landingSpot.Item2.x)
+            {
+                value += (1 - (Math.Abs(Ship.RotationAngle) / 90.0)) * 0.3;
+
+                if (vx <= 20)
+                    value += 0.2;
+                else if(vx <= 100)
+                    value += (1 - ((vx-20) / 80.0)) * 0.20;
+
+                if (vy <= 40)
+                    value += 0.1;
+                else if (vy <= 100) 
+                    value += (1 - ((vy-40) / 60.0)) * 0.10;
+            }
 
             //Console.Error.WriteLine(value);
 
@@ -116,7 +129,7 @@ namespace GameSolution
             }
             else if (Board.ShipCollision(Ship))
             {
-                return -1 + Evaluate(true);
+                return Evaluate(true) - 1;
             }
 
             return null;

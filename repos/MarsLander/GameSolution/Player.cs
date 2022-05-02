@@ -36,11 +36,7 @@ class Player
 
         GameState state = new GameState(board);
 
-        Population population = new Population(100);
-        for (int i = 0; i < 100; i++)
-        {
-            population.addIndividual(new MarsLanderSolution());
-        }
+        Population population = new Population();
         MarsLanderSolution? winningSolution = null;
 
 
@@ -83,49 +79,28 @@ class Player
             }
             else
             {
-                GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.7);
-                do
-                {   
-                    for (int i = 0; i < population.size; i++)
+                if (isFirstTurn)
+                {
+                    for (int i = 0; i < 100; i++)
                     {
-                        if(watch.ElapsedMilliseconds >= limit && i > 10)
-                        {
-                            break;
-                        }
-                        MarsLanderSolution solution = (MarsLanderSolution)population.getIndividual(i);
-                        var cloneState = state.Clone();
-                        double? winner;
-                        int counter = 0;
-                        do
-                        {
-                            cloneState.ApplyMove(solution.Moves[counter++], true);
-                            winner = cloneState.GetWinner();
-                        }
-                        while (winner == null);
-                        solution.SetFitness(winner.Value);
-                        if (winner.Value > 1)
-                        {
-                            winningSolution = solution;
-                            Console.Error.WriteLine("Found solution!!");
-                            break;
-                        }
+                        population.Add(new MarsLanderSolution(state));
                     }
-                    genetic.runOnce();
                 }
-                while(winningSolution == null && watch.ElapsedMilliseconds < limit);
-                if(winningSolution != null)
-                {
-                    move = winningSolution.Moves[0];
-                }
-                else
-                {
-                    population.sortPopulation();
-                    var solution = (MarsLanderSolution)population.getIndividual(0);
-                    move = solution.Moves[0];
-                }
+                GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.7);
+                move = (Move)genetic.GetNextMove(watch, limit);
+                population = genetic.Population;
             }
             
             state.ApplyMove(move, true);
+
+            if (!monte)
+            {
+                foreach(Individual i in population)
+                {
+                    var solution = (MarsLanderSolution)i;
+                    solution.AdvanceTurn(state);
+                }
+            }
 
             watch.Stop();
 
