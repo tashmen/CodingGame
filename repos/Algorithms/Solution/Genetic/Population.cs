@@ -33,10 +33,10 @@ namespace Algorithms.Genetic
             Individuals.Sort(delegate (Individual i1, Individual i2)
             {
                 if (i1 == null && i2 == null) return 0;
-                else if (i1 == null) return -1;
-                else if (i2 == null) return 1;
+                else if (i1 == null) return 1;
+                else if (i2 == null) return -1;
                 else if (i2.Fitness == i1.Fitness) return 0;
-                else return i1.Fitness > i2.Fitness ? 1 : -1;
+                else return i1.Fitness > i2.Fitness ? -1 : 1;
             });
         }
 

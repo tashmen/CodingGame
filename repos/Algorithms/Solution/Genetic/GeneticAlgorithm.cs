@@ -10,7 +10,7 @@ namespace Algorithms.Genetic
     public class GeneticAlgorithm
     {
         /**The population for the genetic algorithm to choose from*/
-        private Population Population { get; set; }
+        public Population Population { get; private set; }
         /**The rate at which mutations occur*/
         private double MutationRate { get; set; }
         /**The percent of the original population that will be in the new population*/
@@ -47,7 +47,7 @@ namespace Algorithms.Genetic
                     {
                         break;
                     }
-                    if(i.Fitness == 0)
+                    if(i.Fitness == double.MinValue)
                         i.CalculateFitness();
                     counter++;
                 }
@@ -91,14 +91,14 @@ namespace Algorithms.Genetic
                 //4)Create a baby and add him to the new population
                 child = individual1.CreateBaby(individual2, CrossOver);
                 child.Mutate(MutationRate);
-                child.Fitness = 0;
+                child.Fitness = double.MinValue;
                 newPopulation.Add(child);
                 x++;
                 if (x < Population.Count)
                 {
                     child = individual2.CreateBaby(individual1, CrossOver);
                     child.Mutate(MutationRate);
-                    child.Fitness = 0;
+                    child.Fitness = double.MinValue;
                     newPopulation.Add(child);
                 }
             }
