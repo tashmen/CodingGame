@@ -20,4 +20,11 @@ namespace GameSolution.Entities
             return $"{Rotation} {Power}";
         }
     }
+
+    public class StaticMove : Move
+    {
+        public StaticMove(int rotate, int power) : base(rotate, power)
+        {
+        }
+    }
 }

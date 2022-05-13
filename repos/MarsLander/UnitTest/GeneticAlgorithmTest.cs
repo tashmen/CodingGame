@@ -42,7 +42,7 @@ namespace UnitTest
             {
                 Population.Add(new MarsLanderSolution(state));
             }
-            GeneticAlgorithm genetic = new GeneticAlgorithm(Population, 0.10, 0.01, 0.7);
+            GeneticAlgorithm genetic = new GeneticAlgorithm(Population, 0.01, 0.10, 0.2);
 
             do
             {

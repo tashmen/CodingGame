@@ -6,9 +6,9 @@ namespace GameSolution.Entities
 {
     public class MarsLanderSolution : Individual
     {
-        public IList<Move> Moves { get; set; }
+        public IList<StaticMove> Moves { get; set; }
         private Random Rand { get; set; }
-        private static int TotalMoves { get; set; } = 200;
+        private static int TotalMoves { get; set; } = 100;
         public double Fitness { get; set; }
         public GameState State { get; set; }
 
@@ -17,32 +17,25 @@ namespace GameSolution.Entities
             Fitness = double.MinValue;
             Rand = new Random();
             State = (GameState)state.Clone();
-            Moves = new List<Move>(TotalMoves);
+            Moves = new List<StaticMove>(TotalMoves);
             for(int i = 0; i < TotalMoves; i++)
             {
-                if (i == 0)
-                {
-                    Moves.Add(CreateRandomMove(new Move(State.Ship.RotationAngle, State.Ship.Power)));
-                }
-                else Moves.Add(CreateRandomMove(Moves[i - 1]));
+                Moves.Add(CreateRandomMove());
             }
         }
 
         public MarsLanderSolution(MarsLanderSolution parentA, MarsLanderSolution parentB, double crossOver)
         {
             Rand = new Random();
+            var randomNum = Rand.NextDouble();
             State = (GameState)parentA.State.Clone();
-            Moves = new List<Move>(TotalMoves);
+            Moves = new List<StaticMove>(TotalMoves);
             for (int i = 0; i < TotalMoves; i++)
             {
-                if (i < TotalMoves * crossOver)
-                {
-                    Moves.Add(parentA.Moves[i]);
-                }
-                else
-                {
-                    Moves.Add(parentB.Moves[i]);
-                }
+                
+                var parent1 = parentA.Moves[i];
+                var parent2 = parentB.Moves[i];
+                Moves.Add(new StaticMove((int)(randomNum * parent1.Rotation + (1-randomNum) * parent2.Rotation), (int)(randomNum * parent1.Power + (1-randomNum) * parent2.Power)));
             }
         }
 
@@ -61,16 +54,16 @@ namespace GameSolution.Entities
             return Fitness;
         }
 
-        public Move CreateRandomMove(Move previousMove)
+        public StaticMove CreateRandomMove()
         {
-            return new Move(Rand.Next(Math.Max(previousMove.Rotation - 15, -90), Math.Min(previousMove.Rotation + 15, 90) + 1), Rand.Next(Math.Max(previousMove.Power - 1, 0), Math.Min(previousMove.Power + 1, 4) + 1));
+            return new StaticMove(Rand.Next(-15, 16), Rand.Next(-1, 2));
         }
 
         public void AdvanceTurn(GameState updatedState)
         {
             State = (GameState)updatedState.Clone();
             Moves.RemoveAt(0);
-            Moves.Add(CreateRandomMove(Moves[Moves.Count - 1]));
+            Moves.Add(CreateRandomMove());
         }
 
 
@@ -81,15 +74,12 @@ namespace GameSolution.Entities
 
         public void Mutate(double mutationRate)
         {
+            
             for (int i = 0; i < TotalMoves; i++)
             {
-                if(Rand.NextDouble() < mutationRate)
+                if (Rand.NextDouble() < mutationRate)
                 {
-                    if(i == 0)
-                    {
-                        Moves[i] = CreateRandomMove(new Move(State.Ship.RotationAngle, State.Ship.Power));
-                    }
-                    else Moves[i] = CreateRandomMove(Moves[i-1]);
+                    Moves[i] = CreateRandomMove();
                 }
             }
         }

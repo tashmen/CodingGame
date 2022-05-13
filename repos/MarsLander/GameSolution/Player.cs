@@ -86,7 +86,7 @@ class Player
                         population.Add(new MarsLanderSolution(state));
                     }
                 }
-                GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.7);
+                GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.05, 0.01, 0.2);
                 move = (Move)genetic.GetNextMove(watch, limit);
                 population = genetic.Population;
             }

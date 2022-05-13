@@ -10,9 +10,12 @@ namespace GameSolution.Entities
         IList<Point2d> Points { get; set; }
         Tuple<Point2d, Point2d> LandingSpot { get; set; }
 
+        public double MaxY { get; set; }
+
         public Board(IList<Point2d> points)
         {
             Points = points;
+            MaxY = 0;
         }
 
         public Tuple<Point2d, Point2d> GetLandingSpot()
@@ -22,6 +25,7 @@ namespace GameSolution.Entities
                 Point2d lastPoint = null;
                 foreach (var point in Points)
                 {
+                    MaxY = Math.Max(MaxY, point.y);
                     if (lastPoint == null)
                         lastPoint = point;
                     else

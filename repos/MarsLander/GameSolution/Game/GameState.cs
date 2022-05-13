@@ -36,9 +36,18 @@ namespace GameSolution
             if (isMax)
             {
                 Move m = (Move)move;
+                if (move is StaticMove)
+                {
+                    Ship.SetRotation(m.Rotation + Ship.RotationAngle);
+                    Ship.SetPower(m.Power + Ship.Power);
+                }
+                else
+                {
+                    Ship.SetRotation(m.Rotation);
+                    Ship.SetPower(m.Power);
+                }
+                
                 LastMove = m;
-                Ship.SetRotation(m.Rotation);
-                Ship.SetPower(m.Power);
                 Ship.AdvanceTurn();
             }
         }
@@ -71,11 +80,11 @@ namespace GameSolution
             //value += (1 - (xDiff * xDiff / 49000000.0)) * 0.5;
             //value += (1 - (yDiff * yDiff / 9000000.0)) * 0.0001;
 
-            value += (1 - (distance / 7615.0)) * 0.4;
+            value += (1 - (distance / 7615.0)) * 0.2;
 
             if (landingSpot.Item1.x <= Ship.Location.x && Ship.Location.x <= landingSpot.Item2.x)
             {
-                value += (1 - (Math.Abs(Ship.RotationAngle) / 90.0)) * 0.3;
+                value += (1 - (Math.Abs(Ship.RotationAngle) / 90.0)) * 0.1;
 
                 if (vx <= 20)
                     value += 0.2;
@@ -83,9 +92,9 @@ namespace GameSolution
                     value += (1 - ((vx-20) / 80.0)) * 0.20;
 
                 if (vy <= 40)
-                    value += 0.1;
+                    value += 0.5;
                 else if (vy <= 100) 
-                    value += (1 - ((vy-40) / 60.0)) * 0.10;
+                    value += (1 - ((vy-40) / 60.0)) * 0.50;
             }
 
             //Console.Error.WriteLine(value);
@@ -123,6 +132,10 @@ namespace GameSolution
 
         public double? GetWinner()
         {
+            //if the ship is higher than the maximum spot on the board then it couldn't have possibly crashed or landed.
+            if (Ship.Location.y > Board.MaxY)
+                return null;
+
             if (Board.ShipLanded(Ship))
             {
                 return Ship.Fuel;
