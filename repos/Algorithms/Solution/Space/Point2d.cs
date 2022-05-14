@@ -4,8 +4,8 @@ namespace Algorithms.Space
 {
     public class Point2d
     {
-        public double x { get; private set; }
-        public double y { get; private set; }
+        public double x;
+        public double y;
 
         public Point2d(double x, double y)
         {

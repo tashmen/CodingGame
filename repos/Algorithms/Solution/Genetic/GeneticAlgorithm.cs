@@ -10,14 +10,14 @@ namespace Algorithms.Genetic
     public class GeneticAlgorithm
     {
         /**The population for the genetic algorithm to choose from*/
-        public Population Population { get; private set; }
+        public Population Population;
         /**The rate at which mutations occur*/
-        private double MutationRate { get; set; }
+        private double MutationRate;
         /**The percent of the original population that will be in the new population*/
-        private double ElitePercent { get; set; }
+        private double ElitePercent;
         /**The percent of the chromosome to use from the first parent*/
-        private double CrossOver { get; set; }
-        public int GenerationCounter {get; set;}
+        private double CrossOver;
+        public int GenerationCounter;
 
         /**Sets the initial population and the mutation rate*/
         public GeneticAlgorithm(Population initialPopulation, double mRate, double eP, double cO)

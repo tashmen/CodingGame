@@ -7,8 +7,8 @@ namespace Algorithms.Genetic
 {
     public class Population : IEnumerable<Individual>, IList<Individual>
     {
-        private List<Individual> Individuals { get; set; }
-        private Random Rand { get; set; }
+        private List<Individual> Individuals;
+        private Random Rand;
 
         public int Count => Individuals.Count;
 

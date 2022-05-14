@@ -8,10 +8,10 @@ namespace Algorithms.Graph
     {
         public class Node
         {
-            public int Id { get; set; }
-            public double Distance { get; set; }
+            public int Id;
+            public double Distance;
 
-            public bool IsExplored { get; set; }
+            public bool IsExplored;
             public Node(int id, double distance)
             {
                 Id = id;
@@ -31,8 +31,8 @@ namespace Algorithms.Graph
             }
         }
 
-        private Dictionary<int, List<Node>> Links { get; set; }
-        private Dictionary<int, Dictionary<int, List<Node>>> Paths { get; set; }
+        private Dictionary<int, List<Node>> Links;
+        private Dictionary<int, Dictionary<int, List<Node>>> Paths;
         private bool IsByDirectional;
         public GraphLinks(bool isByDirectional = true)
         {

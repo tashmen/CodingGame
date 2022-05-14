@@ -8,7 +8,7 @@ namespace Algorithms.Graph
     {
         private List<INode> Nodes;
         //Will hold shortest paths from a start node id to an end node id
-        private Dictionary<int, Dictionary<int, List<ILink>>> Paths { get; set; }
+        private Dictionary<int, Dictionary<int, List<ILink>>> Paths;
 
         public Graph()
         {

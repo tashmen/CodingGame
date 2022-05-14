@@ -5,7 +5,7 @@ namespace Algorithms.Trees
 {
     public class TreeAlgorithm
     {
-        protected GameTreeNode RootNode { get; private set; }
+        protected GameTreeNode RootNode;
         public void SetState(IGameState rootState, bool isMax = true, bool findState = true)
         {
             if (RootNode != null && findState)
