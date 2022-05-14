@@ -26,5 +26,10 @@ namespace GameSolution.Entities
         public StaticMove(int rotate, int power) : base(rotate, power)
         {
         }
+
+        public static Move ConvertToMove(Ship ship, StaticMove move)
+        {
+            return new Move(Math.Min(Math.Max(ship.RotationAngle + move.Rotation, -90), 90), Math.Max(Math.Min(ship.Power + move.Power, 4), 0));
+        }
     }
 }

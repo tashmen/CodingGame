@@ -8,7 +8,7 @@ namespace GameSolution.Entities
     {
         public IList<StaticMove> Moves { get; set; }
         private Random Rand { get; set; }
-        private static int TotalMoves { get; set; } = 100;
+        private static int TotalMoves { get; set; } = 200;
         public double Fitness { get; set; }
         public GameState State { get; set; }
 
@@ -96,7 +96,9 @@ namespace GameSolution.Entities
 
         public object GetNextMove()
         {
-            return Moves[0];
+            var move = Moves[0];
+            var ship = State.Ship;
+            return StaticMove.ConvertToMove(ship, move);
         }
     }
 }

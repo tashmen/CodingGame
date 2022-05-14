@@ -7,8 +7,8 @@ namespace GameSolution.Entities
 {
     public class Board
     {
-        IList<Point2d> Points { get; set; }
-        Tuple<Point2d, Point2d> LandingSpot { get; set; }
+        public IList<Point2d> Points { get; set; }
+        public Tuple<Point2d, Point2d> LandingSpot { get; set; }
 
         public double MaxY { get; set; }
 

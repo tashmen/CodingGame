@@ -69,7 +69,7 @@ class Player
             
             Move move;
 
-            var limit = isFirstTurn ? 998 : 98;
+            var limit = isFirstTurn ? 995 : 95;
 
             if (monte)
             {
@@ -86,7 +86,7 @@ class Player
                         population.Add(new MarsLanderSolution(state));
                     }
                 }
-                GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.05, 0.01, 0.2);
+                GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.2);
                 move = (Move)genetic.GetNextMove(watch, limit);
                 population = genetic.Population;
             }
@@ -103,6 +103,7 @@ class Player
             }
 
             watch.Stop();
+            Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);
 
             // rotate power. rotate is the desired rotation angle. power is the desired thrust power.
             Console.WriteLine(move.ToString());

@@ -10,9 +10,6 @@ using Xunit.Abstractions;
 
 namespace UnitTest
 {
-
-
-
     public class GameTests
     {
         private Converter converter;
