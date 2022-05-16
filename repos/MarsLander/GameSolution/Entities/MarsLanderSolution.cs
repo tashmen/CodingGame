@@ -6,21 +6,22 @@ namespace GameSolution.Entities
 {
     public class MarsLanderSolution : Individual
     {
-        public IList<StaticMove> Moves;
+        public StaticMove[] Moves;
         private Random Rand;
         private static int TotalMoves = 200;
         public double Fitness { get; set; }
         public GameState State;
+        public int Turn = 0;
 
         public MarsLanderSolution(GameState state)
         {
             Fitness = double.MinValue;
             Rand = new Random();
             State = (GameState)state.Clone();
-            Moves = new List<StaticMove>(TotalMoves);
+            Moves = new StaticMove[TotalMoves];
             for(int i = 0; i < TotalMoves; i++)
             {
-                Moves.Add(CreateRandomMove());
+                Moves[i] = CreateRandomMove();
             }
         }
 
@@ -29,13 +30,12 @@ namespace GameSolution.Entities
             Rand = new Random();
             var randomNum = Rand.NextDouble();
             State = (GameState)parentA.State.Clone();
-            Moves = new List<StaticMove>(TotalMoves);
+            Moves = new StaticMove[TotalMoves];
             for (int i = 0; i < TotalMoves; i++)
             {
-                
                 var parent1 = parentA.Moves[i];
                 var parent2 = parentB.Moves[i];
-                Moves.Add(new StaticMove((int)(randomNum * parent1.Rotation + (1-randomNum) * parent2.Rotation), (int)(randomNum * parent1.Power + (1-randomNum) * parent2.Power)));
+                Moves[i] = new StaticMove((int)(randomNum * parent1.Rotation + (1-randomNum) * parent2.Rotation), (int)(randomNum * parent1.Power + (1-randomNum) * parent2.Power));
             }
         }
 
@@ -62,8 +62,7 @@ namespace GameSolution.Entities
         public void AdvanceTurn(GameState updatedState)
         {
             State = (GameState)updatedState.Clone();
-            Moves.RemoveAt(0);
-            Moves.Add(CreateRandomMove());
+            Turn++;
         }
 
 
@@ -74,13 +73,10 @@ namespace GameSolution.Entities
 
         public void Mutate(double mutationRate)
         {
-            
-            for (int i = 0; i < TotalMoves; i++)
+            for(int i = 0; i<TotalMoves * mutationRate; i++)
             {
-                if (Rand.NextDouble() < mutationRate)
-                {
-                    Moves[i] = CreateRandomMove();
-                }
+                var index = Rand.Next(0, TotalMoves);
+                Moves[index] = CreateRandomMove();
             }
         }
 
@@ -96,7 +92,7 @@ namespace GameSolution.Entities
 
         public object GetNextMove()
         {
-            var move = Moves[0];
+            var move = Moves[Turn];
             var ship = State.Ship;
             return StaticMove.ConvertToMove(ship, move);
         }

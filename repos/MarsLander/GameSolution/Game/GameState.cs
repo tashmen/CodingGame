@@ -138,11 +138,11 @@ namespace GameSolution
 
             if (Board.ShipLanded(Ship))
             {
-                return Ship.Fuel;
+                return Ship.Fuel + 1;
             }
             else if (Board.ShipCollision(Ship))
             {
-                return Evaluate(true) - 1;
+                return Evaluate(true);
             }
 
             return null;
