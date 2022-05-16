@@ -10,10 +10,10 @@ namespace GameSolution
 {
     public class GameState : IGameState
     {
-        public Board Board { get; set; }
-        public Ship Ship { get; set; }
+        public Board Board;
+        public Ship Ship;
 
-        public Move LastMove { get; set; }
+        public Move LastMove;
 
         public GameState(Board board)
         {

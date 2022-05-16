@@ -6,8 +6,8 @@ namespace GameSolution.Entities
 {
     public class Move
     {
-        public int Rotation { get; set; }
-        public int Power { get; set; }
+        public int Rotation;
+        public int Power;
 
         public Move(int rotate, int power)
         {

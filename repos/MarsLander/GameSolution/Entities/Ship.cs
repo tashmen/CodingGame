@@ -8,13 +8,13 @@ namespace GameSolution.Entities
 {
     public class Ship
     {
-        public Point2d Location { get; set; }
-        public Point2d VelocityVector { get; set; }
-        public int Fuel { get; set; }
-        public int RotationAngle { get; set; }// limited +-15
-        public int Power { get; set; }//limited +-1
+        public Point2d Location;
+        public Point2d VelocityVector;
+        public int Fuel;
+        public int RotationAngle;// limited +-15
+        public int Power;//limited +-1
 
-        public static Point2d GravityVector { get; set; } = new Point2d(0, -3.711);
+        public static Point2d GravityVector = new Point2d(0, -3.711);
 
         public Ship(int x, int y, int xSpeed, int ySpeed, int fuel, int rotate, int power)
         {

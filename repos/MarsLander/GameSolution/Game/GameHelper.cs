@@ -23,7 +23,7 @@ namespace GameSolution.Game
             do
             {
                 Stopwatch watch = new Stopwatch();
-                //watch.Start();
+                watch.Start();
                 var move = (Move)genetic.GetNextMove(watch, 98, genetic.GenerationCounter + 1000);
                 Population = genetic.Population;
 

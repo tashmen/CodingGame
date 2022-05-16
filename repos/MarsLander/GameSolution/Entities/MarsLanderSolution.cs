@@ -6,11 +6,11 @@ namespace GameSolution.Entities
 {
     public class MarsLanderSolution : Individual
     {
-        public IList<StaticMove> Moves { get; set; }
-        private Random Rand { get; set; }
-        private static int TotalMoves { get; set; } = 200;
+        public IList<StaticMove> Moves;
+        private Random Rand;
+        private static int TotalMoves = 200;
         public double Fitness { get; set; }
-        public GameState State { get; set; }
+        public GameState State;
 
         public MarsLanderSolution(GameState state)
         {
