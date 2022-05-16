@@ -17,6 +17,9 @@ namespace Algorithms.Genetic
         private double ElitePercent;
         /**The percent of the chromosome to use from the first parent*/
         private double CrossOver;
+        /// <summary>
+        /// The number of generations that have been created
+        /// </summary>
         public int GenerationCounter;
 
         /**Sets the initial population and the mutation rate*/
@@ -82,11 +85,12 @@ namespace Algorithms.Genetic
             {
                 newPopulation.Add(Population[x]);
             }
+            double totalFit = Population.GetTotalFitness();
             for (int x = (int)(Population.Count * ElitePercent); x < Population.Count; x++)
             {
                 //3) Select two parents from the population
-                individual1 = Population.SelectRandomFromPopulation();
-                individual2 = Population.SelectRandomFromPopulation();
+                individual1 = Population.SelectRandomFromPopulation(totalFit);
+                individual2 = Population.SelectRandomFromPopulation(totalFit);
 
                 //4)Create a baby and add him to the new population
                 child = individual1.CreateBaby(individual2, CrossOver);

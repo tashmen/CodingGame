@@ -40,26 +40,27 @@ namespace Algorithms.Genetic
             });
         }
 
+        public double GetTotalFitness()
+        {
+            return Individuals.Sum(i => i.Fitness);
+        }
+
 
 
         /// <summary>
         /// Selects a random Individual from the population in a roulette wheel fashion with individuals who have a higher fitness having a higher chance of being selected.
         /// </summary>
+        /// <param name="totalFit">The total fitness of the population</param>
         /// <returns>The selected Individual</returns>
-        public Individual SelectRandomFromPopulation()
+        public Individual SelectRandomFromPopulation(double totalFit)
         {
-            double totalFit = 0;
-            foreach (Individual i in Individuals)
-            {
-                totalFit = totalFit + Math.Abs(i.Fitness);
-            }
             double randNum = Rand.NextDouble() * totalFit;
             int y = 0;
-            double totalFitSoFar = Math.Abs(Individuals[y].Fitness);
+            double totalFitSoFar = Individuals[y].Fitness;
             while (totalFitSoFar < randNum)
             {
                 y++;
-                totalFitSoFar += Math.Abs(Individuals[y].Fitness);
+                totalFitSoFar += Individuals[y].Fitness;
             }
             return Individuals[y];
         }
