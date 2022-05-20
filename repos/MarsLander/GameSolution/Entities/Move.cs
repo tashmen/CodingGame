@@ -19,6 +19,11 @@ namespace GameSolution.Entities
         {
             return $"{Rotation} {Power}";
         }
+
+        public virtual Move Clone()
+        {
+            return new Move(Rotation, Power);
+        }
     }
 
     public class StaticMove : Move
@@ -30,6 +35,11 @@ namespace GameSolution.Entities
         public static Move ConvertToMove(Ship ship, StaticMove move)
         {
             return new Move(Math.Min(Math.Max(ship.RotationAngle + move.Rotation, -90), 90), Math.Max(Math.Min(ship.Power + move.Power, 4), 0));
+        }
+
+        public override Move Clone()
+        {
+            return new StaticMove(Rotation, Power);
         }
     }
 }

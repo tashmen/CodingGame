@@ -49,7 +49,7 @@ namespace GameSolution.Entities
             var landingSpot = GetLandingSpot();
             if (landingSpot.Item1.x <= ship.Location.x && ship.Location.x <= landingSpot.Item2.x)
             {
-                if (ship.Location.y <= landingSpot.Item1.y)
+                if (ship.Location.y <= landingSpot.Item1.y && landingSpot.Item1.y <= ship.Location.y - ship.VelocityVector.y)
                 {
                     if (Math.Abs(ship.VelocityVector.x) <= 20 && Math.Abs(ship.VelocityVector.y) <= 40 && ship.RotationAngle == 0)
                     {
@@ -67,6 +67,8 @@ namespace GameSolution.Entities
             if (ship.Location.y <= 0 || ship.Location.y >= 2900)
                 return true;
 
+            Point2d shipLastLocation = new Point2d(ship.Location.x - ship.VelocityVector.x, ship.Location.y - ship.VelocityVector.y);
+
             Point2d lastPoint = null;
             foreach (var point in Points)
             {
@@ -75,19 +77,29 @@ namespace GameSolution.Entities
                 else
                 {
                     var currentPoint = point;
-                    if (lastPoint.x <= ship.Location.x && ship.Location.x <= currentPoint.x)
-                    {
-                        Point2d v1 = Space2d.CreateVector(lastPoint, currentPoint);
-                        Point2d v2 = Space2d.CreateVector(ship.Location, currentPoint);
-                        double xp = v1.x * v2.y - v1.y * v2.x;
-                        if (xp > 0)
-                            return true;
-                        else return false;
-                    }
-                    lastPoint = currentPoint;
+                    if (IsIntersecting(lastPoint, currentPoint, ship.Location, shipLastLocation))
+                        return true;
                 }
             }
             return false;
+        }
+
+        bool IsIntersecting(Point2d a, Point2d b, Point2d c, Point2d d)
+        {
+            if(!((a.x <= c.x && c.x <= b.x) || (a.x <= d.x && d.x <= b.x)))
+               return false;
+            
+            double denominator = ((b.x - a.x) * (d.y - c.y)) - ((b.y - a.y) * (d.x - c.x));
+            double numerator1 = ((a.y - c.y) * (d.x - c.x)) - ((a.x - c.x) * (d.y - c.y));
+            double numerator2 = ((a.y - c.y) * (b.x - a.x)) - ((a.x - c.x) * (b.y - a.y));
+
+            // Detect coincident lines (has a problem, read below)
+            if (denominator == 0) return numerator1 == 0 && numerator2 == 0;
+
+            double r = numerator1 / denominator;
+            double s = numerator2 / denominator;
+
+            return (r >= 0 && r <= 1) && (s >= 0 && s <= 1);
         }
     }
 }

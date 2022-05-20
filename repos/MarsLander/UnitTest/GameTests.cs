@@ -33,14 +33,35 @@ namespace UnitTest
         }
 
         [Fact]
+        public void ShipCollisionThroughLine()
+        {
+            IList<Point2d> points = new List<Point2d>();
+            points.Add(new Point2d(500, 2100));
+            points.Add(new Point2d(1500, 2100));
+            points.Add(new Point2d(2000, 200));
+            Board b = new Board(points);
+            Assert.True(b.ShipCollision(new Ship(1482, 2102, -26, 3, 500, 0, 4)));
+        }
+
+        [Fact]
+        public void ShipLanded_WhereShipIsUnderPoint()
+        {
+            IList<Point2d> points = new List<Point2d>();
+            points.Add(new Point2d(500, 2100));
+            points.Add(new Point2d(1500, 2100));
+            Board b = new Board(points);
+            Assert.False(b.ShipLanded(new Ship(1492, 2079, -20, -4, 300, 0, 4)));
+        }
+
+        [Fact]
         public void SafeLandTest()
         {
             IList<Point2d> points = new List<Point2d>();
             points.Add(new Point2d(0, 0));
             points.Add(new Point2d(50, 0));
             Board b = new Board(points);
-            Assert.True(b.ShipLanded(new Ship(25, 0, 14, 30, 0, 0, 4)));
-            Assert.False(b.ShipLanded(new Ship(25, 20, 14, 30, 0, 0, 4)));
+            Assert.True(b.ShipLanded(new Ship(25, 0, 14, -30, 0, 0, 4)));
+            Assert.False(b.ShipLanded(new Ship(25, 20, 14, -30, 0, 0, 4)));
         }
 
         [Fact]

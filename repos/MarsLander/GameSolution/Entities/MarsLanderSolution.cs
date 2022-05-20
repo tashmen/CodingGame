@@ -1,6 +1,7 @@
 ﻿using Algorithms.Genetic;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GameSolution.Entities
 {
@@ -8,7 +9,7 @@ namespace GameSolution.Entities
     {
         public StaticMove[] Moves;
         private Random Rand;
-        private static int TotalMoves = 100;
+        private static int TotalMoves = 120;
         public double Fitness { get; set; }
         public GameState State;
         public int Turn = 0;
@@ -25,25 +26,20 @@ namespace GameSolution.Entities
             }
         }
 
-        public MarsLanderSolution(MarsLanderSolution parentA, MarsLanderSolution parentB, double crossOver)
+        public MarsLanderSolution(MarsLanderSolution solution)
         {
+            Fitness = solution.Fitness;
             Rand = new Random();
-            var randomNum = Rand.NextDouble();
-            State = (GameState)parentA.State.Clone();
-            Moves = new StaticMove[TotalMoves];
-            for (int i = 0; i < TotalMoves; i++)
-            {
-                var parent1 = parentA.Moves[i];
-                var parent2 = parentB.Moves[i];
-                Moves[i] = new StaticMove((int)(randomNum * parent1.Rotation + (1-randomNum) * parent2.Rotation), (int)(randomNum * parent1.Power + (1-randomNum) * parent2.Power));
-            }
+            State = (GameState)solution.State.Clone();
+            Moves = solution.Moves.Select(m => (StaticMove)m.Clone()).ToArray();
+            Turn = solution.Turn;
         }
 
         public double CalculateFitness()
         {
             var clonedState = State.Clone();
             double? winner;
-            int counter = 0;
+            int counter = Turn;
             do
             {
                 clonedState.ApplyMove(Moves[counter++], true);
@@ -68,16 +64,29 @@ namespace GameSolution.Entities
         }
 
 
-        public Individual CreateBaby(Individual parent2, double crossOver)
+        public Individual CreateBaby(Individual parent1, Individual parent2, double crossOver)
         {
-            return new MarsLanderSolution(this, (MarsLanderSolution)parent2, crossOver);
+            var parentA = (MarsLanderSolution)parent1;
+            var parentB = (MarsLanderSolution)parent2;
+            var randomNum = Rand.NextDouble();
+            State = (GameState)((MarsLanderSolution)parent1).State.Clone();
+            for (int i = 0; i < TotalMoves; i++)
+            {
+                var p1 = parentA.Moves[i];
+                var p2 = parentB.Moves[i];
+                Moves[i].Rotation = (int)(randomNum * p1.Rotation + (1 - randomNum) * p2.Rotation);
+                Moves[i].Power = (int)(randomNum * p1.Power + (1 - randomNum) * p2.Power);
+            }
+            Turn = parentA.Turn;
+
+            return this;
         }
 
         public void Mutate(double mutationRate)
         {
             for(int i = 0; i<TotalMoves * mutationRate; i++)
             {
-                var index = Rand.Next(0, TotalMoves);
+                var index = Rand.Next(Turn, TotalMoves);
                 Moves[index] = CreateRandomMove();
             }
         }
@@ -97,6 +106,11 @@ namespace GameSolution.Entities
             var move = Moves[Turn];
             var ship = State.Ship;
             return StaticMove.ConvertToMove(ship, move);
+        }
+
+        public Individual Clone()
+        {
+            return new MarsLanderSolution(this);
         }
     }
 }
