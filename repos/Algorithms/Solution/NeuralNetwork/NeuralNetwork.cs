@@ -53,6 +53,25 @@ namespace Algorithms.NeuralNetwork
             Fitness = 0;
         }
 
+        public NeuralNetwork(NeuralNetwork net)
+        {
+            rand = new Random();
+            numLayers = net.numLayers;
+            numNeurons = (int[])net.numNeurons.Clone();
+            nFirstInputs = net.nFirstInputs;
+            numInputs = (int[])net.numInputs.Clone();
+
+
+            neuronLayers = new NeuronLayer[numLayers];
+            for (int x = 0; x < numLayers; x++)
+            {
+                neuronLayers[x] = new NeuronLayer(numNeurons[x], numInputs[x]);
+                totalNumWeightsInNetwork += numNeurons[x] * numInputs[x];
+            }
+            setWeights(net.getWeights());
+            Fitness = 0;
+        }
+
         public NeuralNetwork(BinaryReader reader)
         {
             numLayers = reader.ReadInt32();
@@ -212,20 +231,22 @@ namespace Algorithms.NeuralNetwork
 
         //Individual Methods for the genetic algorithm
         //creates an individual from two parents 
-        public Individual CreateBaby(Individual parent2, double crossOver)
+        public Individual CreateBaby(Individual parent1, Individual parent2, double crossOver)
         {
-            double[] weights = new double[getNumWeights()];
-            double[] p1weights = getWeights();
-            double[] p2weights = ((NeuralNetwork)parent2).getWeights();
-            for (int x = 0; x < getNumWeights(); x++)
+            var p1 = (NeuralNetwork)parent1;
+            var p2 = (NeuralNetwork)parent2;
+            double[] weights = new double[p1.getNumWeights()];
+            double[] p1weights = p1.getWeights();
+            double[] p2weights = p2.getWeights();
+            for (int x = 0; x < p1.getNumWeights(); x++)
             {
-                if (getNumWeights() * crossOver < x)
+                if (p1.getNumWeights() * crossOver < x)
                     weights[x] = p1weights[x];
                 else weights[x] = p2weights[x];
             }
-            NeuralNetwork net = new NeuralNetwork(getNumLayers(), getNumNeurons(), nFirstInputs);
-            net.setWeights(weights);
-            return net;
+            
+            setWeights(weights);
+            return this;
         }
 
         //mutates the individual 
@@ -263,6 +284,11 @@ namespace Algorithms.NeuralNetwork
         public object GetNextMove()
         {
             throw new NotImplementedException();
+        }
+
+        public Individual Clone()
+        {
+            return new NeuralNetwork(this);
         }
     }
 }

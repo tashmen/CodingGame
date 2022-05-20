@@ -38,6 +38,10 @@ namespace UnitTest.Algorithms
                     for (int g = 0; g < 50; g++)
                     {
                         NeuralNetwork network = (NeuralNetwork)population[p];
+                        if(g == 0)
+                        {
+                            network.Fitness = 0;
+                        }
                         GameState state = new GameState();
                         bool isMax = true;
                         do

@@ -14,7 +14,7 @@ namespace Algorithms.Genetic
         /// </summary>
         public double Fitness { get; set; }
         /** Creates an individual from two parents*/
-        Individual CreateBaby(Individual parent2, double crossOver);
+        Individual CreateBaby(Individual parent1, Individual parent2, double crossOver);
 
         /** Mutates the individual */
         void Mutate(double mutationRate);
@@ -22,5 +22,7 @@ namespace Algorithms.Genetic
         double CalculateFitness();
 
         object GetNextMove();
+
+        Individual Clone();
     }
 }

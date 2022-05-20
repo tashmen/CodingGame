@@ -18,7 +18,12 @@ namespace UnitTest.Algorithms
             throw new NotImplementedException();
         }
 
-        public Individual CreateBaby(Individual parent2, double crossOver)
+        public Individual Clone()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Individual CreateBaby(Individual parent1, Individual parent2, double crossOver)
         {
             throw new NotImplementedException();
         }

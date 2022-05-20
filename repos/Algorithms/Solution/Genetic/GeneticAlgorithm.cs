@@ -11,6 +11,7 @@ namespace Algorithms.Genetic
     {
         /**The population for the genetic algorithm to choose from*/
         public Population Population;
+        private Population HiddenPopulation;
         /**The rate at which mutations occur*/
         private double MutationRate;
         /**The percent of the original population that will be in the new population*/
@@ -26,6 +27,7 @@ namespace Algorithms.Genetic
         public GeneticAlgorithm(Population initialPopulation, double mRate, double eP, double cO)
         {
             Population = initialPopulation;
+            HiddenPopulation = initialPopulation.Clone();
             MutationRate = mRate;
             ElitePercent = eP;
             CrossOver = cO;
@@ -74,7 +76,6 @@ namespace Algorithms.Genetic
         public Population GenerateNextGeneration()
         {
             GenerationCounter++;
-            Population newPopulation = new Population();
             Individual individual1;
             Individual individual2;
             Individual child;
@@ -83,7 +84,7 @@ namespace Algorithms.Genetic
             //2) keep the top elite percent that are performing well
             for (int x = 0; x < (int)(Population.Count * ElitePercent); x++)
             {
-                newPopulation.Add(Population[x]);
+                HiddenPopulation[x] = Population[x];
             }
             double totalFit = Population.GetTotalFitness();
             for (int x = (int)(Population.Count * ElitePercent); x < Population.Count; x++)
@@ -93,22 +94,22 @@ namespace Algorithms.Genetic
                 individual2 = Population.SelectRandomFromPopulation(totalFit);
 
                 //4)Create a baby and add him to the new population
-                child = individual1.CreateBaby(individual2, CrossOver);
+                child = HiddenPopulation[x].CreateBaby(individual1, individual2, CrossOver);
                 child.Mutate(MutationRate);
                 child.Fitness = double.MinValue;
-                newPopulation.Add(child);
                 x++;
                 if (x < Population.Count)
                 {
-                    child = individual2.CreateBaby(individual1, CrossOver);
+                    child = HiddenPopulation[x].CreateBaby(individual2, individual1, CrossOver);
                     child.Mutate(MutationRate);
                     child.Fitness = double.MinValue;
-                    newPopulation.Add(child);
                 }
             }
             //5) Set the old population to the new one
-            Population = newPopulation;
-            return newPopulation;
+            var swap = Population;
+            Population = HiddenPopulation;
+            HiddenPopulation = swap;
+            return Population;
         }
     }
 }

@@ -25,6 +25,12 @@ namespace Algorithms.Genetic
             Rand = new Random();
         }
 
+        public Population(Population population)
+        {
+            Individuals = population.Individuals.Select(i => i.Clone()).ToList();
+            Rand = new Random();
+        }
+
         /// <summary>
         /// Sort the population based on fitness
         /// </summary>
@@ -136,6 +142,11 @@ namespace Algorithms.Genetic
         public bool Remove(Individual item)
         {
             return Individuals.Remove(item);
+        }
+
+        public Population Clone()
+        {
+            return new Population(this);
         }
     }
 }
