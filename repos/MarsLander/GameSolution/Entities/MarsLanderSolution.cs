@@ -8,7 +8,7 @@ namespace GameSolution.Entities
     {
         public StaticMove[] Moves;
         private Random Rand;
-        private static int TotalMoves = 200;
+        private static int TotalMoves = 100;
         public double Fitness { get; set; }
         public GameState State;
         public int Turn = 0;
@@ -49,7 +49,9 @@ namespace GameSolution.Entities
                 clonedState.ApplyMove(Moves[counter++], true);
                 winner = clonedState.GetWinner();
             }
-            while (winner == null);
+            while (winner == null && counter < TotalMoves);
+            if (winner == null)
+                winner = 0;
             SetFitness(winner.Value);
             return Fitness;
         }
