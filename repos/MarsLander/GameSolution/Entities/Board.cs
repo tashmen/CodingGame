@@ -38,24 +38,28 @@ namespace GameSolution.Entities
             var landingSpot = GetLandingSpot();
             pointIndexToDistanceFromLandingSpot = new double[points.Count];
             double distance = 0;
-            lastPoint = points[0];
+            lastPoint = null;
             bool foundLandingSpot = false;
-            for (int i = 1; i<points.Count; i++)
+            for (int i = 0; i<points.Count; i++)
             {
                 var currentPoint = points[i];
-                if (!foundLandingSpot)
+                if(lastPoint != null)
                 {
-                    distance = lastPoint.GetDistance(currentPoint);
-                    for (int j = 0; j < i; j++)
+                    if (!foundLandingSpot)
                     {
-                        pointIndexToDistanceFromLandingSpot[j] += distance;
+                        distance = lastPoint.GetDistance(currentPoint);
+                        for (int j = 0; j < i; j++)
+                        {
+                            pointIndexToDistanceFromLandingSpot[j] += distance;
+                        }
+                    }
+                    else
+                    {
+                        distance += lastPoint.GetDistance(currentPoint);
+                        pointIndexToDistanceFromLandingSpot[i] = distance;
                     }
                 }
-                else
-                {
-                    distance += lastPoint.GetDistance(currentPoint);
-                    pointIndexToDistanceFromLandingSpot[i] = distance;
-                }
+                
                 if (currentPoint == landingSpot.Item1 || currentPoint == landingSpot.Item2)
                 {
                     foundLandingSpot = true;
@@ -119,10 +123,22 @@ namespace GameSolution.Entities
         public bool IsInBounds(Ship ship)
         {
             //Check if ship is still within the board
-            if (ship.Location.x <= 0 || ship.Location.x >= 6950)
+            if (ship.Location.x <= 0)
+            {
+                ship.CrashPoint = new Tuple<Point2d, Point2d>(Points[0], Points[1]);
                 return false;
+            }
+            if(ship.Location.x >= 6950)
+            {
+                ship.CrashPoint = new Tuple<Point2d, Point2d>(Points[Points.Count - 2], Points[Points.Count - 1]);
+                return false;
+            }
+
             if (ship.Location.y <= 0 || ship.Location.y >= 2950)
+            {
+                ship.CrashPoint = null;
                 return false;
+            }
 
             return true;
         }
@@ -178,6 +194,8 @@ namespace GameSolution.Entities
 
             var distanceToPoint1 = pointIndexToDistanceFromLandingSpot[Points.IndexOf(ship.CrashPoint.Item1)];
             var distanceToPoint2 = pointIndexToDistanceFromLandingSpot[Points.IndexOf(ship.CrashPoint.Item2)];
+            if (distanceToPoint1 == 0 && distanceToPoint2 == 0)
+                return 0;
 
             double minDist = Math.Min(ship.Location.GetDistance(ship.CrashPoint.Item1) + distanceToPoint1, ship.Location.GetDistance(ship.CrashPoint.Item2) + distanceToPoint2);
 

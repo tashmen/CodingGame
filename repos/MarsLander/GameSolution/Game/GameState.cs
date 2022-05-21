@@ -98,14 +98,10 @@ namespace GameSolution
             }
             else
             {
-                if (vx <= 20)
-                    value += 0.1;
-                else if (vx <= 100)
-                    value += (1 - ((vx - 20) / 80.0)) * 0.1;
-                if (vy <= 40)
-                    value += 0.1;
-                else if (vy <= 100)
-                    value += (1 - ((vy - 40) / 60.0)) * 0.1;
+                if (vx <= 100)
+                    value += (1 - ((vx) / 100)) * 0.1;
+                if (vy <= 100)
+                    value += (1 - ((vy) / 100)) * 0.1;
             }
             //Console.Error.WriteLine(value);
             return value;
