@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Linq;
-using System.IO;
-using System.Text;
-using System.Collections;
 using System.Collections.Generic;
 using Algorithms.Space;
 using GameSolution.Entities;
 using GameSolution;
-using Algorithms.Trees;
 using System.Diagnostics;
 using Algorithms.Genetic;
 
@@ -19,7 +14,6 @@ class Player
 {
     static void Main(string[] args)
     {
-        bool monte = false;
         string[] inputs;
         int surfaceN = int.Parse(Console.ReadLine()); // the number of points used to draw the surface of Mars.
         IList<Point2d> points = new List<Point2d>();
@@ -71,37 +65,27 @@ class Player
 
             var limit = isFirstTurn ? 995 : 95;
 
-            if (monte)
+            
+            if (isFirstTurn)
             {
-                MonteCarloTreeSearch search = new MonteCarloTreeSearch(true);
-                search.SetState(state, true, true);
-                move = (Move)search.GetNextMove(watch, limit, -1, 30);
-            }
-            else
-            {
-                if (isFirstTurn)
+                for (int i = 0; i < 100; i++)
                 {
-                    for (int i = 0; i < 100; i++)
-                    {
-                        population.Add(new MarsLanderSolution(state));
-                    }
+                    population.Add(new MarsLanderSolution(state));
                 }
-                GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.2);
-                move = (Move)genetic.GetNextMove(watch, limit);
-                population = genetic.Population;
-                Console.Error.WriteLine($"gen: {genetic.GenerationCounter}, move: {move}, score: {population.GetBestIndividual().Fitness}");
             }
+            GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.2);
+            move = (Move)genetic.GetNextMove(watch, limit);
+            population = genetic.Population;
+            Console.Error.WriteLine($"gen: {genetic.GenerationCounter}, move: {move}, score: {population.GetBestIndividual().Fitness}");
             
             state.ApplyMove(move, true);
 
-            if (!monte)
+            foreach(Individual i in population)
             {
-                foreach(Individual i in population)
-                {
-                    var solution = (MarsLanderSolution)i;
-                    solution.AdvanceTurn(state);
-                }
+                var solution = (MarsLanderSolution)i;
+                solution.AdvanceTurn(state);
             }
+            
 
             watch.Stop();
             Console.Error.WriteLine("ms: " + watch.ElapsedMilliseconds);

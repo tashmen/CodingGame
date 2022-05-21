@@ -1,12 +1,5 @@
-﻿using Algorithms.Genetic;
-using Algorithms.Space;
-using Algorithms.Trees;
-using GameSolution;
-using GameSolution.Entities;
-using GameSolution.Game;
+﻿using GameSolution.Game;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using Xunit;
 using Xunit.Abstractions;
 
