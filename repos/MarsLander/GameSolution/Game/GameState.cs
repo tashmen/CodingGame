@@ -145,7 +145,12 @@ namespace GameSolution
                 return Evaluate(true);
 
             //if the ship is higher than the maximum spot around the ship then it couldn't have possibly crashed or landed.
-            var maxY = Math.Max(Board.MaxYAtX[Ship.Location.GetTruncatedX()], Board.MaxYAtX[Ship.Location.GetTruncatedX() - Ship.VelocityVector.GetTruncatedX()]);
+            var lastX = Ship.Location.GetTruncatedX() - Ship.VelocityVector.GetTruncatedX();
+            int maxY = 0;
+            if (lastX < 0 && lastX > 6900)
+                maxY = Board.MaxYAtX[Ship.Location.GetTruncatedX()];
+            else
+                maxY = Math.Max(Board.MaxYAtX[Ship.Location.GetTruncatedX()], Board.MaxYAtX[lastX]);
             if (Ship.Location.y > (maxY + 100))
                 return null;
 

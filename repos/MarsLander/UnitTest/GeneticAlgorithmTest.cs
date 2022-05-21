@@ -65,6 +65,14 @@ namespace UnitTest
             Assert.True(state.GetWinner() >= 1);
         }
 
+        [Fact]
+        public void CaveWrongSide()
+        {
+            var state = GameHelper.CreateCaveWrongSide();
+            GameHelper.PlayGame(state);
+            Assert.True(state.GetWinner() >= 1);
+        }
+
 
     }
 }

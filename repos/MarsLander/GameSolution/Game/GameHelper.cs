@@ -225,5 +225,55 @@ namespace GameSolution.Game
             return state;
 
         }
+
+        public static GameState CreateCaveWrongSide()
+        {
+            /*
+             *(0,1800)
+(300,1200)
+(1000,1550)
+(2000,1200)
+(2500,1650)
+(3700,220)
+(4700,220)
+(4750,1000)
+(4700,1650)
+(4000,1700)
+(3700,1600)
+(3750,1900)
+(4000,2100)
+(4900,2050)
+(5100,1000)
+(5500,500)
+(6200,800)
+(6999,600)
+             */
+            IList<Point2d> points = new List<Point2d>();
+            points.Add(new Point2d(0, 1800));
+            points.Add(new Point2d(300, 1200));
+            points.Add(new Point2d(1000, 1550));
+            points.Add(new Point2d(2000, 1200));
+            points.Add(new Point2d(2500, 1650));
+            points.Add(new Point2d(3700, 220));
+            points.Add(new Point2d(4700, 220));
+            points.Add(new Point2d(4750, 1000));
+            points.Add(new Point2d(4700, 1650));
+            points.Add(new Point2d(4000, 1700));
+            points.Add(new Point2d(3700, 1600));
+            points.Add(new Point2d(3750, 1900));
+            points.Add(new Point2d(4000, 2100));
+            points.Add(new Point2d(4900, 2050));
+            points.Add(new Point2d(5100, 1000));
+            points.Add(new Point2d(5500, 500));
+            points.Add(new Point2d(6200, 800));
+            points.Add(new Point2d(6999, 600));
+            Board board = new Board(points);
+            GameState state = new GameState(board);
+            Ship ship = new Ship(6500, 2000, 0, 0, 1200, 0, 0);
+            state.SetShip(ship);
+
+            return state;
+
+        }
     }
 }
