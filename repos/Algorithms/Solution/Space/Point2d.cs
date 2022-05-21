@@ -88,30 +88,30 @@ namespace Algorithms.Space
             }
             else
             {
-                x = x / length;
-                y = y / length;
+                x /= length;
+                y /= length;
             }
             return this;
         }
 
         public Point2d Multiply(double scalar)
         {
-            x = x * scalar;
-            y = y * scalar;
+            x *= scalar;
+            y *= scalar;
             return this;
         }
 
         public Point2d Add(Point2d vector)
         {
-            x = x + vector.x;
-            y = y + vector.y;
+            x += vector.x;
+            y += vector.y;
             return this;
         }
 
         public Point2d Subtract(Point2d vector)
         {
-            x = x - vector.x;
-            y = y - vector.y;
+            x -= vector.x;
+            y -= vector.y;
             return this;
         }
 
@@ -136,6 +136,12 @@ namespace Algorithms.Space
         public Point2d Clone()
         {
             return new Point2d(x, y);
+        }
+
+        public void Fill(Point2d point)
+        {
+            x = point.x;
+            y = point.y;
         }
 
         public static double GetDistance(double x1, double y1, double x2, double y2)

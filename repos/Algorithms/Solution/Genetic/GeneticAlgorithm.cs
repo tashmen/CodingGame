@@ -91,7 +91,7 @@ namespace Algorithms.Genetic
             {
                 //3) Select two parents from the population
                 individual1 = Population.SelectRandomFromPopulation(totalFit);
-                individual2 = Population.SelectRandomFromPopulation(totalFit);
+                individual2 = Population.SelectRandomFromPopulation(totalFit, individual1);
 
                 //4)Create a baby and add him to the new population
                 child = HiddenPopulation[x].CreateBaby(individual1, individual2, CrossOver);

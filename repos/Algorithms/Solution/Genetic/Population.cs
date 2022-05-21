@@ -58,7 +58,7 @@ namespace Algorithms.Genetic
         /// </summary>
         /// <param name="totalFit">The total fitness of the population</param>
         /// <returns>The selected Individual</returns>
-        public Individual SelectRandomFromPopulation(double totalFit)
+        public Individual SelectRandomFromPopulation(double totalFit, Individual i = null)
         {
             double randNum = Rand.NextDouble() * totalFit;
             int y = 0;
@@ -68,6 +68,15 @@ namespace Algorithms.Genetic
                 y++;
                 totalFitSoFar += Individuals[y].Fitness;
             }
+            if(i != null && i == Individuals[y])
+            {
+                if (y == Individuals.Count - 1)
+                {
+                    y--;
+                }
+                else y++;
+            }
+
             return Individuals[y];
         }
 
