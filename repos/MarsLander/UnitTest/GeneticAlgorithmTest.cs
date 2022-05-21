@@ -40,7 +40,23 @@ namespace UnitTest
             GameHelper.PlayGame(state);
             Assert.True(state.GetWinner() >= 1);
         }
-        
-      
+
+        [Fact]
+        public void InitialSpeedWrongSide()
+        {
+            var state = GameHelper.CreateInitialSpeedWrongSide();
+            GameHelper.PlayGame(state);
+            Assert.True(state.GetWinner() >= 1);
+        }
+
+        [Fact]
+        public void DeepCanyon()
+        {
+            var state = GameHelper.CreateDeepCanyon();
+            GameHelper.PlayGame(state);
+            Assert.True(state.GetWinner() >= 1);
+        }
+
+
     }
 }

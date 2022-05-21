@@ -34,6 +34,8 @@ namespace GameSolution.Entities
             Power = ship.Power;
         }
 
+        private static Point2d directionVector = new Point2d(0, 0);
+        private static Point2d speedVector = new Point2d(0, 0);
         public void AdvanceTurn()
         {
             if (Fuel < Power)
@@ -42,12 +44,14 @@ namespace GameSolution.Entities
             }
 
             double radians = RotationAngle * Math.PI / 180;
-            Point2d directionVector = new Point2d(Math.Sin(-radians), Math.Cos(-radians));
-            directionVector = directionVector.Multiply(Power).Add(GravityVector).Add(VelocityVector);
+            directionVector.x = Math.Sin(-radians);
+            directionVector.y = Math.Cos(-radians);
+            directionVector.Multiply(Power).Add(GravityVector).Add(VelocityVector);
 
-            Point2d speedVector = directionVector.Clone().Add(VelocityVector).Multiply(0.5);
+            speedVector.Fill(directionVector);
+            speedVector.Add(VelocityVector).Multiply(0.5);
 
-            VelocityVector = directionVector;
+            VelocityVector.Fill(directionVector);
             Fuel -= Power;
             Location = Location.Add(speedVector);
         }
@@ -85,6 +89,15 @@ namespace GameSolution.Entities
         public Ship Clone()
         {
             return new Ship(this);
+        }
+
+        public void Fill(Ship ship)
+        {
+            Location = ship.Location;
+            VelocityVector = ship.VelocityVector;
+            Fuel = ship.Fuel;
+            RotationAngle = ship.RotationAngle;
+            Power = ship.Power;
         }
 
         public override string ToString()

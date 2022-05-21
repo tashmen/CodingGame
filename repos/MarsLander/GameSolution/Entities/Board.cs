@@ -9,6 +9,7 @@ namespace GameSolution.Entities
     {
         public IList<Point2d> Points;
         public Tuple<Point2d, Point2d> LandingSpot;
+        public int[] MaxYAtX;
 
         public double MaxY;
 
@@ -16,6 +17,23 @@ namespace GameSolution.Entities
         {
             Points = points;
             MaxY = 0;
+            MaxYAtX = new int[7000];
+            Point2d lastPoint = null;
+            foreach(Point2d currentPoint in points)
+            {
+
+                if (lastPoint != null)
+                {
+                    var slope = (lastPoint.y - currentPoint.y) / (lastPoint.x - currentPoint.x);
+                    var yIntercept = currentPoint.y - (slope * currentPoint.x);
+                    for(int x = lastPoint.GetTruncatedX(); x<currentPoint.x; x++)
+                    {
+                        MaxYAtX[x] = (int)Math.Ceiling(slope * x + yIntercept);
+                    }
+                }
+
+                lastPoint = currentPoint;
+            }
         }
 
         public Tuple<Point2d, Point2d> GetLandingSpot()
@@ -47,9 +65,9 @@ namespace GameSolution.Entities
         public bool ShipLanded(Ship ship)
         {
             var landingSpot = GetLandingSpot();
-            if (landingSpot.Item1.x <= ship.Location.x && ship.Location.x <= landingSpot.Item2.x)
+            if (landingSpot.Item1.x < ship.Location.x && ship.Location.x < landingSpot.Item2.x)
             {
-                if (ship.Location.y <= landingSpot.Item1.y && landingSpot.Item1.y <= ship.Location.y - ship.VelocityVector.y)
+                if (ship.Location.y < landingSpot.Item1.y && landingSpot.Item1.y <= ship.Location.y - ship.VelocityVector.y)
                 {
                     if (Math.Abs(ship.VelocityVector.x) <= 20 && Math.Abs(ship.VelocityVector.y) <= 40 && ship.RotationAngle == 0)
                     {
@@ -60,13 +78,19 @@ namespace GameSolution.Entities
             return false;
         }
 
+        public bool IsInBounds(Ship ship)
+        {
+            //Check if ship is still within the board
+            if (ship.Location.x <= 0 || ship.Location.x >= 6950)
+                return false;
+            if (ship.Location.y <= 0 || ship.Location.y >= 2950)
+                return false;
+
+            return true;
+        }
+
         public bool ShipCollision(Ship ship)
         {
-            if (ship.Location.x <= 0 || ship.Location.x >= 6900)
-                return true;
-            if (ship.Location.y <= 0 || ship.Location.y >= 2900)
-                return true;
-
             Point2d shipLastLocation = new Point2d(ship.Location.x - ship.VelocityVector.x, ship.Location.y - ship.VelocityVector.y);
 
             Point2d lastPoint = null;

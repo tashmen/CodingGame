@@ -57,6 +57,12 @@ namespace GameSolution
             return new GameState(this);
         }
 
+        public void Fill(GameState state)
+        {
+            Board = state.Board;
+            Ship.Fill(state.Ship);
+        }
+
         public bool Equals(IGameState state)
         {
             GameState game = (GameState)state;
@@ -73,8 +79,8 @@ namespace GameSolution
             var vx = Math.Abs(Ship.VelocityVector.x);
             var vy = Math.Abs(Ship.VelocityVector.y);
 
-            var xDiff = Math.Abs(Ship.Location.x - midPoint.x);
-            var xDiff2 = midPoint.x - Ship.Location.x;
+            //var xDiff = Math.Abs(Ship.Location.x - midPoint.x);
+            //var xDiff2 = midPoint.x - Ship.Location.x;
 
             double value = 0;
             //value += (1 - (xDiff * xDiff / 49000000.0)) * 0.5;
@@ -82,19 +88,19 @@ namespace GameSolution
 
             value += (1 - (distance / 7615.0)) * 0.2;
 
+            if (vx <= 20)
+                value += 0.3;
+            else if (vx <= 100)
+                value += (1 - ((vx - 20) / 80.0)) * 0.30;
+
+            if (vy <= 40)
+                value += 0.4;
+            else if (vy <= 100)
+                value += (1 - ((vy - 40) / 60.0)) * 0.40;
+
             if (landingSpot.Item1.x <= Ship.Location.x && Ship.Location.x <= landingSpot.Item2.x)
             {
                 value += (1 - (Math.Abs(Ship.RotationAngle) / 90.0)) * 0.1;
-
-                if (vx <= 20)
-                    value += 0.2;
-                else if(vx <= 100)
-                    value += (1 - ((vx-20) / 80.0)) * 0.20;
-
-                if (vy <= 40)
-                    value += 0.5;
-                else if (vy <= 100) 
-                    value += (1 - ((vy-40) / 60.0)) * 0.50;
             }
 
             //Console.Error.WriteLine(value);
@@ -132,8 +138,12 @@ namespace GameSolution
 
         public double? GetWinner()
         {
-            //if the ship is higher than the maximum spot on the board then it couldn't have possibly crashed or landed.
-            if (Ship.Location.y > Board.MaxY)
+            //If the ship goes outside of bounds then this should be considered a collision, but checking this first so that the MaxY functionality is always in bounds.
+            if (!Board.IsInBounds(Ship))
+                return Evaluate(true);
+
+            //if the ship is higher than the maximum spot around the ship then it couldn't have possibly crashed or landed.
+            if (Ship.Location.y > Board.MaxYAtX[Ship.Location.GetTruncatedX()] + 100)
                 return null;
 
             if (Board.ShipLanded(Ship))

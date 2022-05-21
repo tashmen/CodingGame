@@ -28,8 +28,20 @@ namespace UnitTest
             points.Add(new Point2d(0, 0));
             points.Add(new Point2d(50, 0));
             Board b = new Board(points);
-            Assert.True(b.ShipCollision(new Ship(25, -5, 0, 0, 0, 0, 0)));
+            Assert.True(b.ShipCollision(new Ship(25, -5, 0, -10, 0, 0, 0)));
             Assert.False(b.ShipCollision(new Ship(25, 5, 0, 0, 0, 0, 0)));
+            Assert.True(b.ShipCollision(new Ship(25, 0, 0, -5, 0, 0, 0)));
+        }
+
+        [Fact]
+        public void CollisionTest_AtPeak()
+        { 
+            IList<Point2d> points = new List<Point2d>();
+            points.Add(new Point2d(3200, 1000));
+            points.Add(new Point2d(3500, 2000));
+            points.Add(new Point2d(3800, 800));
+            Board b = new Board(points);
+            Assert.True(b.ShipCollision(new Ship(3451, 1698, 67, -41, 712, 26, 4)));
         }
 
         [Fact]
@@ -60,8 +72,9 @@ namespace UnitTest
             points.Add(new Point2d(0, 0));
             points.Add(new Point2d(50, 0));
             Board b = new Board(points);
-            Assert.True(b.ShipLanded(new Ship(25, 0, 14, -30, 0, 0, 4)));
+            Assert.True(b.ShipLanded(new Ship(25, -1, 14, -30, 0, 0, 4)));
             Assert.False(b.ShipLanded(new Ship(25, 20, 14, -30, 0, 0, 4)));
+            Assert.False(b.ShipLanded(new Ship(25, 0, 0, -5, 0, 0, 0)));
         }
 
         [Fact]

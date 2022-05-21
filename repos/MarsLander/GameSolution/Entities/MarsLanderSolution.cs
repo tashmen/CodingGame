@@ -52,9 +52,17 @@ namespace GameSolution.Entities
             return Fitness;
         }
 
-        public StaticMove CreateRandomMove()
+        public StaticMove CreateRandomMove(StaticMove move = null)
         {
-            return new StaticMove(Rand.Next(-15, 16), Rand.Next(-1, 2));
+
+            if(move == null)
+                return new StaticMove(Rand.Next(-15, 16), Rand.Next(-1, 2));
+            else
+            {
+                move.Rotation = Rand.Next(-15, 16);
+                move.Power = Rand.Next(-1, 2);
+            }
+            return move;
         }
 
         public void AdvanceTurn(GameState updatedState)
@@ -69,13 +77,13 @@ namespace GameSolution.Entities
             var parentA = (MarsLanderSolution)parent1;
             var parentB = (MarsLanderSolution)parent2;
             var randomNum = Rand.NextDouble();
-            State = (GameState)((MarsLanderSolution)parent1).State.Clone();
+            State.Fill(((MarsLanderSolution)parent1).State);
             for (int i = 0; i < TotalMoves; i++)
             {
                 var p1 = parentA.Moves[i];
                 var p2 = parentB.Moves[i];
-                Moves[i].Rotation = (int)(randomNum * p1.Rotation + (1 - randomNum) * p2.Rotation);
-                Moves[i].Power = (int)(randomNum * p1.Power + (1 - randomNum) * p2.Power);
+                Moves[i].Rotation = (int)Math.Round(randomNum * p1.Rotation + (1 - randomNum) * p2.Rotation);
+                Moves[i].Power = (int)Math.Round(randomNum * p1.Power + (1 - randomNum) * p2.Power);
             }
             Turn = parentA.Turn;
 
@@ -87,7 +95,7 @@ namespace GameSolution.Entities
             for(int i = 0; i<TotalMoves * mutationRate; i++)
             {
                 var index = Rand.Next(Turn, TotalMoves);
-                Moves[index] = CreateRandomMove();
+                Moves[index] = CreateRandomMove(Moves[index]);
             }
         }
 
