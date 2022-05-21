@@ -18,8 +18,8 @@ namespace GameSolution.Game
             {
                 Population.Add(new MarsLanderSolution(state));
             }
-            GeneticAlgorithm genetic = new GeneticAlgorithm(Population, 0.05, 0.20, 0.2);
-            var limit = 995;
+            GeneticAlgorithm genetic = new GeneticAlgorithm(Population, 0.01, 0.20, 0.2);
+            var limit = 300;
             do
             {
                 Stopwatch watch = new Stopwatch();
@@ -39,7 +39,7 @@ namespace GameSolution.Game
                 }
 
                 watch.Stop();
-                limit = 95;
+                limit = 25;
             }
             while (state.GetWinner() == null);
         }
@@ -170,6 +170,60 @@ namespace GameSolution.Game
             state.SetShip(ship);
 
             return state;
+        }
+
+        public static GameState CreateHighGround()
+        {
+            /*
+             *(0,1000)
+(300,1500)
+(350,1400)
+(500,2100)
+(1500,2100)
+(2000,200)
+(2500,500)
+(2900,300)
+(3000,200)
+(3200,1000)
+(3500,500)
+(3800,800)
+(4000,200)
+(4200,800)
+(4800,600)
+(5000,1200)
+(5500,900)
+(6000,500)
+(6500,300)
+(6999,500) 
+             */
+            IList<Point2d> points = new List<Point2d>();
+            points.Add(new Point2d(0, 1000));
+            points.Add(new Point2d(300, 1500));
+            points.Add(new Point2d(350, 1400));
+            points.Add(new Point2d(500, 2100));
+            points.Add(new Point2d(1500, 2100));
+            points.Add(new Point2d(2000, 200));
+            points.Add(new Point2d(2500, 500));
+            points.Add(new Point2d(2900, 300));
+            points.Add(new Point2d(3000, 200));
+            points.Add(new Point2d(3200, 1000));
+            points.Add(new Point2d(3500, 500));
+            points.Add(new Point2d(3800, 800));
+            points.Add(new Point2d(4000, 200));
+            points.Add(new Point2d(4200, 800));
+            points.Add(new Point2d(4800, 600));
+            points.Add(new Point2d(5000, 1200));
+            points.Add(new Point2d(5500, 900));
+            points.Add(new Point2d(6000, 500));
+            points.Add(new Point2d(6500, 300));
+            points.Add(new Point2d(6999, 500));
+            Board board = new Board(points);
+            GameState state = new GameState(board);
+            Ship ship = new Ship(6500, 2800, -90, 0, 750, 90, 0);
+            state.SetShip(ship);
+
+            return state;
+
         }
     }
 }

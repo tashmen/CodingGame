@@ -74,38 +74,40 @@ namespace GameSolution
             var landingSpot = Board.GetLandingSpot();
             var midPoint = landingSpot.Item1.GetMidPoint(landingSpot.Item2);
             var distance = Ship.Location.GetDistance(midPoint);
-
-
             var vx = Math.Abs(Ship.VelocityVector.x);
             var vy = Math.Abs(Ship.VelocityVector.y);
-
             //var xDiff = Math.Abs(Ship.Location.x - midPoint.x);
             //var xDiff2 = midPoint.x - Ship.Location.x;
-
             double value = 0;
             //value += (1 - (xDiff * xDiff / 49000000.0)) * 0.5;
             //value += (1 - (yDiff * yDiff / 9000000.0)) * 0.0001;
-
-            value += (1 - (distance / 7615.0)) * 0.2;
-
-            if (vx <= 20)
-                value += 0.3;
-            else if (vx <= 100)
-                value += (1 - ((vx - 20) / 80.0)) * 0.30;
-
-            if (vy <= 40)
-                value += 0.4;
-            else if (vy <= 100)
-                value += (1 - ((vy - 40) / 60.0)) * 0.40;
+            value += (1 - (distance / 7615.0)) * 0.6;
 
             if (landingSpot.Item1.x <= Ship.Location.x && Ship.Location.x <= landingSpot.Item2.x)
             {
                 value += (1 - (Math.Abs(Ship.RotationAngle) / 90.0)) * 0.1;
+                if (vx <= 20)
+                    value += 0.15;
+                else if (vx <= 100)
+                    value += (1 - ((vx - 20) / 80.0)) * 0.15;
+                if (vy <= 40)
+                    value += 0.15;
+                else if (vy <= 100)
+                    value += (1 - ((vy - 40) / 60.0)) * 0.15;
             }
-
+            else
+            {
+                if (vx <= 20)
+                    value += 0.1;
+                else if (vx <= 100)
+                    value += (1 - ((vx - 20) / 80.0)) * 0.1;
+                if (vy <= 40)
+                    value += 0.1;
+                else if (vy <= 100)
+                    value += (1 - ((vy - 40) / 60.0)) * 0.1;
+            }
             //Console.Error.WriteLine(value);
-
-            return value; 
+            return value;
         }
 
         public object GetMove(bool isMax)
@@ -143,16 +145,21 @@ namespace GameSolution
                 return Evaluate(true);
 
             //if the ship is higher than the maximum spot around the ship then it couldn't have possibly crashed or landed.
-            if (Ship.Location.y > Board.MaxYAtX[Ship.Location.GetTruncatedX()] + 100)
+            var maxY = Math.Max(Board.MaxYAtX[Ship.Location.GetTruncatedX()], Board.MaxYAtX[Ship.Location.GetTruncatedX() - Ship.VelocityVector.GetTruncatedX()]);
+            if (Ship.Location.y > (maxY + 100))
                 return null;
 
-            if (Board.ShipLanded(Ship))
+            var shipCollision = Board.ShipCollision(Ship);
+            if (shipCollision.HasValue)
             {
-                return Ship.Fuel + 1;
-            }
-            else if (Board.ShipCollision(Ship))
-            {
-                return Evaluate(true);
+                if (!shipCollision.Value)
+                {
+                    return Ship.Fuel + 1;
+                }
+                else
+                {
+                    return Evaluate(true);
+                }
             }
 
             return null;

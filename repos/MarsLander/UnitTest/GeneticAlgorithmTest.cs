@@ -57,6 +57,14 @@ namespace UnitTest
             Assert.True(state.GetWinner() >= 1);
         }
 
+        [Fact]
+        public void HighGround()
+        {
+            var state = GameHelper.CreateHighGround();
+            GameHelper.PlayGame(state);
+            Assert.True(state.GetWinner() >= 1);
+        }
+
 
     }
 }

@@ -65,15 +65,22 @@ namespace GameSolution.Entities
         public bool ShipLanded(Ship ship)
         {
             var landingSpot = GetLandingSpot();
-            if (landingSpot.Item1.x < ship.Location.x && ship.Location.x < landingSpot.Item2.x)
+            var shipLocation = ship.Location.GetRoundedAwayFromZeroPoint();
+            if ((landingSpot.Item1.x + 20) < shipLocation.x && shipLocation.x < (landingSpot.Item2.x - 20))
             {
-                if (ship.Location.y < landingSpot.Item1.y && landingSpot.Item1.y <= ship.Location.y - ship.VelocityVector.y)
+                if (shipLocation.y < landingSpot.Item1.y && landingSpot.Item1.y <= shipLocation.y - ship.VelocityVector.y)
                 {
-                    if (Math.Abs(ship.VelocityVector.x) <= 20 && Math.Abs(ship.VelocityVector.y) <= 40 && ship.RotationAngle == 0)
-                    {
-                        return true;
-                    }
+                    return ShipWithinVelocityForLanding(ship);
                 }
+            }
+            return false;
+        }
+
+        public bool ShipWithinVelocityForLanding(Ship ship)
+        {
+            if (Math.Abs(ship.VelocityVector.x) <= 20 && Math.Abs(ship.VelocityVector.y) <= 40 && ship.RotationAngle == 0)
+            {
+                return true;
             }
             return false;
         }
@@ -89,23 +96,29 @@ namespace GameSolution.Entities
             return true;
         }
 
-        public bool ShipCollision(Ship ship)
+        public bool? ShipCollision(Ship ship)
         {
-            Point2d shipLastLocation = new Point2d(ship.Location.x - ship.VelocityVector.x, ship.Location.y - ship.VelocityVector.y);
+            Point2d shipLastLocation = new Point2d(ship.Location.x - ship.VelocityVector.x, ship.Location.y - ship.VelocityVector.y).GetTruncatedPoint();
 
             Point2d lastPoint = null;
             foreach (var point in Points)
             {
-                if (lastPoint == null)
-                    lastPoint = point;
-                else
+                if (lastPoint != null)
                 {
                     var currentPoint = point;
                     if (IsIntersecting(lastPoint, currentPoint, ship.Location, shipLastLocation))
+                    {
+                        var landingSpot = GetLandingSpot();
+                        if(landingSpot.Item1 == lastPoint && landingSpot.Item2 == currentPoint)
+                        {
+                            return !ShipLanded(ship);
+                        }
                         return true;
+                    }
                 }
+                lastPoint = point;
             }
-            return false;
+            return null;
         }
 
         bool IsIntersecting(Point2d a, Point2d b, Point2d c, Point2d d)
@@ -123,7 +136,7 @@ namespace GameSolution.Entities
             double r = numerator1 / denominator;
             double s = numerator2 / denominator;
 
-            return (r >= 0 && r <= 1) && (s >= 0 && s <= 1);
+            return (r >= 0 && r <= 1) && (s > 0 && s <= 1);
         }
     }
 }
