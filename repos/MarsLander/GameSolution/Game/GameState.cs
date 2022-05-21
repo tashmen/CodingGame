@@ -73,7 +73,7 @@ namespace GameSolution
         {
             var landingSpot = Board.GetLandingSpot();
             var midPoint = landingSpot.Item1.GetMidPoint(landingSpot.Item2);
-            var distance = Ship.Location.GetDistance(midPoint);
+            var distance = Math.Max(Board.CalculatePathDistance(Ship), Ship.Location.GetDistance(midPoint));
             var vx = Math.Abs(Ship.VelocityVector.x);
             var vy = Math.Abs(Ship.VelocityVector.y);
             //var xDiff = Math.Abs(Ship.Location.x - midPoint.x);
@@ -81,6 +81,7 @@ namespace GameSolution
             double value = 0;
             //value += (1 - (xDiff * xDiff / 49000000.0)) * 0.5;
             //value += (1 - (yDiff * yDiff / 9000000.0)) * 0.0001;
+            
             value += (1 - (distance / 7615.0)) * 0.6;
 
             if (landingSpot.Item1.x <= Ship.Location.x && Ship.Location.x <= landingSpot.Item2.x)
@@ -145,12 +146,7 @@ namespace GameSolution
                 return Evaluate(true);
 
             //if the ship is higher than the maximum spot around the ship then it couldn't have possibly crashed or landed.
-            var lastX = Ship.Location.GetTruncatedX() - Ship.VelocityVector.GetTruncatedX();
-            int maxY = 0;
-            if (lastX < 0 && lastX > 6900)
-                maxY = Board.MaxYAtX[Ship.Location.GetTruncatedX()];
-            else
-                maxY = Math.Max(Board.MaxYAtX[Ship.Location.GetTruncatedX()], Board.MaxYAtX[lastX]);
+            var maxY = Math.Max(Board.MaxYAtX[Ship.Location.GetTruncatedX()], Board.MaxYAtX[Ship.LastLocation.GetTruncatedX()]);
             if (Ship.Location.y > (maxY + 100))
                 return null;
 

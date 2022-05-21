@@ -9,7 +9,7 @@ namespace GameSolution.Entities
     {
         public StaticMove[] Moves;
         private Random Rand;
-        private static int TotalMoves = 120;
+        private static int TotalMoves = 150;
         public double Fitness { get; set; }
         public GameState State;
         public int Turn = 0;

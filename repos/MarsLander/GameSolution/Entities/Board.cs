@@ -10,6 +10,7 @@ namespace GameSolution.Entities
         public IList<Point2d> Points;
         public Tuple<Point2d, Point2d> LandingSpot;
         public int[] MaxYAtX;
+        public double[] pointIndexToDistanceFromLandingSpot;
 
         public double MaxY;
 
@@ -21,7 +22,6 @@ namespace GameSolution.Entities
             Point2d lastPoint = null;
             foreach(Point2d currentPoint in points)
             {
-
                 if (lastPoint != null)
                 {
                     var slope = (lastPoint.y - currentPoint.y) / (lastPoint.x - currentPoint.x);
@@ -32,6 +32,37 @@ namespace GameSolution.Entities
                     }
                 }
 
+                lastPoint = currentPoint;
+            }
+
+            var landingSpot = GetLandingSpot();
+            pointIndexToDistanceFromLandingSpot = new double[points.Count];
+            double distance = 0;
+            lastPoint = points[0];
+            bool foundLandingSpot = false;
+            for (int i = 1; i<points.Count; i++)
+            {
+                var currentPoint = points[i];
+                if (!foundLandingSpot)
+                {
+                    distance = lastPoint.GetDistance(currentPoint);
+                    for (int j = 0; j < i; j++)
+                    {
+                        pointIndexToDistanceFromLandingSpot[j] += distance;
+                    }
+                }
+                else
+                {
+                    distance += lastPoint.GetDistance(currentPoint);
+                    pointIndexToDistanceFromLandingSpot[i] = distance;
+                }
+                if (currentPoint == landingSpot.Item1 || currentPoint == landingSpot.Item2)
+                {
+                    foundLandingSpot = true;
+                    distance = 0;
+                    pointIndexToDistanceFromLandingSpot[i] = distance;
+                }
+                
                 lastPoint = currentPoint;
             }
         }
@@ -96,9 +127,9 @@ namespace GameSolution.Entities
             return true;
         }
 
-        public bool? ShipCollision(Ship ship)
+        public bool? ShipCollision(Ship ship, Point2d lastLocation = null)
         {
-            Point2d shipLastLocation = new Point2d(ship.Location.x - ship.VelocityVector.x, ship.Location.y - ship.VelocityVector.y).GetTruncatedPoint();
+            Point2d shipLastLocation = lastLocation == null ? ship.LastLocation : lastLocation;
 
             Point2d lastPoint = null;
             foreach (var point in Points)
@@ -108,6 +139,7 @@ namespace GameSolution.Entities
                     var currentPoint = point;
                     if (IsIntersecting(lastPoint, currentPoint, ship.Location, shipLastLocation))
                     {
+                        ship.CrashPoint = new Tuple<Point2d, Point2d>(lastPoint, currentPoint);
                         var landingSpot = GetLandingSpot();
                         if(landingSpot.Item1 == lastPoint && landingSpot.Item2 == currentPoint)
                         {
@@ -121,7 +153,7 @@ namespace GameSolution.Entities
             return null;
         }
 
-        bool IsIntersecting(Point2d a, Point2d b, Point2d c, Point2d d)
+        public bool IsIntersecting(Point2d a, Point2d b, Point2d c, Point2d d)
         {
             if(!((a.x <= c.x && c.x <= b.x) || (a.x <= d.x && d.x <= b.x)))
                return false;
@@ -137,6 +169,19 @@ namespace GameSolution.Entities
             double s = numerator2 / denominator;
 
             return (r >= 0 && r <= 1) && (s > 0 && s <= 1);
+        }
+
+        public double CalculatePathDistance(Ship ship)
+        {
+            if (ship.CrashPoint == null)
+                return 0;
+
+            var distanceToPoint1 = pointIndexToDistanceFromLandingSpot[Points.IndexOf(ship.CrashPoint.Item1)];
+            var distanceToPoint2 = pointIndexToDistanceFromLandingSpot[Points.IndexOf(ship.CrashPoint.Item2)];
+
+            double minDist = Math.Min(ship.Location.GetDistance(ship.CrashPoint.Item1) + distanceToPoint1, ship.Location.GetDistance(ship.CrashPoint.Item2) + distanceToPoint2);
+
+            return minDist;
         }
     }
 }

@@ -9,16 +9,19 @@ namespace GameSolution.Entities
     public class Ship
     {
         public Point2d Location;
+        public Point2d LastLocation;
         public Point2d VelocityVector;
         public int Fuel;
         public int RotationAngle;// limited +-15
         public int Power;//limited +-1
+        public Tuple<Point2d, Point2d> CrashPoint;
 
         public static Point2d GravityVector = new Point2d(0, -3.711);
 
         public Ship(int x, int y, int xSpeed, int ySpeed, int fuel, int rotate, int power)
         {
             Location = new Point2d(x, y);
+            LastLocation = new Point2d(x, y);
             VelocityVector = new Point2d(xSpeed, ySpeed);
             Fuel = fuel;
             RotationAngle = rotate;
@@ -28,6 +31,7 @@ namespace GameSolution.Entities
         public Ship(Ship ship)
         {
             Location = ship.Location.Clone();
+            LastLocation = ship.LastLocation.Clone();
             VelocityVector = ship.VelocityVector.Clone();
             Fuel = ship.Fuel;
             RotationAngle = ship.RotationAngle;
@@ -38,6 +42,7 @@ namespace GameSolution.Entities
         private static Point2d speedVector = new Point2d(0, 0);
         public void AdvanceTurn()
         {
+            LastLocation.Fill(Location);
             if (Fuel < Power)
             {
                 Power = Fuel;
