@@ -1,6 +1,5 @@
 ﻿using Algorithms.Genetic;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace GameSolution.Entities
@@ -78,7 +77,7 @@ namespace GameSolution.Entities
             var parentB = (MarsLanderSolution)parent2;
             var randomNum = Rand.NextDouble();
             State.Fill(((MarsLanderSolution)parent1).State);
-            for (int i = 0; i < TotalMoves; i++)
+            for (int i = parentA.Turn; i < TotalMoves; i++)
             {
                 var p1 = parentA.Moves[i];
                 var p2 = parentB.Moves[i];
