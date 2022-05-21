@@ -4,7 +4,6 @@ using GameSolution.Entities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace GameSolution.Game
 {
@@ -19,7 +18,7 @@ namespace GameSolution.Game
                 Population.Add(new MarsLanderSolution(state));
             }
             GeneticAlgorithm genetic = new GeneticAlgorithm(Population, 0.01, 0.20, 0.2);
-            var limit = 300;
+            var limit = 995;
             do
             {
                 Stopwatch watch = new Stopwatch();
@@ -39,7 +38,7 @@ namespace GameSolution.Game
                 }
 
                 watch.Stop();
-                limit = 25;
+                limit = 45;
             }
             while (state.GetWinner() == null);
         }
