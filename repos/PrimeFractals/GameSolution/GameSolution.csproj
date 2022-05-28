@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Algorithms\" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="C:\Users\jnorc\source\repos\SourceCombiner\SourceCombine\bin\Release\SourceCombine.exe $(ProjectPath) $(SolutionDir)\Combined.cs false $(ProjectDir)" />
+  </Target>
+
+</Project>
