@@ -52,12 +52,13 @@ namespace GameSolution
                     boardMap[y][x] = (int)Board.GetLocation(x, y);
                 }
             }
-            foreach(Entity? entity in Entities)
+            for(int i = 0; i<Entities.Length; i++)
             {
+                var entity = Entities[i];
                 if (entity == null)
                     continue;
-                if(!entity.IsDead())
-                    boardMap[entity.Point.y][entity.Point.x] = entity.Id;
+                
+                boardMap[entity.Point.y][entity.Point.x] = entity.Id;
             }
         }
 
@@ -187,8 +188,9 @@ namespace GameSolution
         {
             if (numberOfUnitsMine == 0 && numberOfUnitsOpponent == 0)
             {
-                foreach (Entity entity in Entities)
+                for(int i = 0; i<Entities.Length; i++)
                 {
+                    var entity = Entities[i];
                     if (entity == null)
                         continue;
                     
@@ -284,12 +286,13 @@ namespace GameSolution
             if (Turn == 150)
                 return possibleMoves;
 
-            foreach(Entity? entity in Entities)
+            for(int i = 0; i<Entities.Length; i++)
             {
+                var entity = Entities[i];
                 if (entity == null)
                     continue;
 
-                if (entity.IsOwned(isMax) && !entity.IsDead())
+                if (entity.IsOwned(isMax))
                 {
                     int pointY = entity.Point.y;
                     int pointX = entity.Point.x;
@@ -315,12 +318,13 @@ namespace GameSolution
                     }
                     else
                     {
-                        foreach (Entity? targetEntity in Entities)
+                        for(int ti = 0; ti<Entities.Length; ti++)
                         {
+                            var targetEntity = Entities[ti];
                             if (targetEntity == null)
                                 continue;
 
-                            if(entity.Id != targetEntity.Id && !targetEntity.IsDead() && !targetEntity.IsOwned(isMax) && Board.GetManhattenDistance(entity.Point, targetEntity.Point) <= 6)
+                            if(entity.Id != targetEntity.Id && !targetEntity.IsOwned(isMax) && Board.GetManhattenDistance(entity.Point, targetEntity.Point) <= 6)
                             {
                                 var endPoint = CheckBulletPath(entity.Point, targetEntity.Point);
                                 if (endPoint.Equals(targetEntity.Point))
@@ -333,8 +337,8 @@ namespace GameSolution
                 }
             }
 
-            //if (possibleMoves.Count == 0)
-            possibleMoves.Add(Move.Wait());
+            if (possibleMoves.Count == 0)
+                possibleMoves.Add(Move.Wait());
 
             return possibleMoves;
         }
@@ -365,7 +369,7 @@ namespace GameSolution
             {
                 var point = points[i];
                 var location = GetLocation(point.x, point.y);
-                if (IsUnit(location) && !Entities[location].IsDead())
+                if (IsUnit(location))
                 {
                     return point;
                 }
@@ -379,18 +383,17 @@ namespace GameSolution
             Entity[] neutralUnits = new Entity[12];
             bool hasNeutral = false;
             int neutralCount = 0;
-            foreach (Entity? entity in Entities)
+            for (int i = 0; i < Entities.Length; i++)
             {
+                var entity = Entities[i];
                 if (entity == null)
                     continue;
-
                 if (entity.Owner == OwnerType.Neutral)
                 {
                     neutralUnits[neutralCount++] = entity;
                     hasNeutral = true;
                 }
-
-            }
+             }
 
             
             if (hasNeutral)
