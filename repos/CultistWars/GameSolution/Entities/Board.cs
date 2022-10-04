@@ -18,6 +18,7 @@ namespace GameSolution.Entities
         public Point2d Target;
 
         public Point2d[][][][][] BresenhamDictionary;
+        public static int[][][][] ManhattenDictionary = null;
 
         public Board(string[] board)
         {
@@ -39,7 +40,36 @@ namespace GameSolution.Entities
                 }
             }
 
+            CreateManhattenDictionary();
             CreateBresenhamDictionary();
+        }
+
+        public static int GetManhattenDistance(Point2d point, Point2d targetPoint)
+        {
+            return ManhattenDictionary[point.x][point.y][targetPoint.x][targetPoint.y];
+        }
+
+        private static void CreateManhattenDictionary()
+        {
+            ManhattenDictionary = new int[MaxWidth][][][];
+            for (int x = 0; x < MaxWidth; x++)
+            {
+                ManhattenDictionary[x] = new int[MaxHeight][][];
+                for (int y = 0; y < MaxHeight; y++)
+                {
+                    var point = new Point2d(x, y);
+                    ManhattenDictionary[x][y] = new int[MaxWidth][];
+                    for (int tx = 0; tx < MaxWidth; tx++)
+                    {
+                        ManhattenDictionary[x][y][tx] = new int[MaxHeight];
+                        for (int ty = 0; ty < MaxHeight; ty++)
+                        {
+                            var targetPoint = new Point2d(tx, ty);
+                            ManhattenDictionary[x][y][tx][ty] = point.GetManhattenDistance(targetPoint);
+                        }
+                    }
+                }
+            }
         }
 
         private void CreateBresenhamDictionary()
@@ -62,7 +92,7 @@ namespace GameSolution.Entities
                             if (point.Equals(targetPoint))
                                 continue;
 
-                            if (point.GetManhattenDistance(targetPoint) > 6)
+                            if (GetManhattenDistance(point, targetPoint) > 6)
                                 continue;
 
                             if (y < ty)

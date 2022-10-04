@@ -43,7 +43,7 @@ namespace GameSolution.Entities
 
         public void Move(Point2d targetPoint)
         {
-            var distance = Point.GetManhattenDistance(targetPoint);
+            var distance = Board.GetManhattenDistance(Point, targetPoint);
             if (distance != 1)
             {
                 throw new Exception($"Point is not one space away it is: {distance}");
@@ -56,7 +56,7 @@ namespace GameSolution.Entities
             if (Type != EntityType.Cultist)
                 throw new Exception("Cult Leaders can't shoot!");
 
-            var distance = Point.GetManhattenDistance(targetEntity.Point);
+            var distance = Board.GetManhattenDistance(Point, targetEntity.Point);
             if (distance > 6)
                 throw new Exception("Unit to far!");
 
@@ -73,7 +73,7 @@ namespace GameSolution.Entities
             if (Type != EntityType.CultLeader)
                 throw new Exception("Cultists can't convert!");
 
-            var distance = Point.GetManhattenDistance(targetEntity.Point);
+            var distance = Board.GetManhattenDistance(Point, targetEntity.Point);
             if (distance != 1)
                 throw new Exception("Unit is not one space away!");
 

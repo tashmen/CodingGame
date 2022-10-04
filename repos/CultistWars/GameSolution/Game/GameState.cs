@@ -320,7 +320,7 @@ namespace GameSolution
                             if (targetEntity == null)
                                 continue;
 
-                            if(entity.Id != targetEntity.Id && !targetEntity.IsDead() && !targetEntity.IsOwned(isMax) && entity.Point.GetManhattenDistance(targetEntity.Point) <= 6)
+                            if(entity.Id != targetEntity.Id && !targetEntity.IsDead() && !targetEntity.IsOwned(isMax) && Board.GetManhattenDistance(entity.Point, targetEntity.Point) <= 6)
                             {
                                 var endPoint = CheckBulletPath(entity.Point, targetEntity.Point);
                                 if (endPoint.Equals(targetEntity.Point))

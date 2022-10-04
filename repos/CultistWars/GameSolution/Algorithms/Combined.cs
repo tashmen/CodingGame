@@ -570,11 +570,12 @@ namespace Algorithms.Space
         {
             return $"({x},{y})";
         }
-
+        
         public int GetManhattenDistance(Point2d point)
         {
             return (Math.Abs(point.x - x) + Math.Abs(point.y - y));
         }
+        
         public override bool Equals(object objPoint)
         {
             Point2d point = objPoint as Point2d;
