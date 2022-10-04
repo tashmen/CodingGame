@@ -548,26 +548,15 @@ namespace Algorithms.Graph
         }
     }
 }
-//*** SourceCombiner -> original file Circle2d.cs ***
-namespace Algorithms.Space
-{
-    public class Circle2d : Point2d
-    {
-        public double radius;
-        public Circle2d(double x, double y, double radius) : base(x, y)
-        {
-            this.radius = radius;
-        }
-    }
-}
+
 //*** SourceCombiner -> original file Point2d.cs ***
 namespace Algorithms.Space
 {
     public class Point2d
     {
-        public double x;
-        public double y;
-        public Point2d(double x, double y)
+        public int x;
+        public int y;
+        public Point2d(int x, int y)
         {
             this.x = x; 
             this.y = y;
@@ -584,100 +573,20 @@ namespace Algorithms.Space
 
         public int GetManhattenDistance(Point2d point)
         {
-            return (int)(Math.Abs(point.x - x) + Math.Abs(point.y - y));
+            return (Math.Abs(point.x - x) + Math.Abs(point.y - y));
         }
-        public bool Equals(Point2d point)
+        public override bool Equals(object objPoint)
         {
+            Point2d point = objPoint as Point2d;
             return point.x == this.x && point.y == this.y;
         }
-        public Point2d GetTruncatedPoint()
+
+        public override int GetHashCode()
         {
-            return new Point2d(Math.Truncate(this.x), Math.Truncate(this.y));
+            return Tuple.Create(x, y).GetHashCode();
         }
-        public Point2d GetRoundedPoint()
-        {
-            return new Point2d(Math.Round(this.x), Math.Round(this.y));
-        }
-        public Point2d GetCeilingPoint()
-        {
-            return new Point2d(Math.Ceiling(x), Math.Ceiling(y));
-        }
-        public int GetTruncatedX()
-        {
-            return (int)x;
-        }
-        public int GetTruncatedY()
-        {
-            return (int)y;
-        }
-        public double GetAngle(Point2d point)
-        {
-            return Math.Atan2(point.y - y, point.x - x);
-        }
-        public double GetDistance(Point2d point)
-        {
-            return GetDistance(point.x, point.y, x, y);
-        }
-        public Point2d GetMidPoint(Point2d point)
-        {
-            return GetMidPoint(point.x, point.y, x, y);
-        }
-        public double LengthSquared()
-        {
-            return x * x + y * y;
-        }
-        public double Length()
-        {
-            return Math.Sqrt(LengthSquared());
-        }
-        public Point2d Normalize()
-        {
-            var length = Length();
-            if (length == 0)
-            {
-                x = 0;
-                y = 0;
-            }
-            else
-            {
-                x /= length;
-                y /= length;
-            }
-            return this;
-        }
-        public Point2d Multiply(double scalar)
-        {
-            x *= scalar;
-            y *= scalar;
-            return this;
-        }
-        public Point2d Add(Point2d vector)
-        {
-            x += vector.x;
-            y += vector.y;
-            return this;
-        }
-        public Point2d Subtract(Point2d vector)
-        {
-            x -= vector.x;
-            y -= vector.y;
-            return this;
-        }
-        public Point2d Truncate()
-        {
-            x = GetTruncatedX();
-            y = GetTruncatedY();
-            return this;
-        }
-        public Point2d SymmetricTruncate(Point2d origin)
-        {
-            Subtract(origin).Truncate().Add(origin);
-            return this;
-        }
-        public Point2d GetRoundedAwayFromZeroPoint()
-        {
-            return new Point2d(Math.Round(x, MidpointRounding.AwayFromZero), Math.Round(y, MidpointRounding.AwayFromZero));
-        }
+
+       
         public Point2d Clone()
         {
             return new Point2d(x, y);
@@ -686,173 +595,6 @@ namespace Algorithms.Space
         {
             x = point.x;
             y = point.y;
-        }
-        public static double GetDistance(double x1, double y1, double x2, double y2)
-        {
-            return Math.Sqrt(Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2));
-        }
-        public static Point2d GetMidPoint(double x1, double y1, double x2, double y2)
-        {
-            return new Point2d((x1 + x2)/2, (y1+y2)/2);
-        }
-    }
-}
-//*** SourceCombiner -> original file Space2d.cs ***
-namespace Algorithms.Space
-{
-    public class Space2d
-    {
-        /// <summary>
-        /// Given a list of points and a circle radius, find the circle location that covers the maximum number of points
-        /// </summary>
-        /// <param name="points">The list of points to consider</param>
-        /// <param name="radius">The radius of the circle</param>
-        /// <returns>The number of points covered by the circle that is centered at the point.</returns>
-        public static Tuple<int, Point2d> FindCircleWithMaximumPoints(Point2d[] points, double radius)
-        {
-            Tuple<int, Point2d> maxPoint = null;
-            if (points == null)
-                return null;
-            if (radius <= 0)
-                return null;
-            var numberOfPoints = points.Count();
-            double[,] distance = new double[numberOfPoints, numberOfPoints];
-            for (int i = 0; i < numberOfPoints - 1; i++)
-            {
-                for (int j = i + 1; j < numberOfPoints; j++)
-                {
-                    distance[i, j] = distance[j, i] = points[i].GetDistance(points[j]);
-                }
-            }
-            for (int i = 0; i < numberOfPoints; i++)
-            {
-                var currentAnswer = GetPointsInside(distance, points, i, radius, numberOfPoints);
-                var nextPoint = new Tuple<int, Point2d>(currentAnswer.Item1, new Point2d(points[i].x + (radius * Math.Round(Math.Cos(currentAnswer.Item2), 15)), points[i].y + (radius * Math.Round(Math.Sin(currentAnswer.Item2), 15))));
-                if (maxPoint == null || currentAnswer.Item1 > maxPoint.Item1 || (currentAnswer.Item1 == maxPoint.Item1 && IsInteger(nextPoint.Item2.x) && IsInteger(nextPoint.Item2.y)))
-                {
-                    maxPoint = nextPoint;
-                }
-            }
-            return maxPoint;
-        }
-        /// <summary>
-        /// Given a list of points and a circle radius, find the circle location that covers the maximum number of points, at point i.
-        /// </summary>
-        /// <param name="points">The list of points to consider</param>
-        /// <param name="radius">The radius of the circle</param>
-        /// <param name="i">The index of the point to use for the sweeping circle</param>
-        /// <returns>The number of points covered by the circle that is centered at the point.</returns>
-        public static Tuple<int, Point2d> FindCircleWithMaximumPoints(Point2d[] points, double radius, int i)
-        {
-            Tuple<int, Point2d> maxPoint = null;
-            if (points == null)
-                return null;
-            if (radius <= 0)
-                return null;
-            var numberOfPoints = points.Count();
-            double[,] distance = new double[numberOfPoints, numberOfPoints];
-            for (int j = 0; j < numberOfPoints; j++)
-            {
-                distance[i, j] = distance[j, i] = points[i].GetDistance(points[j]);
-            }
-            var currentAnswer = GetPointsInside(distance, points, i, radius, numberOfPoints);
-            maxPoint = new Tuple<int, Point2d>(currentAnswer.Item1, new Point2d(points[i].x + (radius * Math.Round(Math.Cos(currentAnswer.Item2), 15)), points[i].y + (radius * Math.Round(Math.Sin(currentAnswer.Item2), 15))));
-            return maxPoint;
-        }
-        public static double CalculateAreaOfCircle(double radius)
-        {
-            return Math.PI * Math.Pow(radius, 2);
-        }
-        public static double CalculateOverlappingArea(Circle2d circle, Circle2d circle2)
-        {
-            var d = circle.GetDistance(circle2);
-            if (d < circle.radius + circle2.radius)
-            {
-                var a = circle.radius * circle.radius;
-                var b = circle2.radius * circle2.radius;
-                var x = (a - b + d * d) / (2 * d);
-                var z = x * x;
-                var y = Math.Sqrt(a - z);
-                if (d <= Math.Abs(circle2.radius - circle.radius))
-                {
-                    return Math.PI * Math.Min(a, b);
-                }
-                return a * Math.Asin(y / circle.radius) + b * Math.Asin(y / circle2.radius) - y * (x + Math.Sqrt(z + b - a));
-            }
-            return 0;
-        }
-        /// <summary>
-        /// Moves the point towards the targetPoint with maximum distance
-        /// </summary>
-        /// <param name="startPoint">Start point</param>
-        /// <param name="targetPoint">Target point</param>
-        /// <param name="maximumDistance">Maximum distance to translate</param>
-        /// <returns>The translated point in direction of target point with maximum distance</returns>
-        public static Point2d TranslatePoint(Point2d startPoint, Point2d targetPoint, double maximumDistance)
-        {
-            var vector = CreateVector(startPoint, targetPoint);
-            if (vector.LengthSquared() <= (maximumDistance * maximumDistance))
-                return targetPoint;
-            else
-            {
-                vector.Normalize();
-                vector.Multiply(maximumDistance);
-                return new Point2d(startPoint.x + vector.x, startPoint.y + vector.y);
-            }
-            /*
-            if (point.GetDistance(targetPoint) <= maximumDistance)
-                return targetPoint;
-            else
-            {
-                var angle = point.GetAngle(targetPoint);
-                var vx = Math.Cos(angle) * maximumDistance;
-                var vy = Math.Sin(angle) * maximumDistance;
-                return new Point2d(point.x + vx, point.y + vy);
-            }
-            */
-        }
-        public static Point2d CreateVector(Point2d startPoint, Point2d targetPoint)
-        {
-            var x = targetPoint.x - startPoint.x;
-            var y = targetPoint.y - startPoint.y;
-            return new Point2d(x, y);
-        }
-        private static bool IsInteger(double d)
-        {
-            return Math.Abs(d % 1) <= (Double.Epsilon * 100);
-        }
-        private static Tuple<int, double> GetPointsInside(double[,] distance, Point2d[] points, int i, double radius, int numberOfPoints)
-        {
-            List<Tuple<double, bool>> angles = new List<Tuple<double, bool>>();
-            for (int j = 0; j < numberOfPoints; j++)
-            {
-                if (i != j && distance[i, j] <= 2 * radius)
-                {
-                    double B = Math.Acos(distance[i, j] / (2 * radius));
-                    Complex c1 = new Complex(points[j].x - points[i].x, points[j].y - points[i].y);
-                    double A = c1.Phase;
-                    double alpha = A - B;
-                    double beta = A + B;
-                    angles.Add(new Tuple<double, bool>(alpha, true));
-                    angles.Add(new Tuple<double, bool>(beta, false));
-                }
-            }
-            angles = angles.OrderBy(angle => angle.Item1).ToList();
-            int count = 1, res = 1;
-            double maxAngle = 0;
-            foreach (var angle in angles)
-            {
-                if (angle.Item2)
-                    count++;
-                else
-                    count--;
-                if (count > res)
-                {
-                    res = count;
-                    maxAngle = angle.Item1;
-                }
-            }
-            return new Tuple<int, double>(res, maxAngle);
         }
     }
 }

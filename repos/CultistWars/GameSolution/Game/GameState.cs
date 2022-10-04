@@ -57,7 +57,7 @@ namespace GameSolution
                 if (entity == null)
                     continue;
                 if(!entity.IsDead())
-                    boardMap[entity.Point.GetTruncatedY()][entity.Point.GetTruncatedX()] = entity.Id;
+                    boardMap[entity.Point.y][entity.Point.x] = entity.Id;
             }
         }
 
@@ -141,7 +141,7 @@ namespace GameSolution
                     continue;
                 if (!entity.IsDead())
                 {
-                    if (GetLocation(entity.Point.GetTruncatedX(), entity.Point.GetTruncatedY()) != entity.Id)
+                    if (GetLocation(entity.Point.x, entity.Point.y) != entity.Id)
                         throw new Exception("Discrepency in board map.");
                 }
             }
@@ -226,17 +226,17 @@ namespace GameSolution
 
         public void SetBoardMap(Entity entity)
         {
-            boardMap[entity.Point.GetTruncatedY()][entity.Point.GetTruncatedX()] = entity.Id;
+            boardMap[entity.Point.y][entity.Point.x] = entity.Id;
         }
 
         public void ClearBoardMap(Entity entity)
         {
-            boardMap[entity.Point.GetTruncatedY()][entity.Point.GetTruncatedX()] = (int)LocationType.Empty;
+            boardMap[entity.Point.y][entity.Point.x] = (int)LocationType.Empty;
         }
 
         public bool IsSpaceEmpty(int x, int y)
         {
-            return GetLocation(x,y) == (int)LocationType.Empty;
+            return GetLocation(x, y) == (int)LocationType.Empty;
         }
 
         public bool IsUnit(int locationType)
@@ -263,8 +263,8 @@ namespace GameSolution
         private static int[] Y_MODIFIER = new int[] { -1, 0, 1, 0 };
         public void GetMovesForEntity(ref IList possibleMoves, Entity entity)
         {
-            int pointY = entity.Point.GetTruncatedY();
-            int pointX = entity.Point.GetTruncatedX();
+            int pointY = entity.Point.y;
+            int pointX = entity.Point.x;
 
             for(int i = 0; i<4; i++)
             {
@@ -291,8 +291,8 @@ namespace GameSolution
 
                 if (entity.IsOwned(isMax) && !entity.IsDead())
                 {
-                    int pointY = entity.Point.GetTruncatedY();
-                    int pointX = entity.Point.GetTruncatedX();
+                    int pointY = entity.Point.y;
+                    int pointX = entity.Point.x;
                     GetMovesForEntity(ref possibleMoves, entity);
 
                     if (entity.Type == EntityType.CultLeader)
@@ -358,114 +358,20 @@ namespace GameSolution
 
             return null;
         }
-
-        
         public Point2d CheckBulletPath(Point2d startTile, Point2d targetTile)
         {
-            if (startTile.GetTruncatedY() < targetTile.GetTruncatedY())
+            var points = Board.GetBresenhamPoints(startTile, targetTile);
+            for (int i = 0; i < points.Length; i++)
             {
-                return bresenhamForward(startTile, targetTile);
-            }
-            else
-            {
-                return bresenhamBackward(startTile, targetTile);
-            }
-        }
-
-        private Point2d bresenhamForward(Point2d startTile, Point2d targetTile)
-        {
-            int x0, y0, x1, y1;
-            x0 = startTile.GetTruncatedX();
-            y0 = startTile.GetTruncatedY();
-            x1 = targetTile.GetTruncatedX();
-            y1 = targetTile.GetTruncatedY();
-
-
-            int dx = Math.Abs(x1 - x0);
-            int dy = Math.Abs(y1 - y0);
-
-            int sx = x0 < x1 ? 1 : -1;
-            int sy = y0 < y1 ? 1 : -1;
-
-            int err = dx - dy;
-            int e2;
-            int currentX = x0;
-            int currentY = y0;
-
-            while (true)
-            {
-                e2 = 2 * err;
-                if (e2 > -1 * dy)
+                var point = points[i];
+                var location = GetLocation(point.x, point.y);
+                if (IsUnit(location) && !Entities[location].IsDead())
                 {
-                    err -= dy;
-                    currentX += sx;
-                }
-
-                if (e2 < dx)
-                {
-                    err += dx;
-                    currentY += sy;
-                }
-
-                if (currentX == x1 && currentY == y1) break;
-                var location = GetLocation(currentX, currentY);
-                if (Board.GetLocation(currentX, currentY) == LocationType.Obstacle
-                        || (IsUnit(location)
-                        && !Entities[location].IsDead()))
-                {
-                    return new Point2d(currentX, currentY);
+                    return point;
                 }
             }
-            return targetTile;
-        }
 
-        private Point2d bresenhamBackward(Point2d startTile, Point2d targetTile)
-        {
-            int x0, y0, x1, y1;
-
-            x0 = targetTile.GetTruncatedX();
-            y0 = targetTile.GetTruncatedY();
-            x1 = startTile.GetTruncatedX();
-            y1 = startTile.GetTruncatedY();
-
-
-            int dx = Math.Abs(x1 - x0);
-            int dy = Math.Abs(y1 - y0);
-
-            int sx = x0 < x1 ? 1 : -1;
-            int sy = y0 < y1 ? 1 : -1;
-
-            int err = dx - dy;
-            int e2;
-            int currentX = x0;
-            int currentY = y0;
-
-            while (true)
-            {
-                e2 = 2 * err;
-                if (e2 > -1 * dy)
-                {
-                    err -= dy;
-                    currentX += sx;
-                }
-
-                if (e2 < dx)
-                {
-                    err += dx;
-                    currentY += sy;
-                }
-
-                if (currentX == x1 && currentY == y1) break;
-
-                var location = GetLocation(currentX, currentY);
-                if (Board.GetLocation(currentX,currentY) == LocationType.Obstacle
-                        || (IsUnit(location)
-                        && !Entities[location].IsDead()))
-                {
-                    targetTile = new Point2d(currentX, currentY);
-                }
-            }
-            return targetTile;
+            return points[points.Length - 1];
         }
 
         private void MoveNeutralUnit()

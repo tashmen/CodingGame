@@ -58,7 +58,7 @@ class Player
             // To debug: Console.Error.WriteLine("Debug messages...");
 
             
-            var limit = isFirstTurn ? 995 : 45;
+            var limit = isFirstTurn ? 980 : 45;
 
             GC.Collect();
             

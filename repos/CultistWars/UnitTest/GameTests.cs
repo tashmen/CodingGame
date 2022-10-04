@@ -42,7 +42,9 @@ namespace UnitTest
         {
             var state = GameHelper.ProblematicShooting();
             var endPoint = state.CheckBulletPath(new Point2d(3, 3), new Point2d(8, 4));
-            Assert.True(new Point2d(4, 3).Equals(endPoint));
+            Assert.Equal(new Point2d(4, 3), endPoint);
+            endPoint = state.CheckBulletPath(new Point2d(8, 4), new Point2d(3, 3));
+            Assert.Equal(new Point2d(7, 4), endPoint);
 
             state = GameHelper.ProblematicShooting2();
             endPoint = state.CheckBulletPath(new Point2d(0, 4), new Point2d(4, 3));
