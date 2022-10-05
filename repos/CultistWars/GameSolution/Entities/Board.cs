@@ -12,60 +12,106 @@ namespace GameSolution.Entities
 
     public class Board
     {
-        private LocationType[][] Locations;
+        private LocationType[] Locations;
+
+        private Int128 ObstacleBoard;
+        private Int128 EmptyBoard;
+
         public static int MaxHeight = 7;
         public static int MaxWidth = 13;
-        public Point2d Target;
 
-        public Point2d[][][][][] BresenhamDictionary;
-        public static int[][][][] ManhattenDictionary = null;
+        private int[][][] BresenhamDictionary;
+        private static int[][] ManhattenDictionary = null;
+        private int[][] NeighboringLocations = null; 
+
 
         public Board(string[] board)
         {
-            Locations = new LocationType[board.Length][];
+            ObstacleBoard = new Int128();
+            EmptyBoard = new Int128();
+            Locations = new LocationType[board.Length * board[0].Length];
+            int locationIndex = 0;
             for(int r = 0; r <board.Length; r++)
             {
-                Locations[r] = new LocationType[board[r].Length];
                 for(int c = 0; c < board[r].Length; c++)
                 {
                     var spot = board[r][c];
                     if(spot == '.')
                     {
-                        Locations[r][c] = LocationType.Empty;
+                        EmptyBoard.SetBit(locationIndex);
+                        Locations[locationIndex++] = LocationType.Empty;
                     }
                     else if(spot == 'x')
                     {
-                        Locations[r][c] = LocationType.Obstacle;
+                        ObstacleBoard.SetBit(locationIndex);
+                        Locations[locationIndex++] = LocationType.Obstacle;
                     }
                 }
             }
 
             CreateManhattenDictionary();
             CreateBresenhamDictionary();
+            CreateNeighboringLocations();
         }
 
-        public static int GetManhattenDistance(Point2d point, Point2d targetPoint)
+        public static int ConvertPointToLocation(Point2d point)
         {
-            return ManhattenDictionary[point.x][point.y][targetPoint.x][targetPoint.y];
+            return ConvertPointToLocation(point.x, point.y);
         }
+
+        public static int ConvertPointToLocation(int x, int y)
+        {
+            return y * MaxWidth + x;
+        }
+
+        public static Point2d ConvertLocationToPoint(int location)
+        {
+            return new Point2d(location % MaxWidth, location / MaxWidth);
+        }
+
+        public static int GetManhattenDistance(int location, int targetLocation)
+        {
+            return ManhattenDictionary[location][targetLocation];
+        }
+
+        public int[] GetBresenhamPoints(int location, int targetLocation)
+        {
+            return BresenhamDictionary[location][targetLocation];
+        }
+
+        public int[] GetNeighboringLocations(int location)
+        {
+            return NeighboringLocations[location];
+        }
+
+        public LocationType GetLocation(int x, int y)
+        {
+            return Locations[y * MaxWidth + x]; 
+        }
+
+        public bool IsInBounds(int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= MaxWidth || y >= MaxHeight)
+                return false;
+            return true;
+        }
+
 
         private static void CreateManhattenDictionary()
         {
-            ManhattenDictionary = new int[MaxWidth][][][];
+            ManhattenDictionary = new int[MaxWidth * MaxHeight][];
             for (int x = 0; x < MaxWidth; x++)
             {
-                ManhattenDictionary[x] = new int[MaxHeight][][];
                 for (int y = 0; y < MaxHeight; y++)
                 {
                     var point = new Point2d(x, y);
-                    ManhattenDictionary[x][y] = new int[MaxWidth][];
+                    ManhattenDictionary[ConvertPointToLocation(x, y)] = new int[MaxWidth * MaxHeight];
                     for (int tx = 0; tx < MaxWidth; tx++)
                     {
-                        ManhattenDictionary[x][y][tx] = new int[MaxHeight];
                         for (int ty = 0; ty < MaxHeight; ty++)
                         {
                             var targetPoint = new Point2d(tx, ty);
-                            ManhattenDictionary[x][y][tx][ty] = point.GetManhattenDistance(targetPoint);
+                            ManhattenDictionary[ConvertPointToLocation(x, y)][ConvertPointToLocation(tx, ty)] = point.GetManhattenDistance(targetPoint);
                         }
                     }
                 }
@@ -74,40 +120,68 @@ namespace GameSolution.Entities
 
         private void CreateBresenhamDictionary()
         {
-            BresenhamDictionary = new Point2d[MaxWidth][][][][];
-            
-            for(int x = 0; x<MaxWidth; x++)
+            BresenhamDictionary = new int[MaxWidth * MaxHeight][][];
+
+            for (int x = 0; x < MaxWidth; x++)
             {
-                BresenhamDictionary[x] = new Point2d[MaxHeight][][][];
-                for(int y = 0; y<MaxHeight; y++)
+                for (int y = 0; y < MaxHeight; y++)
                 {
                     var point = new Point2d(x, y);
-                    BresenhamDictionary[x][y] = new Point2d[MaxWidth][][];
+                    BresenhamDictionary[ConvertPointToLocation(x, y)] = new int[MaxWidth * MaxHeight][];
                     for (int tx = 0; tx < MaxWidth; tx++)
                     {
-                        BresenhamDictionary[x][y][tx] = new Point2d[MaxHeight][];
                         for (int ty = 0; ty < MaxHeight; ty++)
                         {
                             var targetPoint = new Point2d(tx, ty);
                             if (point.Equals(targetPoint))
                                 continue;
 
-                            if (GetManhattenDistance(point, targetPoint) > 6)
+                            if (GetManhattenDistance(ConvertPointToLocation(point), ConvertPointToLocation(targetPoint)) > 6)
                                 continue;
 
                             if (y < ty)
-                                BresenhamDictionary[x][y][tx][ty] = bresenhamForward(point, targetPoint);
+                                BresenhamDictionary[ConvertPointToLocation(x, y)][ConvertPointToLocation(tx, ty)] = bresenhamForward(point, targetPoint);
                             else
-                                BresenhamDictionary[x][y][tx][ty] = bresenhamBackward(point, targetPoint);
+                                BresenhamDictionary[ConvertPointToLocation(x, y)][ConvertPointToLocation(tx, ty)] = bresenhamBackward(point, targetPoint);
                         }
                     }
                 }
             }
         }
 
-        private Point2d[] bresenhamForward(Point2d startTile, Point2d targetTile)
+
+        private static int[] X_MODIFIER = new int[] { 0, 1, 0, -1 };
+        private static int[] Y_MODIFIER = new int[] { -1, 0, 1, 0 };
+        private void CreateNeighboringLocations()
         {
-            List<Point2d> bresenhamPoints = new List<Point2d>();
+            NeighboringLocations = new int[MaxHeight * MaxWidth][];
+            for (int x = 0; x < MaxWidth; x++)
+            {
+                for (int y = 0; y < MaxHeight; y++)
+                {
+                    int location = ConvertPointToLocation(x, y);
+                    NeighboringLocations[location] = new int[4];
+                    for (int i = 0; i < 4; i++)
+                    {
+                        int cx = x + X_MODIFIER[i];
+                        int cy = y + Y_MODIFIER[i];
+
+                        if (IsInBounds(cx, cy))
+                        {
+                            NeighboringLocations[location][i] = ConvertPointToLocation(cx, cy);
+                        }
+                        else
+                        {
+                            NeighboringLocations[location][i] = (int)LocationType.Obstacle;
+                        }
+                    }
+                }
+            }
+        }
+
+        private int[] bresenhamForward(Point2d startTile, Point2d targetTile)
+        {
+            List<int> bresenhamPoints = new List<int>();
             int x0, y0, x1, y1;
             x0 = startTile.x;
             y0 = startTile.y;
@@ -141,7 +215,7 @@ namespace GameSolution.Entities
                     currentY += sy;
                 }
 
-                bresenhamPoints.Add(new Point2d(currentX, currentY));
+                bresenhamPoints.Add(ConvertPointToLocation(currentX, currentY));
 
                 if (currentX == x1 && currentY == y1) break;
                 if (GetLocation(currentX, currentY) == LocationType.Obstacle)
@@ -153,9 +227,9 @@ namespace GameSolution.Entities
             return bresenhamPoints.ToArray();
         }
 
-        private Point2d[] bresenhamBackward(Point2d startTile, Point2d targetTile)
+        private int[] bresenhamBackward(Point2d startTile, Point2d targetTile)
         {
-            List<Point2d> bresenhamPoints = new List<Point2d>();
+            List<int> bresenhamPoints = new List<int>();
             int x0, y0, x1, y1;
 
             x0 = targetTile.x;
@@ -163,7 +237,7 @@ namespace GameSolution.Entities
             x1 = startTile.x;
             y1 = startTile.y;
 
-            bresenhamPoints.Add(targetTile);
+            bresenhamPoints.Add(ConvertPointToLocation(targetTile));
 
             int dx = Math.Abs(x1 - x0);
             int dy = Math.Abs(y1 - y0);
@@ -198,28 +272,11 @@ namespace GameSolution.Entities
                 {
                     bresenhamPoints.Clear();
                 }
-                bresenhamPoints.Add(new Point2d(currentX, currentY));
+                bresenhamPoints.Add(ConvertPointToLocation(currentX, currentY));
             }
-            
+
             bresenhamPoints.Reverse();
             return bresenhamPoints.ToArray();
-        }
-
-        public Point2d[] GetBresenhamPoints(Point2d startPoint, Point2d targetPoint)
-        {
-            return BresenhamDictionary[startPoint.x][startPoint.y][targetPoint.x][targetPoint.y];
-        }
-
-        public LocationType GetLocation(int x, int y)
-        {
-            return Locations[y][x]; 
-        }
-
-        public bool IsInBounds(int x, int y)
-        {
-            if (x < 0 || y < 0 || x >= MaxWidth || y >= MaxHeight)
-                return false;
-            return true;
         }
     }
 }

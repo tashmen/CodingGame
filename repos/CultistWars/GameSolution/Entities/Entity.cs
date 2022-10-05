@@ -17,7 +17,7 @@ namespace GameSolution.Entities
     }
     public class Entity
     {
-        public Point2d Point;
+        public int Location;
         public int Id;
         public EntityType Type;
         public int Hp;
@@ -26,29 +26,29 @@ namespace GameSolution.Entities
         public Entity(int id, int x, int y, int type, int hp, int isMine)
         {
             Id = id;
-            Point = new Point2d(x, y);
             Type = (EntityType)type;
             Hp = hp;
             Owner = (OwnerType)isMine;
+            Location = Board.ConvertPointToLocation(x, y);
         }
 
         public Entity(Entity entity)
         {
-            Point = entity.Point.Clone();
             Id = entity.Id;
             Type = entity.Type;
             Hp = entity.Hp;
             Owner = entity.Owner;
+            Location = entity.Location;
         }
 
-        public void Move(Point2d targetPoint)
+        public void Move(int targetLocation)
         {
-            var distance = Board.GetManhattenDistance(Point, targetPoint);
+            var distance = Board.GetManhattenDistance(Location, targetLocation);
             if (distance != 1)
             {
                 throw new Exception($"Point is not one space away it is: {distance}");
             }
-            Point = targetPoint;
+            Location = targetLocation;
         }
 
         public void Shoot(Entity targetEntity)
@@ -56,7 +56,7 @@ namespace GameSolution.Entities
             if (Type != EntityType.Cultist)
                 throw new Exception("Cult Leaders can't shoot!");
 
-            var distance = Board.GetManhattenDistance(Point, targetEntity.Point);
+            var distance = Board.GetManhattenDistance(Location, targetEntity.Location);
             if (distance > 6)
                 throw new Exception("Unit to far!");
 
@@ -73,7 +73,7 @@ namespace GameSolution.Entities
             if (Type != EntityType.CultLeader)
                 throw new Exception("Cultists can't convert!");
 
-            var distance = Board.GetManhattenDistance(Point, targetEntity.Point);
+            var distance = Board.GetManhattenDistance(Location, targetEntity.Location);
             if (distance != 1)
                 throw new Exception("Unit is not one space away!");
 
@@ -90,7 +90,7 @@ namespace GameSolution.Entities
 
         public bool Equals(Entity other)
         {
-            return other != null && Id == other.Id && Hp == other.Hp && Type == other.Type && Owner == other.Owner && Point.Equals(other.Point);
+            return other != null && Id == other.Id && Hp == other.Hp && Type == other.Type && Owner == other.Owner && Location == other.Location;
         }
 
         public bool IsDead()
@@ -111,7 +111,8 @@ namespace GameSolution.Entities
 
         public override string ToString()
         {
-            return $"{Id}, {Point.x}, {Point.y}, {(int)Type}, {Hp}, {(int)Owner}";
+            var point = Board.ConvertLocationToPoint(Location);
+            return $"{Id}, {point.x}, {point.y}, {(int)Type}, {Hp}, {(int)Owner}";
             //return $"Id:{Id}, P:{Point}";
         }
     }

@@ -41,14 +41,14 @@ namespace UnitTest
         public void TestBresenham()
         {
             var state = GameHelper.ProblematicShooting();
-            var endPoint = state.CheckBulletPath(new Point2d(3, 3), new Point2d(8, 4));
-            Assert.Equal(new Point2d(4, 3), endPoint);
-            endPoint = state.CheckBulletPath(new Point2d(8, 4), new Point2d(3, 3));
-            Assert.Equal(new Point2d(7, 4), endPoint);
+            var endLocation = state.CheckBulletPath(Board.ConvertPointToLocation(3, 3), Board.ConvertPointToLocation(8, 4));
+            Assert.Equal(Board.ConvertPointToLocation(4, 3), endLocation);
+            endLocation = state.CheckBulletPath(Board.ConvertPointToLocation(8, 4), Board.ConvertPointToLocation(3, 3));
+            Assert.Equal(Board.ConvertPointToLocation(7,4), endLocation);
 
             state = GameHelper.ProblematicShooting2();
-            endPoint = state.CheckBulletPath(new Point2d(0, 4), new Point2d(4, 3));
-            Assert.True(new Point2d(2, 3).Equals(endPoint));
+            endLocation = state.CheckBulletPath(Board.ConvertPointToLocation(0, 4), Board.ConvertPointToLocation(4, 3));
+            Assert.Equal(Board.ConvertPointToLocation(2, 3), endLocation);
         }
     }
 }

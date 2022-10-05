@@ -23,7 +23,7 @@ class Player
         for (int i = 0; i < height; i++)
         {
             strBoard[i] = Console.ReadLine(); // A y of the board: "." is empty, "x" is obstacle
-            Console.Error.WriteLine(strBoard[i]);
+            //Console.Error.WriteLine(strBoard[i]);
         }
 
         Board board = new Board(strBoard);
@@ -47,7 +47,7 @@ class Player
                 int owner = int.Parse(inputs[5]); // id of owner player
                 OwnerType isMine = owner == myId ? OwnerType.Max : owner == 2 ? OwnerType.Neutral : OwnerType.Min;
                 entities[unitId] = new Entity(unitId, x, y, unitType, hp, (int)isMine);
-                Console.Error.WriteLine(entities[unitId]);
+                //Console.Error.WriteLine(entities[unitId]);
             }
 
             state.Turn = turn;
@@ -69,7 +69,7 @@ class Player
             //miniMax.SetState(state);
 
             long move;
-            move = (long)monteCarlo.GetNextMove(watch, limit, 4, 5);
+            move = (long)monteCarlo.GetNextMove(watch, limit, 10, 5);
             //move = (Move)miniMax.GetNextMove(watch, limit, 5);
             watch.Stop();
 

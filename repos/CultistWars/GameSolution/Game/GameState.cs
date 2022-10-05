@@ -21,7 +21,7 @@ namespace GameSolution
 
         //Calculated Values
         double numberOfUnitsMine = 0, numberOfUnitsOpponent = 0, hpOfUnitsMine = 0, hpOfUnitsOpponent = 0;
-        int[][] boardMap = new int[Board.MaxHeight][];
+        int[] boardMap = new int[Board.MaxHeight * Board.MaxWidth];
         //End Calculated Values
 
         public GameState(Board board)
@@ -43,13 +43,12 @@ namespace GameSolution
         public void Reset()
         {
             numberOfUnitsMine = numberOfUnitsOpponent = hpOfUnitsMine = hpOfUnitsOpponent = 0;
-            boardMap = new int[Board.MaxHeight][];
+            boardMap = new int[Board.MaxHeight * Board.MaxWidth];
             for (int y = 0; y < Board.MaxHeight; y++)
             {
-                boardMap[y] = new int[Board.MaxWidth];
                 for (int x = 0; x < Board.MaxWidth; x++)
                 {
-                    boardMap[y][x] = (int)Board.GetLocation(x, y);
+                    SetLocation(x, y, (int)Board.GetLocation(x, y));
                 }
             }
             for(int i = 0; i<Entities.Length; i++)
@@ -58,7 +57,7 @@ namespace GameSolution
                 if (entity == null)
                     continue;
                 
-                boardMap[entity.Point.y][entity.Point.x] = entity.Id;
+                SetBoardMap(entity);
             }
         }
 
@@ -78,7 +77,7 @@ namespace GameSolution
                 case MoveType.Move:
                     Entity moveEntity = Entities[Move.GetUnitId(m)];
                     ClearBoardMap(moveEntity);
-                    moveEntity.Move(new Point2d(Move.GetX(m), Move.GetY(m)));
+                    moveEntity.Move(Move.GetLocation(m));
                     SetBoardMap(moveEntity);
                     break;
                 case MoveType.Shoot:
@@ -221,19 +220,39 @@ namespace GameSolution
             return LastMove;
         }
 
+        public int GetLocation(int location)
+        {
+            return boardMap[location];
+        }
+
         public int GetLocation(int x, int y)
         {
-            return boardMap[y][x];
+            return boardMap[Board.ConvertPointToLocation(x, y)];
+        }
+
+        public void SetLocation(int location, int value)
+        {
+            boardMap[location] = value;
+        }
+
+        public void SetLocation(int x, int y, int value)
+        {
+            boardMap[Board.ConvertPointToLocation(x, y)] = value;
         }
 
         public void SetBoardMap(Entity entity)
         {
-            boardMap[entity.Point.y][entity.Point.x] = entity.Id;
+            SetLocation(entity.Location, entity.Id);
         }
 
         public void ClearBoardMap(Entity entity)
         {
-            boardMap[entity.Point.y][entity.Point.x] = (int)LocationType.Empty;
+            SetLocation(entity.Location, (int)LocationType.Empty);
+        }
+
+        public bool IsSpaceEmpty(int location)
+        {
+            return GetLocation(location) == (int)LocationType.Empty;
         }
 
         public bool IsSpaceEmpty(int x, int y)
@@ -244,6 +263,21 @@ namespace GameSolution
         public bool IsUnit(int locationType)
         {
             return locationType >= 0;
+        }
+
+        public bool HasCultist(int location, bool isMax)
+        {
+            var spaceId = GetLocation(location);
+
+            if (IsUnit(spaceId))
+            {
+                var entity = Entities[spaceId];
+                if (entity == null)
+                    return false;
+                return entity.Type == EntityType.Cultist && !entity.IsOwned(isMax);
+            }
+
+            return false;
         }
 
         public bool HasCultist(int x, int y, bool isMax)
@@ -261,39 +295,33 @@ namespace GameSolution
             return false;
         }
 
-        private static int[] X_MODIFIER = new int[] { 0, 1, 0, -1 };
-        private static int[] Y_MODIFIER = new int[] { -1, 0, 1, 0 };
+        
         public void GetMovesForEntity(ref IList possibleMoves, Entity entity)
         {
-            int pointY = entity.Point.y;
-            int pointX = entity.Point.x;
+            int[] locations = Board.GetNeighboringLocations(entity.Location);
 
-            for(int i = 0; i<4; i++)
+            for (int i = 0; i<4; i++)
             {
-                int x = pointX + X_MODIFIER[i];
-                int y = pointY + Y_MODIFIER[i];
+                int location = locations[i];                
 
-                if (Board.IsInBounds(x, y) && IsSpaceEmpty(x, y))
+                if (location != (int)LocationType.Obstacle && IsSpaceEmpty(location))
                 {
-                    possibleMoves.Add(Move.MoveUnit(entity.Id, x, y));
+                    possibleMoves.Add(Move.MoveUnit(entity.Id, location));
                 }
             }
         }
 
         public void GetConvertsForEntity(ref IList possibleMoves, Entity entity, bool isMax)
         {
-
-            int pointY = entity.Point.y;
-            int pointX = entity.Point.x;
+            int[] locations = Board.GetNeighboringLocations(entity.Location);
 
             for (int i = 0; i < 4; i++)
             {
-                int x = pointX + X_MODIFIER[i];
-                int y = pointY + Y_MODIFIER[i];
+                int location = locations[i];
 
-                if (Board.IsInBounds(x, y) && HasCultist(x, y, isMax))
+                if (location != (int)LocationType.Obstacle && HasCultist(location, isMax))
                 {
-                    possibleMoves.Add(Move.Convert(entity.Id, boardMap[y][x]));
+                    possibleMoves.Add(Move.Convert(entity.Id, GetLocation(location)));
                 }
             }
         }
@@ -326,10 +354,10 @@ namespace GameSolution
                             if (targetEntity == null)
                                 continue;
 
-                            if(entity.Id != targetEntity.Id && !targetEntity.IsOwned(isMax) && Board.GetManhattenDistance(entity.Point, targetEntity.Point) <= 6)
+                            if(entity.Id != targetEntity.Id && !targetEntity.IsOwned(isMax) && Board.GetManhattenDistance(entity.Location, targetEntity.Location) <= 6)
                             {
-                                var endPoint = CheckBulletPath(entity.Point, targetEntity.Point);
-                                if (endPoint.Equals(targetEntity.Point))
+                                var endLocation = CheckBulletPath(entity.Location, targetEntity.Location);
+                                if (endLocation == targetEntity.Location)
                                 {
                                     possibleMoves.Add(Move.Shoot(entity.Id, targetEntity.Id));
                                 }
@@ -364,20 +392,20 @@ namespace GameSolution
 
             return null;
         }
-        public Point2d CheckBulletPath(Point2d startTile, Point2d targetTile)
+        public int CheckBulletPath(int startTile, int targetTile)
         {
-            var points = Board.GetBresenhamPoints(startTile, targetTile);
-            for (int i = 0; i < points.Length; i++)
+            var locations = Board.GetBresenhamPoints(startTile, targetTile);
+            for (int i = 0; i < locations.Length; i++)
             {
-                var point = points[i];
-                var location = GetLocation(point.x, point.y);
-                if (IsUnit(location))
+                var location = locations[i];
+                var spaceId = GetLocation(location);
+                if (IsUnit(spaceId))
                 {
-                    return point;
+                    return location;
                 }
             }
 
-            return points[points.Length - 1];
+            return locations[locations.Length - 1];
         }
 
         private void MoveNeutralUnit()
@@ -411,7 +439,7 @@ namespace GameSolution
                         long action = (long)moves[InternalRandom.rand(ref Seed, moves.Count)];
                         NeutralLastMove = action;
                         ClearBoardMap(neutralUnit);
-                        neutralUnit.Move(new Point2d(Move.GetX(action), Move.GetY(action)));
+                        neutralUnit.Move(Move.GetLocation(action));
                         SetBoardMap(neutralUnit);
                     }
                 }

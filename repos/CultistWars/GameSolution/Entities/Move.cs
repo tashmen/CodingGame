@@ -14,15 +14,14 @@ namespace GameSolution.Entities
     {
         public static long UnitIdMask = (long)Math.Pow(2, 4) - 1;
         public static long MoveTypeMask = (long)Math.Pow(2, 6) - 1 - UnitIdMask;
-        public static long PointXMask = (long)Math.Pow(2, 10) - 1 - MoveTypeMask;
-        public static long PointYMask = (long)Math.Pow(2, 14) - 1 - PointXMask;
-        public static long TargetUnitIdMask = (long)Math.Pow(2, 18) - 1 - PointYMask;
+        public static long TargetUnitIdMask = (long)Math.Pow(2, 10) - 1 - MoveTypeMask;
+        public static long LocationMask = (long)Math.Pow(2, 17) - 1 - TargetUnitIdMask;
 
         /*
         public int UnitId;//4 bits
         public MoveType Type;//2 bits
-        public Point2d Point;//2 (4 bits) = 8 bits
         public int TargetUnitId;//4 bits
+        public int Location; //7 bits
         */
 
         public static int GetUnitId(long move)
@@ -35,44 +34,39 @@ namespace GameSolution.Entities
             return (MoveType)((move & MoveTypeMask) >> 4);
         }
 
-        public static int GetX(long move)
-        {
-            return (int)((move & PointXMask) >> 6);
-        }
-
-        public static int GetY(long move)
-        {
-            return (int)((move & PointYMask) >> 10);
-        }
-
         public static int GetTargetUnitId(long move)
         {
-            return (int)((move & TargetUnitIdMask) >> 14);
+            return (int)((move & TargetUnitIdMask) >> 6);
         }
 
-        public static long CreateMove(int unitId, MoveType moveType, int targetX, int targetY, int targetUnitId)
+        public static int GetLocation(long move)
         {
-            return unitId | (int)moveType << 4 | targetX << 6 | targetY << 10 | targetUnitId << 14;
+            return (int)((move & LocationMask) >> 10);
+        }
+
+        public static long CreateMove(int unitId, MoveType moveType, int targetUnitId, int location)
+        {
+            return unitId | (int)moveType << 4 | targetUnitId << 6 | location << 10;
         }
 
         public static long Wait()
         {
-            return CreateMove(0, MoveType.Wait, 0, 0, 0);
+            return CreateMove(0, MoveType.Wait, 0, 0);
         }
 
-        public static long MoveUnit(int unitId, int targetX, int targetY)
+        public static long MoveUnit(int unitId, int location)
         {
-            return CreateMove(unitId, MoveType.Move, targetX, targetY, 0);
+            return CreateMove(unitId, MoveType.Move, 0, location);
         }
 
         public static long Shoot(int unitId, int targetUnitId)
         {
-            return CreateMove(unitId, MoveType.Shoot, 0, 0, targetUnitId);
+            return CreateMove(unitId, MoveType.Shoot, targetUnitId, 0);
         }
 
         public static long Convert(int unitId, int targetUnitId)
         {
-            return CreateMove(unitId, MoveType.Convert, 0, 0, targetUnitId);
+            return CreateMove(unitId, MoveType.Convert, targetUnitId, 0);
         }
 
         public static bool IsWait(long move)
@@ -85,7 +79,8 @@ namespace GameSolution.Entities
             switch(GetMoveType(move))
             {
                 case MoveType.Move:
-                    return $"{GetUnitId(move)} MOVE {GetX(move)} {GetY(move)}";
+                    var point = Board.ConvertLocationToPoint(GetLocation(move));
+                    return $"{GetUnitId(move)} MOVE {point.x} {point.y}";
                 case MoveType.Wait:
                     return $"WAIT";
                 case MoveType.Shoot:
