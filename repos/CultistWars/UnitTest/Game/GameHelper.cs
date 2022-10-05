@@ -159,5 +159,40 @@ namespace GameSolution.Game
             state.SetState(entities);
             return state;
         }
+
+        public static GameState IncorrectNeutralMove()
+        {
+            string[] boardInput = {
+                "...x.....x...",
+                ".x.x.....x.x.",
+                "..x..x.x..x..",
+                ".............",
+                "x...........x",
+                "...x.....x...",
+                "x...........x"
+            };
+            Board board = new Board(boardInput);
+            GameState state = new GameState(board);
+
+            Entity[] entities = new Entity[]
+            {
+                new Entity(0, 1, 3, 1, 10, -1),
+                new Entity(1, 12, 3, 1, 10, 1),
+                new Entity(2, 4, 1, 0, 10, 0),
+                new Entity(3, 1, 6, 0, 10, 0),
+                new Entity(4, 2, 6, 0, 10, 0),
+                new Entity(5, 4, 4, 0, 10, 0),
+                new Entity(6, 5, 1, 0, 10, 0),
+                new Entity(7, 4, 5, 0, 10, 0),
+                new Entity(8, 8, 1, 0, 10, 0),
+                new Entity(9, 11, 6, 0, 10, 0),
+                new Entity(10, 10, 6, 0, 10, 0),
+                new Entity(11, 8, 4, 0, 10, 0),
+                new Entity(12, 7, 1, 0, 10, 0),
+                new Entity(13, 8, 5, 0, 10, 0)
+            };
+            state.SetState(entities);
+            return state;
+        }
     }
 }

@@ -50,5 +50,15 @@ namespace UnitTest
             endLocation = state.CheckBulletPath(Board.ConvertPointToLocation(0, 4), Board.ConvertPointToLocation(4, 3));
             Assert.Equal(Board.ConvertPointToLocation(2, 3), endLocation);
         }
+
+        [Fact]
+        public void TestNeutralMove()
+        {
+            var state = GameHelper.IncorrectNeutralMove();
+
+            state.MoveNeutralUnit();
+
+            Assert.Equal(Move.ToString(Move.MoveUnit(5, Board.ConvertPointToLocation(3, 4))), Move.ToString(state.NeutralLastMove));
+        }
     }
 }

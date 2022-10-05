@@ -22,6 +22,9 @@ namespace GameSolution
         //Calculated Values
         double numberOfUnitsMine = 0, numberOfUnitsOpponent = 0, hpOfUnitsMine = 0, hpOfUnitsOpponent = 0;
         int[] boardMap = new int[Board.MaxHeight * Board.MaxWidth];
+        List<Entity> myEntities;
+        List<Entity> oppEntities;
+        List<Entity> neutralEntities;
         //End Calculated Values
 
         public GameState(Board board)
@@ -42,6 +45,10 @@ namespace GameSolution
 
         public void Reset()
         {
+            myEntities = new List<Entity>(14);
+            oppEntities = new List<Entity>(14);
+            neutralEntities = new List<Entity>(14);
+
             numberOfUnitsMine = numberOfUnitsOpponent = hpOfUnitsMine = hpOfUnitsOpponent = 0;
             boardMap = new int[Board.MaxHeight * Board.MaxWidth];
             for (int y = 0; y < Board.MaxHeight; y++)
@@ -56,6 +63,16 @@ namespace GameSolution
                 var entity = Entities[i];
                 if (entity == null)
                     continue;
+
+                if (entity.IsOwned(true))
+                {
+                    myEntities.Add(entity);
+                }
+                else if(entity.IsOwned(false))
+                {
+                    oppEntities.Add(entity);
+                }
+                else neutralEntities.Add(entity);
                 
                 SetBoardMap(entity);
             }
@@ -96,6 +113,11 @@ namespace GameSolution
                     {
                         Entities[Move.GetTargetUnitId(m)] = null;
                         ClearBoardMap(shootEntityTarget);
+                        if (isMine)
+                            myEntities.Remove(shootEntityTarget);
+                        else if(isOpp)
+                            oppEntities.Remove(shootEntityTarget);
+                        else neutralEntities.Remove(shootEntityTarget);
                     }
                     else 
                     {
@@ -110,17 +132,33 @@ namespace GameSolution
                     Entity convertEntityTarget = Entities[Move.GetTargetUnitId(m)];
                     if(convertEntityTarget.Owner == OwnerType.Neutral)
                     {
+                        neutralEntities.Remove(convertEntityTarget);
                         if (isMax)
                         {
                             numberOfUnitsMine++;
+                            myEntities.Add(convertEntityTarget);
                         }
-                        else numberOfUnitsOpponent++;
+                        else
+                        {
+                            numberOfUnitsOpponent++;
+                            oppEntities.Add(convertEntityTarget);
+                        }
                     }
                     else
                     {
                         var modifier = isMax ? 1 : -1;
                         numberOfUnitsMine += modifier;
                         numberOfUnitsOpponent -= modifier;
+                        if (isMax)
+                        {
+                            myEntities.Add(convertEntityTarget);
+                            oppEntities.Remove(convertEntityTarget);
+                        }
+                        else
+                        {
+                            oppEntities.Add(convertEntityTarget);
+                            myEntities.Remove(convertEntityTarget);
+                        }
                     }
                     convertEntity.Convert(convertEntityTarget);
                     break;
@@ -328,39 +366,49 @@ namespace GameSolution
 
         public IList GetPossibleMoves(bool isMax)
         {
-            IList possibleMoves = new List<long>();
+            var entitiesToCheck = isMax ? myEntities : oppEntities;
+            var targetEntitiesToCheck = isMax ? oppEntities : myEntities;
+
+            IList possibleMoves = new List<long>(20);
             if (Turn == 150)
                 return possibleMoves;
 
-            for(int i = 0; i<Entities.Length; i++)
+            for(int i = 0; i< entitiesToCheck.Count; i++)
             {
-                var entity = Entities[i];
-                if (entity == null)
-                    continue;
+                var entity = entitiesToCheck[i];
 
-                if (entity.IsOwned(isMax))
+                GetMovesForEntity(ref possibleMoves, entity);
+
+                if (entity.Type == EntityType.CultLeader)
                 {
-                    GetMovesForEntity(ref possibleMoves, entity);
+                    GetConvertsForEntity(ref possibleMoves, entity, isMax);
+                }
+                else
+                {
+                    for (int ti = 0; ti < targetEntitiesToCheck.Count; ti++)
+                    {
+                        var targetEntity = targetEntitiesToCheck[ti];
 
-                    if (entity.Type == EntityType.CultLeader)
-                    {
-                        GetConvertsForEntity(ref possibleMoves, entity, isMax);
-                    }
-                    else
-                    {
-                        for(int ti = 0; ti<Entities.Length; ti++)
+                        if (Board.GetManhattenDistance(entity.Location, targetEntity.Location) <= 6)
                         {
-                            var targetEntity = Entities[ti];
-                            if (targetEntity == null)
-                                continue;
-
-                            if(entity.Id != targetEntity.Id && !targetEntity.IsOwned(isMax) && Board.GetManhattenDistance(entity.Location, targetEntity.Location) <= 6)
+                            var endLocation = CheckBulletPath(entity.Location, targetEntity.Location);
+                            if (endLocation == targetEntity.Location)
                             {
-                                var endLocation = CheckBulletPath(entity.Location, targetEntity.Location);
-                                if (endLocation == targetEntity.Location)
-                                {
-                                    possibleMoves.Add(Move.Shoot(entity.Id, targetEntity.Id));
-                                }
+                                possibleMoves.Add(Move.Shoot(entity.Id, targetEntity.Id));
+                            }
+                        }
+                    }
+
+                    for (int ti = 0; ti < neutralEntities.Count; ti++)
+                    {
+                        var targetEntity = neutralEntities[ti];
+
+                        if (Board.GetManhattenDistance(entity.Location, targetEntity.Location) <= 6)
+                        {
+                            var endLocation = CheckBulletPath(entity.Location, targetEntity.Location);
+                            if (endLocation == targetEntity.Location)
+                            {
+                                possibleMoves.Add(Move.Shoot(entity.Id, targetEntity.Id));
                             }
                         }
                     }
@@ -408,30 +456,15 @@ namespace GameSolution
             return locations[locations.Length - 1];
         }
 
-        private void MoveNeutralUnit()
+        public void MoveNeutralUnit()
         {
-            Entity[] neutralUnits = new Entity[12];
-            bool hasNeutral = false;
-            int neutralCount = 0;
-            for (int i = 0; i < Entities.Length; i++)
-            {
-                var entity = Entities[i];
-                if (entity == null)
-                    continue;
-                if (entity.Owner == OwnerType.Neutral)
-                {
-                    neutralUnits[neutralCount++] = entity;
-                    hasNeutral = true;
-                }
-             }
-
-            
-            if (hasNeutral)
+            var neutralCount = neutralEntities.Count;
+            if (neutralCount > 0)
             {
                 int index = InternalRandom.rand(ref Seed, 12);
                 if (index < neutralCount)
                 {
-                    Entity neutralUnit = neutralUnits[index];
+                    Entity neutralUnit = neutralEntities[index];
                     IList moves = new List<long>();
                     GetMovesForEntity(ref moves, neutralUnit);
                     if (moves.Count > 0)

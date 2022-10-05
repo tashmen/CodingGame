@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Algorithms.Trees;
 using GameSolution;
 using GameSolution.Entities;
+using GameSolution.Game;
 
 /**
  * Convert neutral units and attack enemy ones
@@ -16,6 +17,7 @@ class Player
         int turn = 0;
         string[] inputs;
         int myId = int.Parse(Console.ReadLine()); // 0 - you are the first player, 1 - you are the second player
+        
         inputs = Console.ReadLine().Split(' ');
         int width = int.Parse(inputs[0]); // Width of the board
         int height = int.Parse(inputs[1]); // Height of the board
@@ -30,6 +32,14 @@ class Player
         MonteCarloTreeSearch monteCarlo = new MonteCarloTreeSearch();
         //Minimax miniMax = new Minimax();
         GameState state = new GameState(board);
+
+        //When I am second player then adjust the starting seed and turn
+        if(myId == 1)
+        {
+            turn++;
+            InternalRandom.rand(ref state.Seed, 5);
+            InternalRandom.rand(ref state.Seed, 5);
+        }
 
         // game loop
         while (true)
@@ -69,7 +79,7 @@ class Player
             //miniMax.SetState(state);
 
             long move;
-            move = (long)monteCarlo.GetNextMove(watch, limit, 10, 5);
+            move = (long)monteCarlo.GetNextMove(watch, limit, 14, 20);
             //move = (Move)miniMax.GetNextMove(watch, limit, 5);
             watch.Stop();
 
@@ -78,16 +88,17 @@ class Player
             /*
             var cloneState = (GameState)monteCarlo.GetRootState().Clone();
             cloneState.ApplyMove(move, true);
-            Console.Error.WriteLine($"Neutral move: {cloneState.NeutralLastMove}");
+            Console.Error.WriteLine($"Neutral move: {Move.ToString(cloneState.NeutralLastMove)}");
 
-            var moves = (List<Move>)cloneState.GetPossibleMoves(false);
-            foreach (Move oppMove in moves)
+            var moves = (List<long>)cloneState.GetPossibleMoves(false);
+            foreach (long oppMove in moves)
             {
                 var cs = (GameState)cloneState.Clone();
                 cs.ApplyMove(oppMove, false);
-                Console.Error.WriteLine($"Neutral move for opponent: {cs.NeutralLastMove} for move {oppMove}");
+                Console.Error.WriteLine($"Neutral move for opponent: {Move.ToString(cs.NeutralLastMove)} for move {Move.ToString(oppMove)}");
             }
             */
+            
             turn += 2;
             Console.WriteLine(Move.ToString(move));
             isFirstTurn = false;
