@@ -24,9 +24,15 @@ namespace Algorithms.Space
             return $"({x},{y})";
         }
 
-        public bool Equals(Point2d point)
+        public override bool Equals(object objPoint)
         {
+            Point2d point = objPoint as Point2d;
             return point.x == this.x && point.y == this.y;
+        }
+
+        public override int GetHashCode()
+        {
+            return Tuple.Create(x, y).GetHashCode();
         }
 
         public Point2d GetTruncatedPoint()
@@ -56,6 +62,11 @@ namespace Algorithms.Space
         public double GetAngle(Point2d point)
         {
             return Math.Atan2(point.y - y, point.x - x);
+        }
+
+        public int GetManhattenDistance(Point2d point)
+        {
+            return (int)(Math.Abs(point.x - x) + Math.Abs(point.y - y));
         }
 
         public double GetDistance(Point2d point)

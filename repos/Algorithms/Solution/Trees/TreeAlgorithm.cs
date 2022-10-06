@@ -15,13 +15,15 @@ namespace Algorithms.Trees
                 //find the child that matches the new node
                 bool isFound = false;
                 //Expand any moves left in the root node (if any)
-                foreach (object move in RootNode.moves)
+                for(int i = 0; i<RootNode.moves.Count; i++) 
                 {
+                    var move = RootNode.moves[i];
                     Expand(RootNode, move);
                 }
                 //Begin scanning the children
-                foreach (GameTreeNode child in RootNode.children)
+                for(int i = 0; i<RootNode.children.Count; i++)
                 {
+                    var child = RootNode.children[i];
                     if (child.state.Equals(rootState))
                     {
                         RootNode = child;
@@ -29,12 +31,15 @@ namespace Algorithms.Trees
                         break;
                     }
 
-                    foreach (object move in child.moves)
+                    
+                    for (int j = 0; j< child.moves.Count; j++)
                     {
+                        var move = child.moves[j];
                         Expand(child, move);
                     }
-                    foreach (GameTreeNode descendent in child.children)
+                    for(int j = 0; j< child.children.Count; j++) 
                     {
+                        var descendent = child.children[j];
                         if (descendent.state.Equals(rootState))
                         {
                             RootNode = descendent;
