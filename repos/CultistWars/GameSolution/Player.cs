@@ -74,14 +74,32 @@ class Player
             
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            
-            monteCarlo.SetState(state);
 
-            /*
-            GameState currentState = (GameState)monteCarlo.GetRootState();
-            Console.Error.WriteLine("Seed: " + currentState.Seed);
-            */
-            
+            try
+            {
+                monteCarlo.SetState(state);
+            }
+            catch (Exception ex)
+            {
+                GameState currentState = (GameState)monteCarlo.GetRootState();
+                for (int i = 0; i < height; i++)
+                {
+                    Console.Error.WriteLine($"\"{strBoard[i]}\",");
+                }
+                for(int i = 0; i< currentState.Entities.Length; i++)
+                {
+                    if(entities[i] != null)
+                        Console.Error.WriteLine($"new Entity({currentState.Entities[i]}),");
+                    else Console.Error.WriteLine($"null,");
+                }
+
+                Console.Error.WriteLine("Last Move: " + Move.ToString(currentState.LastMove));
+                Console.Error.WriteLine("Last Neutral Move: " + Move.ToString(currentState.NeutralLastMove));
+                Console.Error.WriteLine("Seed: " + currentState.Seed);
+
+                monteCarlo.SetState(state, true, false);
+            }
+
             //miniMax.SetState(state);
 
             long move;

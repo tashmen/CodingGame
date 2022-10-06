@@ -1009,6 +1009,7 @@ namespace Algorithms.Trees
                 }
                 if (!isFound)
                 {
+                    throw new Exception("Could not find the next state in tree!  Starting over...");
                     Console.Error.WriteLine("Could not find the next state in tree!  Starting over...");
                     RootNode = new GameTreeNode(rootState.Clone(), isMax);
                 }

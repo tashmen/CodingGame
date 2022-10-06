@@ -25,6 +25,7 @@ namespace GameSolution
         List<Entity> myEntities;
         List<Entity> oppEntities;
         List<Entity> neutralEntities;
+        List<Entity> deadNeutrals = new List<Entity>(12);
         //End Calculated Values
 
         public GameState(Board board)
@@ -40,6 +41,9 @@ namespace GameSolution
             LastMove = state.LastMove;
             NeutralLastMove = state.NeutralLastMove;
             Seed = state.Seed;
+
+            deadNeutrals = state.deadNeutrals.Select(e => e.Clone()).ToList();
+
             Reset();
         }
 
@@ -117,6 +121,11 @@ namespace GameSolution
                             myEntities.Remove(shootEntityTarget);
                         else if(isOpp)
                             oppEntities.Remove(shootEntityTarget);
+                        else
+                        {
+                            neutralEntities.Remove(shootEntityTarget);
+                            deadNeutrals.Add(shootEntityTarget);
+                        }
                     }
                     else 
                     {
@@ -402,7 +411,7 @@ namespace GameSolution
                     {
                         var targetEntity = neutralEntities[ti];
 
-                        if (!targetEntity.IsDead() && Board.GetManhattenDistance(entity.Location, targetEntity.Location) <= 6)
+                        if (Board.GetManhattenDistance(entity.Location, targetEntity.Location) <= 6)
                         {
                             var endLocation = CheckBulletPath(entity.Location, targetEntity.Location);
                             if (endLocation == targetEntity.Location)
@@ -457,14 +466,21 @@ namespace GameSolution
 
         public void MoveNeutralUnit()
         {
+            List<Entity> allNeutralEntities = neutralEntities;
+            if(deadNeutrals.Count > 0)
+            {
+                allNeutralEntities = new List<Entity>(neutralEntities);
+                allNeutralEntities.AddRange(deadNeutrals);
+                allNeutralEntities.Sort((e1, e2) => e1.Id > e2.Id ? 1 : -1);
+            }
             NeutralLastMove = -1;
-            var neutralCount = neutralEntities.Count;
+            var neutralCount = allNeutralEntities.Count;
             if (neutralCount > 0)
             {
                 int index = InternalRandom.rand(ref Seed, 12);
                 if (index < neutralCount)
                 {
-                    Entity neutralUnit = neutralEntities[index];
+                    Entity neutralUnit = allNeutralEntities[index];
                     if (neutralUnit.IsDead())
                         return;
                     IList moves = new List<long>();
