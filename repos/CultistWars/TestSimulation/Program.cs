@@ -2,4 +2,4 @@
 using GameSolution.Game;
 
 var state = GameHelper.CreateEasyStart();
-GameHelper.PlayGameAgainstRandom(state);
+GameHelper.PlayGameAgainstRandom(state, false);

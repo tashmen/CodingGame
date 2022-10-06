@@ -615,12 +615,14 @@ namespace Algorithms.Trees
         public GameTreeNode(IGameState state, bool isMax, GameTreeNode parent = null)
         {
             this.state = state;
-            moves = new List<object>();
-            foreach(object obj in state.GetPossibleMoves(isMax))
+            moves = new List<object>(50);
+            var possibleMoves = state.GetPossibleMoves(isMax);
+            for (int i = 0; i < possibleMoves.Count; i++)
             {
+                var obj = possibleMoves[i];
                 moves.Add(obj);
             }
-            children = new List<GameTreeNode>();
+            children = new List<GameTreeNode>(50);
             this.parent = parent;
             this.isMax = isMax;
         }
@@ -969,28 +971,34 @@ namespace Algorithms.Trees
             if (RootNode != null && findState)
             {
                 //if we have already started searching then continue to search as we go if possible; the search will scan two layers to see if only one move was played or if 2 moves were played to get back to the original players turn.
+
                 //find the child that matches the new node
                 bool isFound = false;
                 //Expand any moves left in the root node (if any)
-                foreach (object move in RootNode.moves)
+                for (int i = 0; i < RootNode.moves.Count; i++)
                 {
+                    var move = RootNode.moves[i];
                     Expand(RootNode, move);
                 }
                 //Begin scanning the children
-                foreach (GameTreeNode child in RootNode.children)
+                for (int i = 0; i < RootNode.children.Count; i++)
                 {
+                    var child = RootNode.children[i];
                     if (child.state.Equals(rootState))
                     {
                         RootNode = child;
                         isFound = true;
                         break;
                     }
-                    foreach (object move in child.moves)
+
+                    for (int j = 0; j < child.moves.Count; j++)
                     {
+                        var move = child.moves[j];
                         Expand(child, move);
                     }
-                    foreach (GameTreeNode descendent in child.children)
+                    for (int j = 0; j < child.children.Count; j++)
                     {
+                        var descendent = child.children[j];
                         if (descendent.state.Equals(rootState))
                         {
                             RootNode = descendent;
@@ -1001,7 +1009,6 @@ namespace Algorithms.Trees
                 }
                 if (!isFound)
                 {
-                    //throw new Exception("Could not find the next state in tree!  Starting over...");
                     Console.Error.WriteLine("Could not find the next state in tree!  Starting over...");
                     RootNode = new GameTreeNode(rootState.Clone(), isMax);
                 }

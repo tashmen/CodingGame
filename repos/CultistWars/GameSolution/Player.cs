@@ -29,7 +29,7 @@ class Player
         }
 
         Board board = new Board(strBoard);
-        MonteCarloTreeSearch monteCarlo = new MonteCarloTreeSearch();
+        MonteCarloTreeSearch monteCarlo = new MonteCarloTreeSearch(true);
         //Minimax miniMax = new Minimax();
         GameState state = new GameState(board);
 
@@ -76,10 +76,16 @@ class Player
             watch.Start();
             
             monteCarlo.SetState(state);
+
+            /*
+            GameState currentState = (GameState)monteCarlo.GetRootState();
+            Console.Error.WriteLine("Seed: " + currentState.Seed);
+            */
+            
             //miniMax.SetState(state);
 
             long move;
-            move = (long)monteCarlo.GetNextMove(watch, limit, 14, 20);
+            move = (long)monteCarlo.GetNextMove(watch, limit, 14, 10);
             //move = (Move)miniMax.GetNextMove(watch, limit, 5);
             watch.Stop();
 

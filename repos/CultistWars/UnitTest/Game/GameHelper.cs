@@ -28,10 +28,10 @@ namespace GameSolution.Game
             while (state.GetWinner() == null);
         }
 
-        public static void PlayGameAgainstRandom(GameState state)
+        public static void PlayGameAgainstRandom(GameState state, bool showErros = true, MonteCarloTreeSearch.SearchStrategy searchStrategy = MonteCarloTreeSearch.SearchStrategy.Random)
         {
 
-            MonteCarloTreeSearch monteCarlo = new MonteCarloTreeSearch();
+            MonteCarloTreeSearch monteCarlo = new MonteCarloTreeSearch(showErros, searchStrategy);
             var limit = 995;
             //bool isMax = true;
             do
@@ -192,6 +192,82 @@ namespace GameSolution.Game
                 new Entity(13, 8, 5, 0, 10, 0)
             };
             state.SetState(entities);
+            return state;
+        }
+
+        public static GameState IncorrectNeutralMove2()
+        {
+            string[] boardInput = {
+                "..xx.....xx..",
+                ".............",
+                ".xx.......xx.",
+                ".x.........x.",
+                "...x.x.x.x...",
+                ".....x.x.....",
+                "....x...x...."
+            };
+            Board board = new Board(boardInput);
+            GameState state = new GameState(board);
+
+            Entity[] entities = new Entity[]
+            {
+               new Entity(0, 2, 4, 1, 10, 1),
+                new Entity(1, 8, 2, 1, 10, -1),
+                new Entity(2, 2, 5, 0, 10, 1),
+                new Entity(3, 5, 3, 0, 10, 0),
+                new Entity(4, 4, 2, 0, 4, 0),
+                new Entity(5, 2, 3, 0, 10, 1),
+                new Entity(6, 3, 3, 0, 4, 0),
+                new Entity(7, 6, 4, 0, 10, 0),
+                new Entity(8, 11, 5, 0, 10, -1),
+                new Entity(9, 7, 2, 0, 10, 0),
+                new Entity(10, 8, 1, 0, 10, -1),
+                new Entity(11, 10, 3, 0, 10, -1),
+                new Entity(12, 9, 2, 0, 10, -1),
+                new Entity(13, 6, 6, 0, 10, 0),
+            };
+            state.SetState(entities);
+            state.Seed = 2012129743;
+
+            state.ApplyMove(421l, true);
+            return state;
+        }
+
+        public static GameState IncorrectNeutralMove3()
+        {
+            string[] boardInput = {
+                "..xx.....xx..",
+                ".............",
+                ".xx.......xx.",
+                ".x.........x.",
+                "...x.x.x.x...",
+                ".....x.x.....",
+                "....x...x...."
+            };
+            Board board = new Board(boardInput);
+            GameState state = new GameState(board);
+
+            Entity[] entities = new Entity[]
+            {
+                new Entity(0, 2, 4, 1, 10, 1),
+                new Entity(1, 10, 5, 1, 10, -1),
+                new Entity(2, 0, 4, 0, 10, 1),
+                new Entity(3, 4, 3, 0, 10, 0),
+                new Entity(4, 4, 1, 0, 10, 0),
+                new Entity(5, 2, 3, 0, 10, 1),
+                new Entity(6, 3, 2, 0, 10, 0),
+                new Entity(7, 6, 6, 0, 10, 0),
+                new Entity(8, 11, 5, 0, 10, -1),
+                new Entity(9, 8, 2, 0, 10, 0),
+                new Entity(10, 7, 2, 0, 10, 0),
+                new Entity(11, 10, 3, 0, 10, 0),
+                new Entity(12, 9, 3, 0, 10, 0),
+                new Entity(13, 7, 6, 0, 10, 0)
+            };
+            state.SetState(entities);
+            state.Seed = 879663491;
+
+            state.ApplyMove(0l, true);
             return state;
         }
     }

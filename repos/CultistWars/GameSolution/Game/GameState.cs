@@ -117,7 +117,6 @@ namespace GameSolution
                             myEntities.Remove(shootEntityTarget);
                         else if(isOpp)
                             oppEntities.Remove(shootEntityTarget);
-                        else neutralEntities.Remove(shootEntityTarget);
                     }
                     else 
                     {
@@ -403,7 +402,7 @@ namespace GameSolution
                     {
                         var targetEntity = neutralEntities[ti];
 
-                        if (Board.GetManhattenDistance(entity.Location, targetEntity.Location) <= 6)
+                        if (!targetEntity.IsDead() && Board.GetManhattenDistance(entity.Location, targetEntity.Location) <= 6)
                         {
                             var endLocation = CheckBulletPath(entity.Location, targetEntity.Location);
                             if (endLocation == targetEntity.Location)
@@ -458,6 +457,7 @@ namespace GameSolution
 
         public void MoveNeutralUnit()
         {
+            NeutralLastMove = -1;
             var neutralCount = neutralEntities.Count;
             if (neutralCount > 0)
             {
@@ -465,6 +465,8 @@ namespace GameSolution
                 if (index < neutralCount)
                 {
                     Entity neutralUnit = neutralEntities[index];
+                    if (neutralUnit.IsDead())
+                        return;
                     IList moves = new List<long>();
                     GetMovesForEntity(ref moves, neutralUnit);
                     if (moves.Count > 0)
@@ -474,6 +476,11 @@ namespace GameSolution
                         ClearBoardMap(neutralUnit);
                         neutralUnit.Move(Move.GetLocation(action));
                         SetBoardMap(neutralUnit);
+                    }
+                    else
+                    {
+                        //Seed still moves even if there are no legal move actions; the unit still must 'wait'!
+                        InternalRandom.rand(ref Seed, 1);
                     }
                 }
             }
