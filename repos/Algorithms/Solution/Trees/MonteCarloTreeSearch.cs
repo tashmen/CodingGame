@@ -25,6 +25,11 @@ namespace Algorithms.Trees
             strategy = searchStrategy;
         }
 
+        public IGameState GetRootState()
+        {
+            return RootNode.state;
+        }
+
         /// <summary>
         /// Get the next move
         /// </summary>
@@ -76,8 +81,9 @@ namespace Algorithms.Trees
 
             GameTreeNode bestChild = null;
             double bestScore = double.MinValue;
-            foreach(GameTreeNode child in RootNode.children)
+            for(int i = 0; i<RootNode.children.Count; i++)
             {
+                var child = RootNode.children[i];
                 double score = child.GetScore(RootNode.isMax);
                 if(bestScore < score)
                 {
@@ -158,8 +164,9 @@ namespace Algorithms.Trees
                 tempNode = queue.Dequeue();
                 if (tempNode.moves.Count == 0)
                 {
-                    foreach (GameTreeNode child in tempNode.children)
+                    for(int i = 0; i<tempNode.children.Count; i++)
                     {
+                        var child = tempNode.children[i];
                         queue.Enqueue(child);
                     }
                 }
