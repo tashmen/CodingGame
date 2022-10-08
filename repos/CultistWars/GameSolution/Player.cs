@@ -103,7 +103,7 @@ class Player
             //miniMax.SetState(state);
 
             long move;
-            move = (long)monteCarlo.GetNextMove(watch, limit, 40, 5, 0.5);
+            move = (long)monteCarlo.GetNextMove(watch, limit, 30, 5, 0.5);
             //move = (Move)miniMax.GetNextMove(watch, limit, 5);
             watch.Stop();
 
