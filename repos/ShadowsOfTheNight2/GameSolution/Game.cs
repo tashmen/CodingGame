@@ -50,31 +50,22 @@ namespace GameSolution
             switch (BombDir)
             {
                 case BombDirection.Unknown:
-                    StartX = FindNextJump(currentX, previousX, leftX, rightX);
-                    //Y0 = largestY - Y0 - 1;
+                    StartX = FindNextJump(currentX, previousX, leftX, rightX, LargestX);
                     break;
                 case BombDirection.Same:
                     if (currentX == previousX)
                     {
-                        if (isXScan)
+                        if (previousY < currentY)
                         {
-                            isXScan = false;
-                            StartY = (rightY + leftY) / 2;
+                            leftY = previousY;
+                            rightY = currentY;
                         }
                         else
                         {
-                            if (previousY < currentY)
-                            {
-                                leftY = previousY;
-                                rightY = currentY;
-                            }
-                            else
-                            {
-                                leftY = currentY;
-                                rightY = previousY;
-                            }
-                            StartY = (rightY + leftY) / 2;
+                            leftY = currentY;
+                            rightY = previousY;
                         }
+                        StartY = (rightY + leftY) / 2;
                     }
                     else
                     {
@@ -88,26 +79,26 @@ namespace GameSolution
                     {
                         if (previousX < currentX)
                         {
-                            rightX = Math.Max(leftX, Math.Min(rightX, (previousX + currentX) / 2));
-                            StartX = FindNextJump(currentX, previousX, leftX, rightX);
+                            rightX = UpdateRight(leftX, rightX, previousX, currentX);
+                            StartX = FindNextJump(currentX, previousX, leftX, rightX/*currentX*/, LargestX);
                         }
                         else
                         {
-                            leftX = Math.Min(rightX, Math.Max(leftX, (previousX + currentX) / 2 + 2));
-                            StartX = FindNextJump(currentX, previousX, leftX, rightX);
+                            leftX = UpdateLeft(leftX, rightX, previousX, currentX);
+                            StartX = FindNextJump(currentX, previousX, leftX/*currentX*/, rightX, LargestX);
                         }
                     }
                     else
                     {
                         if (previousY < currentY)
                         {
-                            rightY = Math.Max(leftY, Math.Min(rightY, (previousY + currentY) / 2));
-                            StartY = FindNextJump(currentY, previousY, leftY, rightY);
+                            rightY = UpdateRight(leftY, rightY, previousY, currentY);
+                            StartY = FindNextJump(currentY, previousY, leftY, rightY /*currentY*/, LargestY);
                         }
                         else
                         {
-                            leftY = Math.Min(rightY, Math.Max(leftY, (previousY + currentY) / 2 + 2));
-                            StartY = FindNextJump(currentY, previousY, leftY, rightY);
+                            leftY = UpdateLeft(leftY, rightY, previousY, currentY);
+                            StartY = FindNextJump(currentY, previousY, leftY/*currentY*/, rightY, LargestY);
                         }
 
                     }
@@ -117,26 +108,26 @@ namespace GameSolution
                     {
                         if (previousX < currentX)
                         {
-                            leftX = Math.Min(rightX, Math.Max(leftX, (currentX + previousX) / 2 + 1));
-                            StartX = FindNextJump(currentX, previousX, leftX, rightX);
+                            leftX = UpdateLeft(leftX, rightX, previousX, currentX);
+                            StartX = FindNextJump(currentX, previousX, leftX /*currentX*/, rightX, LargestX);
                         }
                         else
                         {
-                            rightX = Math.Max(leftX, Math.Min(rightX, (currentX + previousX) / 2));
-                            StartX = FindNextJump(currentX, previousX, leftX, rightX);
+                            rightX = UpdateRight(leftX, rightX, previousX, currentX);
+                            StartX = FindNextJump(currentX, previousX, leftX, rightX /*currentX*/, LargestX);
                         }
                     }
                     else
                     {
                         if (previousY < currentY)
                         {
-                            leftY = Math.Min(rightY, Math.Max(leftY, (currentY + previousY) / 2 + 1));
-                            StartY = FindNextJump(currentY, previousY, /*leftY*/ currentY, rightY);
+                            leftY = UpdateLeft(leftY, rightY, previousY, currentY);
+                            StartY = FindNextJump(currentY, previousY, leftY /*currentY*/, rightY, LargestY);
                         }
                         else
                         {
-                            rightY = Math.Max(leftY, Math.Min(rightY, (currentY + previousY) / 2));
-                            StartY = FindNextJump(currentY, previousY, leftY, /*rightY*/ currentY);
+                            rightY = UpdateRight(leftY, rightY, previousY, currentY);
+                            StartY = FindNextJump(currentY, previousY, leftY, rightY /*currentY*/, LargestY);
                         }
                     }
                     break;
@@ -145,7 +136,7 @@ namespace GameSolution
             if (leftX == rightX && isXScan)
             {
                 isXScan = false;
-                StartY = FindNextJump(currentY, previousY, leftY, rightY);
+                StartY = FindNextJump(currentY, previousY, leftY, rightY, LargestY);
             }
 
             Console.Error.WriteLine($"X: {leftX}, {rightX} Y: {leftY}, {rightY}");
@@ -153,13 +144,37 @@ namespace GameSolution
             return Tuple.Create(StartX, StartY);
         }
 
-        static int FindNextJump(int current, int previous, int left, int right)
+        static int FindNextJump(int current, int previous, int left, int right, int largest)
         {
             var midPoint = (left + right) / 2;
             if (current == midPoint && left != right)
                 return current + 1;
             else
+            {
                 return midPoint;
+                //return Math.Max(0, Math.Min(largest - 1, 2 * midPoint - current));
+                if (current > left && current < right)
+                {
+                    
+                }
+                else if (current > right)
+                {
+                    return right;
+                }
+                else if (current < left)
+                    return left;
+            }
+                
+        }
+
+        static int UpdateRight(int left, int right, int previous, int current)
+        {
+            return Math.Max(left, Math.Min(right, (int)Math.Ceiling((previous + current) / 2.0) - 1));
+        }
+
+        static int UpdateLeft(int left, int right, int previous, int current)
+        {
+            return Math.Min(right, Math.Max(left, (int)((previous + current) / 2.0) + 1));
         }
     }
 }
