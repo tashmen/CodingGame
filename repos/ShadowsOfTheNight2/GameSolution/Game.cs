@@ -70,8 +70,6 @@ namespace GameSolution
                     else
                     {
                         leftX = rightX = (currentX + previousX) / 2;
-                        StartX = leftX;
-                        isXScan = false;
                     }
                     break;
                 case BombDirection.Colder:
@@ -138,6 +136,12 @@ namespace GameSolution
                 isXScan = false;
                 StartY = FindNextJump(currentY, previousY, leftY, rightY, LargestY);
             }
+            
+            if(leftY == rightY && !isXScan && leftX == rightX)
+            {
+                StartY = leftY;
+                StartX = leftX;
+            }
 
             Console.Error.WriteLine($"X: {leftX}, {rightX} Y: {leftY}, {rightY}");
 
@@ -152,7 +156,7 @@ namespace GameSolution
             else
             {
                 return midPoint;
-                //return Math.Max(0, Math.Min(largest - 1, 2 * midPoint - current));
+                return Math.Max(0, Math.Min(largest - 1, 2 * midPoint - current));
                 if (current > left && current < right)
                 {
                     

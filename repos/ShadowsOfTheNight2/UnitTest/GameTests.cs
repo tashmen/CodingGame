@@ -54,11 +54,12 @@ namespace UnitTest
         [InlineData(101, 1, 20, 0, 0, 32, 0)]
         [InlineData(101, 1, 20, 0, 0, 2, 0)]
         [InlineData(50, 50, 16, 17, 29, 48, 10)]
-        [InlineData(1000, 1000, 28, 501, 501, 998, 2)]
-        [InlineData(1000, 1000, 28, 501, 501, 998, 738)]
+        [InlineData(1000, 1000, 27, 501, 501, 998, 2)]
+        [InlineData(1000, 1000, 27, 501, 501, 998, 738)]
         [InlineData(1000, 1000, 27, 501, 501, 738, 745)]
         [InlineData(1000, 1000, 27, 501, 501, 501, 998)]
         [InlineData(1000, 1000, 27, 501, 501, 751, 719)]
+        [InlineData(1000, 1000, 27, 501, 501, 998, 998)]
 
         public void TestGamePlay( int largestX, int largestY, int turns, int startX, int startY, int bombX, int bombY)
         {
