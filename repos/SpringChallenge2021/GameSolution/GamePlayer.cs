@@ -6,6 +6,7 @@ using GameSolution.Entities;
 using GameSolution.Moves;
 using System.Diagnostics;
 using Algorithms;
+using Algorithms.Trees;
 
 public class GamePlayer
 {

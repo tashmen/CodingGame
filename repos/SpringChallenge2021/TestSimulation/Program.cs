@@ -1,9 +1,6 @@
-﻿using Algorithms;
-using GameSolution.Entities;
-using GameSolution.Moves;
+﻿using Algorithms.Trees;
 using GameSolution.Utility;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace TestSimulation

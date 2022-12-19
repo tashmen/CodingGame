@@ -1,4 +1,5 @@
 ﻿using Algorithms;
+using Algorithms.GameComponent;
 using GameSolution.Entities;
 using GameSolution.Moves;
 using System;

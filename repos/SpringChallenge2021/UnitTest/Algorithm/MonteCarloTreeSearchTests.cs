@@ -1,4 +1,5 @@
 ﻿using Algorithms;
+using Algorithms.Trees;
 using GameSolution.Entities;
 using GameSolution.Moves;
 using GameSolution.Utility;
