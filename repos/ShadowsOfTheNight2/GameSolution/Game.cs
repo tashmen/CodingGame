@@ -68,12 +68,12 @@ namespace GameSolution
                         if (previousX < currentX)
                         {
                             rightX = UpdateRight(leftX, rightX, previousX, currentX);
-                            StartX = FindNextJump(currentX, previousX, leftX, rightX/*currentX*/, LargestX);
+                            StartX = FindNextJump(currentX, previousX, leftX, rightX, LargestX);
                         }
                         else
                         {
                             leftX = UpdateLeft(leftX, rightX, previousX, currentX);
-                            StartX = FindNextJump(currentX, previousX, leftX/*currentX*/, rightX, LargestX);
+                            StartX = FindNextJump(currentX, previousX, leftX, rightX, LargestX);
                         }
                     }
                     else
@@ -81,12 +81,12 @@ namespace GameSolution
                         if (previousY < currentY)
                         {
                             rightY = UpdateRight(leftY, rightY, previousY, currentY);
-                            StartY = FindNextJump(currentY, previousY, leftY, rightY /*currentY*/, LargestY);
+                            StartY = FindNextJump(currentY, previousY, leftY, rightY, LargestY);
                         }
                         else
                         {
                             leftY = UpdateLeft(leftY, rightY, previousY, currentY);
-                            StartY = FindNextJump(currentY, previousY, leftY/*currentY*/, rightY, LargestY);
+                            StartY = FindNextJump(currentY, previousY, leftY, rightY, LargestY);
                         }
 
                     }
@@ -97,12 +97,12 @@ namespace GameSolution
                         if (previousX < currentX)
                         {
                             leftX = UpdateLeft(leftX, rightX, previousX, currentX);
-                            StartX = FindNextJump(currentX, previousX, leftX /*currentX*/, rightX, LargestX);
+                            StartX = FindNextJump(currentX, previousX, leftX, rightX, LargestX);
                         }
                         else
                         {
                             rightX = UpdateRight(leftX, rightX, previousX, currentX);
-                            StartX = FindNextJump(currentX, previousX, leftX, rightX /*currentX*/, LargestX);
+                            StartX = FindNextJump(currentX, previousX, leftX, rightX, LargestX);
                         }
                     }
                     else
@@ -110,12 +110,12 @@ namespace GameSolution
                         if (previousY < currentY)
                         {
                             leftY = UpdateLeft(leftY, rightY, previousY, currentY);
-                            StartY = FindNextJump(currentY, previousY, leftY /*currentY*/, rightY, LargestY);
+                            StartY = FindNextJump(currentY, previousY, leftY, rightY, LargestY);
                         }
                         else
                         {
                             rightY = UpdateRight(leftY, rightY, previousY, currentY);
-                            StartY = FindNextJump(currentY, previousY, leftY, rightY /*currentY*/, LargestY);
+                            StartY = FindNextJump(currentY, previousY, leftY, rightY, LargestY);
                         }
                     }
                     break;
@@ -149,16 +149,6 @@ namespace GameSolution
                 if(calculatedMiddle == largest-1 || calculatedMiddle == 0)
                     return midPoint;
                 return calculatedMiddle;
-                if (current > left && current < right)
-                {
-                    
-                }
-                else if (current > right)
-                {
-                    return right;
-                }
-                else if (current < left)
-                    return left;
             }
                 
         }
