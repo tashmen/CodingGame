@@ -54,6 +54,8 @@ namespace Algorithms.Graph
         public void AddLink(int id1, int id2, double distance)
         {
             //Console.Error.WriteLine(id1 + " " + id2 + " " + distance);
+            if (ContainsLink(id1, id2))
+                return;
             AddLinkInternal(id1, id2, distance);
             if(IsByDirectional)
                 AddLinkInternal(id2, id1, distance);

@@ -6,19 +6,19 @@ namespace Algorithms.Graph
 {
     public class Graph
     {
-        private List<INode> Nodes;
+        private Dictionary<int, INode> Nodes;
         //Will hold shortest paths from a start node id to an end node id
         private Dictionary<int, Dictionary<int, List<ILink>>> Paths;
 
         public Graph()
         {
-            Nodes = new List<INode>();
+            Nodes = new Dictionary<int, INode>();
             
         }
 
         public void AddNode(INode node)
         {
-            Nodes.Add(node);
+            Nodes[node.Id] = node;
         }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace Algorithms.Graph
         {
             Paths = new Dictionary<int, Dictionary<int, List<ILink>>>();
 
-            foreach (INode vertex in Nodes)
+            foreach (INode vertex in Nodes.Values)
             {
                 InternalBuildShortestPathsFromStartNode(vertex);
             }
@@ -42,7 +42,7 @@ namespace Algorithms.Graph
 
         private void InternalBuildShortestPathsFromStartNode(INode startNode, double maxDistance = double.MaxValue)
         {
-            foreach (INode node in Nodes)
+            foreach (INode node in Nodes.Values)
             {
                 node.IsExplored = false;
             }
@@ -51,7 +51,8 @@ namespace Algorithms.Graph
 
             Paths[startNode.Id] = new Dictionary<int, List<ILink>>();
             Paths[startNode.Id][startNode.Id] = new List<ILink>();
-            minimumSpanningTree.Add(new Link(startNode, startNode, 0));
+            minimumSpanningTree.Add(new Link(startNode.Id, startNode.Id, 0));
+            startNode.IsExplored = true;
 
             int vertexCount = Nodes.Count;
             double currentDist;
@@ -63,11 +64,11 @@ namespace Algorithms.Graph
                 ILink parentLink = null;
                 foreach (ILink currentLink in minimumSpanningTree)
                 {
-                    INode currentNode = currentLink.EndNode;
+                    INode currentNode = Nodes[currentLink.EndNodeId];
                     currentDist = currentLink.GetDistance(Paths[startNode.Id][currentNode.Id]);
                     foreach (ILink adjacent in currentNode.GetLinks())
                     {
-                        INode adjacentNode = adjacent.EndNode;
+                        INode adjacentNode = Nodes[adjacent.EndNodeId];
                         if (adjacentNode.IsExplored)
                         {
                             continue;//skip nodes already in minimum spanning tree
@@ -85,7 +86,7 @@ namespace Algorithms.Graph
                         {
                             Paths[startNode.Id].TryGetValue(currentNode.Id, out List<ILink> pathCurrent);
                             int lengthCurrent = pathCurrent == null ? 0 : pathCurrent.Count;
-                            Paths[startNode.Id].TryGetValue(parentLink.EndNode.Id, out List<ILink> pathPrevious);
+                            Paths[startNode.Id].TryGetValue(parentLink.EndNodeId, out List<ILink> pathPrevious);
                             int lengthPrevious = pathPrevious == null ? 0 : pathPrevious.Count;
                             if (lengthCurrent < lengthPrevious)
                             {
@@ -101,11 +102,11 @@ namespace Algorithms.Graph
                     return;//no possible paths
                 }
                 minimumSpanningTree.Add(bestLink);
-                bestLink.EndNode.IsExplored = true;
+                Nodes[bestLink.EndNodeId].IsExplored = true;
                 List<ILink> currentPath = null;
-                if (!parentLink.EndNode.Equals(startNode))
+                if (!parentLink.EndNodeId.Equals(startNode.Id))
                 {
-                    Paths[startNode.Id].TryGetValue(parentLink.EndNode.Id, out currentPath);
+                    Paths[startNode.Id].TryGetValue(parentLink.EndNodeId, out currentPath);
                 }
                 if (currentPath == null)
                 {
@@ -115,7 +116,7 @@ namespace Algorithms.Graph
                 {
                     currentPath = new List<ILink>(currentPath);
                 }
-                Paths[startNode.Id].Add(bestLink.EndNode.Id, currentPath);
+                Paths[startNode.Id].Add(bestLink.EndNodeId, currentPath);
                 currentPath.Add(bestLink);
  
                 if (minDist >= maxDistance)
@@ -144,10 +145,35 @@ namespace Algorithms.Graph
                 throw new InvalidOperationException();
             }
 
-            INode shortest = paths.First().EndNode;
+            INode shortest = Nodes[paths.First().EndNodeId];
             Console.Error.WriteLine("|||Shortest: " + shortest + " from: " + startNode.Id + " to: " + endNode.Id);
 
             return shortest;
+        }
+
+        /// <summary>
+        /// Retrieves all nodes along the shortest path between two points
+        /// </summary>
+        /// <param name="startNodeId">Start node id</param>
+        /// <param name="endNodeId">End node id</param>
+        /// <returns>The full path from start to end</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public IList<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
+        {
+            Paths.TryGetValue(startNodeId, out Dictionary<int, List<ILink>> endPoints);
+            if (endPoints == null)
+            {
+                Console.Error.WriteLine("|||Start not found: " + startNodeId);
+                throw new InvalidOperationException();
+            }
+            endPoints.TryGetValue(endNodeId, out List<ILink> paths);
+            if (paths == null)
+            {
+                Console.Error.WriteLine("|||End not found: " + endNodeId + " start: " + startNodeId);
+                throw new InvalidOperationException();
+            }
+
+            return paths;
         }
 
         /// <summary>
@@ -158,12 +184,23 @@ namespace Algorithms.Graph
         /// <returns>The distance along the shortest path</returns>
         public double GetShortestPathDistance(INode startNode, INode endNode)
         {
-            Paths.TryGetValue(startNode.Id, out Dictionary<int, List<ILink>> endPoints);
+            return GetShortestPathDistance(startNode.Id, endNode.Id);
+        }
+
+        /// <summary>
+        /// Retrieves the distance following the shortest path from start to end.
+        /// </summary>
+        /// <param name="startId">The starting node id</param>
+        /// <param name="endId">The ending node id</param>
+        /// <returns>The distance along the shortest path</returns>
+        public double GetShortestPathDistance(int startId, int endId)
+        {
+            Paths.TryGetValue(startId, out Dictionary<int, List<ILink>> endPoints);
             if (endPoints == null)
             {
                 return double.MaxValue;
             }
-            endPoints.TryGetValue(endNode.Id, out List<ILink> paths);
+            endPoints.TryGetValue(endId, out List<ILink> paths);
             if (paths == null)
             {
                 return double.MaxValue;
@@ -180,7 +217,7 @@ namespace Algorithms.Graph
         /// <returns>The distance from start to end</returns>
         public double GetDistance(Node startNode, Node endNode)
         {
-            return startNode.GetLinks().Where(l => l.EndNode.Equals(endNode)).First().Distance;
+            return startNode.GetLinks().Where(l => l.EndNodeId.Equals(endNode.Id)).First().Distance;
         }
     }
 }

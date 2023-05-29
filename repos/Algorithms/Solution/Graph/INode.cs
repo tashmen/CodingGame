@@ -42,28 +42,35 @@ namespace Algorithms.Graph
 
     public interface ILink
     {
-        INode StartNode { get; }
-        INode EndNode { get; }
-        long Distance { get; }
-        long GetDistance(List<ILink> currentPath);
+        int StartNodeId { get; }
+        int EndNodeId { get; }
+        double Distance { get; }
+        double GetDistance(List<ILink> currentPath);
     }
 
     public class Link : ILink
     {
-        public INode StartNode { get; private set; }
-        public INode EndNode { get; private set; }
-        public long Distance { get; private set; }
+        public int StartNodeId { get; private set; }
+        public int EndNodeId { get; private set; }
+        public double Distance { get; private set; }
 
-        public Link(INode startNode, INode endNode, long distance)
+        public Link(int startNodeId, int endNodeId, double distance)
         {
-            StartNode = startNode;
-            EndNode = endNode;
+            StartNodeId = startNodeId;
+            EndNodeId = endNodeId;
             Distance = distance;
         }
 
-        public long GetDistance(List<ILink> currentPath)
+        public Link(INode startNode, INode endNode, double distance)
         {
-            long distance = 0;
+            StartNodeId = startNode.Id;
+            EndNodeId = endNode.Id;
+            Distance = distance;
+        }
+
+        public double GetDistance(List<ILink> currentPath)
+        {
+            double distance = 0;
             foreach(ILink link in currentPath)
             {
                 distance += link.Distance;
