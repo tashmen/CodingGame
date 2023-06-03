@@ -3,9 +3,6 @@ using GameSolution.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using static Algorithms.Graph.GraphLinks;
-using Node = Algorithms.Graph.Node;
 
 namespace GameSolution.Game
 {
@@ -20,48 +17,96 @@ namespace GameSolution.Game
         public Move GetMove()
         {
             Move move = new Move();
+            
+            SortedDictionary<double, List<Cell>> distanceToTargets= new SortedDictionary<double, List<Cell>>();
 
-            foreach (Cell myBase in State.MyBaseDictionary.Values)
+            int totalEggTargets = 0;
+            int totalCrystalTargets = 0;
+            if (State.TotalCrystals > (State.TotalMyAnts + State.TotalOppAnts) / 6 * 10)
             {
                 foreach (Cell eggCell in State.EggCells)
                 {
-                    var distance = State.Graph.GetShortestPathDistance(myBase.Index, eggCell.Index);
-                    Console.Error.WriteLine($"Found egg cell: {eggCell.Index} with distance: {distance}");
-                    if (IsMyBaseCloserThanOpponents(distance, State.OppBaseDictionary, eggCell))
+                    var closestBase = GetClosestBase(State.MyBaseDictionary, eggCell);
+
+                    if (IsMyBaseCloserThanOpponents(closestBase.Item1, State.OppBaseDictionary, eggCell))
                     {
-                        Console.Error.WriteLine($"distance is within range");
-                        var path = GetShortestPathFromExistingBeacons(move, myBase.Index, eggCell.Index);
-                        move.AddAction(MoveAction.CreateBeacon(path.First().StartNodeId, 1));
-                        foreach (var node in path)
+                        Console.Error.WriteLine($"Found egg cell: {eggCell.Index} with minimum distance: {closestBase.Item1}");
+
+                        if (!distanceToTargets.TryGetValue(closestBase.Item1, out List<Cell> targets))
                         {
-                            move.AddAction(MoveAction.CreateBeacon(node.EndNodeId, 1));
+                            targets = distanceToTargets[closestBase.Item1] = new List<Cell>();
                         }
+                        targets.Add(eggCell);
+                        totalEggTargets++;
                     }
+                }
+            }
+            
+            
+            foreach (Cell crystalCell in State.CrystalCells)
+            {
+                var closestBase = GetClosestBase(State.MyBaseDictionary, crystalCell);
+
+                if (IsMyBaseCloserThanOpponents(closestBase.Item1, State.OppBaseDictionary, crystalCell))
+                {
+                    if (!distanceToTargets.TryGetValue(closestBase.Item1, out List<Cell> targets))
+                    {
+                        targets = distanceToTargets[closestBase.Item1] = new List<Cell>();
+                    }
+                    targets.Add(crystalCell);
+                    totalCrystalTargets++;
                 }
             }
 
-            if(move.Actions.Count == 0 || State.TotalMyAnts > State.TotalOppAnts)
+
+            
+
+            HashSet<int> beacons = new HashSet<int>();
+            var totalResources = 0;
+            double previousDistance = 0;
+            var eggsTargeted = 0;
+            foreach(double key in distanceToTargets.Keys)
             {
-                foreach (Cell myBase in State.MyBaseDictionary.Values)
+                if (((key - previousDistance) < 2) && totalResources / (State.TotalMyAnts / key) > 4)
+                    break;
+                foreach(Cell target in distanceToTargets[key])
                 {
-                    foreach (Cell crystalCell in State.CrystalCells)
+                    
+                    var closestBase = GetClosestBase(State.MyBaseDictionary, target);
+                    Console.Error.WriteLine($"Processing target: {target.Index} at distance: {key}");
+                    var path = GetShortestPathFromExistingBeacons(beacons, closestBase.Item2.Index, target.Index);
+                    if ((totalEggTargets > eggsTargeted && target.ResourceType == ResourceType.Crystal && ((State.TotalCrystals / (State.TotalOppAnts + State.TotalMyAnts) > 5) || (target.ResourceAmount / key < 3)) && (eggsTargeted == 0 || path.Count > 1)))
                     {
-                        var distance = State.Graph.GetShortestPathDistance(myBase.Index, crystalCell.Index);
-                        if (distance < State.TotalMyAnts)
-                        {
-                            var path = GetShortestPathFromExistingBeacons(move, myBase.Index, crystalCell.Index);
-                            move.AddAction(MoveAction.CreateBeacon(path.First().StartNodeId, 1));
-                            foreach (var node in path)
-                            {
-                                move.AddAction(MoveAction.CreateBeacon(node.EndNodeId, 1));
-                            }
-                        }
+                        continue;
+                    }
+
+                    
+                    var totalCount = path.Count + beacons.Count;
+                    Console.Error.WriteLine($"{totalCount} vs {State.TotalMyAnts}");
+                    if (totalCount > State.TotalMyAnts)
+                    { 
+                        continue; 
+                    }
+
+                    beacons.Add(path[0].StartNodeId);
+                    foreach(var link in path)
+                    {
+                        beacons.Add(link.EndNodeId);
+                    }
+                    totalResources += target.ResourceAmount;
+                    if (target.ResourceType == ResourceType.Egg)
+                    {
+                        eggsTargeted++;
                     }
                 }
+                previousDistance = key;
             }
             
-            
-            
+            foreach(var beacon in beacons)
+            {
+                move.AddAction(MoveAction.CreateBeacon(beacon, 1));
+            }
+
 
             if (move.Actions.Count == 0)
                 move.AddAction(MoveAction.CreateWait());
@@ -69,20 +114,37 @@ namespace GameSolution.Game
             return move;
         }
 
-        public IList<ILink> GetShortestPathFromExistingBeacons(Move move, int startId, int endId)
+        public Tuple<double, Cell> GetClosestBase(Dictionary<int, Cell> bases, Cell target)
         {
-            var minDist = State.Graph.GetShortestPathDistance(startId, endId);
-            IList<ILink> bestPath = State.Graph.GetShortestPathAll(startId, endId);
-
-            foreach(MoveAction moveAction in move.Actions)
+            double minDistance = 999999;
+            Cell closestBase = null;
+            foreach (var myBaseTarget in bases.Values)
             {
-                if (endId != moveAction.Index1)
+                var distance = State.Board.Graph.GetShortestPathDistance(myBaseTarget.Index, target.Index);
+                if (minDistance > distance)
                 {
-                    var distance = State.Graph.GetShortestPathDistance(moveAction.Index1, endId);
+                    minDistance = distance;
+                    closestBase = myBaseTarget;
+                }
+            }
+
+            return Tuple.Create(minDistance, closestBase);
+        }
+
+        public IList<ILink> GetShortestPathFromExistingBeacons(HashSet<int> beacons, int startId, int endId)
+        {
+            var minDist = State.Board.Graph.GetShortestPathDistance(startId, endId);
+            IList<ILink> bestPath = State.Board.Graph.GetShortestPathAll(startId, endId);
+
+            foreach(int id in beacons)
+            {
+                if (endId != id)
+                {
+                    var distance = State.Board.Graph.GetShortestPathDistance(id, endId);
                     if (minDist > distance)
                     {
                         minDist = distance;
-                        bestPath = State.Graph.GetShortestPathAll(moveAction.Index1, endId);
+                        bestPath = State.Board.Graph.GetShortestPathAll(id, endId);
                     }
                 }
             }
@@ -94,8 +156,8 @@ namespace GameSolution.Game
         {
             foreach(Cell oppBase in opponentBases.Values)
             {
-                var oppDistance = State.Graph.GetShortestPathDistance(oppBase.Index, targetLocation.Index);
-                if (oppDistance < distance)
+                var oppDistance = State.Board.Graph.GetShortestPathDistance(oppBase.Index, targetLocation.Index);
+                if (oppDistance * 2.5 < distance || ((oppDistance < distance) && (targetLocation.ResourceAmount / distance) < 2))
                     return false;
             }
             return true;

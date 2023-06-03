@@ -1,5 +1,4 @@
 ﻿using Algorithms.GameComponent;
-using Algorithms.Graph;
 using GameSolution.Entities;
 using System;
 using System.Collections;
@@ -12,7 +11,7 @@ namespace GameSolution.Game
         public bool enableLogging = false;
         public Board Board { get; set; }
 
-        public int turn { get; set; }
+        public int Turn { get; set; }
         public Dictionary<int, Cell> MyBaseDictionary { get; set; }
         public Dictionary<int, Cell> OppBaseDictionary { get; set; }
 
@@ -21,15 +20,17 @@ namespace GameSolution.Game
 
         public int TotalMyAnts { get; set; } = 0;
         public int TotalOppAnts { get; set; } = 0;
-
-        public Graph Graph { get; set; }
+        public int TotalCrystals { get; set; } = 0;
+        public int MyScore { get; set; } = 0;
+        public int OppScore { get; set; } = 0;
+        
 
         public Move? maxMove { get; set; }
         public Move? minMove { get; set; }
 
         public GameState()
         {
-            turn = 0;
+            Turn = 0;
             maxMove = null;
             minMove = null;
         }
@@ -37,25 +38,30 @@ namespace GameSolution.Game
         public GameState(GameState state)
         {
             Board = state.Board.Clone();
-            turn = state.turn;
+            Turn = state.Turn;
             maxMove = state.maxMove;
             minMove = state.minMove;
         }
 
-        public void SetNextTurn(Board board)
+        public void SetNextTurn(Board board, int myScore, int oppScore)
         {
-            turn++;
+            Turn++;
             this.Board = board;
+            MyScore = myScore;
+            OppScore= oppScore;
             UpdateGameState();
         }
 
         public void UpdateGameState()
         {
-            Graph = new Graph();
             MyBaseDictionary = new Dictionary<int, Cell>();
             OppBaseDictionary = new Dictionary<int, Cell>();
             EggCells = new List<Cell>();
             CrystalCells = new List<Cell>();
+
+            TotalMyAnts = 0;
+            TotalOppAnts = 0;
+            TotalCrystals = 0;
 
             foreach (Cell cell in Board.Cells.Values)
             {
@@ -74,24 +80,11 @@ namespace GameSolution.Game
                 else if (cell.ResourceType == ResourceType.Crystal)
                 {
                     CrystalCells.Add(cell);
+                    TotalCrystals += cell.ResourceAmount;
                 }
                 TotalMyAnts += cell.MyAnts;
                 TotalOppAnts += cell.OppAnts;
-                var node = new Node(cell.Index);
-                Graph.AddNode(node);
-                foreach (int index in cell.Neighbors)
-                {
-                    if (index != -1)
-                    {
-                        var neighborCell = Board.GetCell(index);
-                        var distance = neighborCell.ResourceAmount > 0 ? 1 : 1.001;
-                        node.AddLink(new Link(node, new Node(index), distance));
-                        //Console.Error.WriteLine($"adding line {cell.Index}, {index}, {distance}");
-                    }
-                }
             }
-
-            Graph.CalculateShortestPaths();
         }
 
         public void ApplyMove(object move, bool isMax)
@@ -136,7 +129,7 @@ namespace GameSolution.Game
 
         public object GetMove(bool isMax)
         {
-            return true;
+            return isMax ? maxMove : minMove;
         }
 
         public IList GetPossibleMoves(bool isMax)
@@ -146,8 +139,31 @@ namespace GameSolution.Game
 
         public double? GetWinner()
         {
-            double? winner = Board.GetWinner();
-            if (this.turn == 220 & !winner.HasValue)
+            double? winner = null;
+            if(TotalCrystals == 0)
+            {
+                if(MyScore > OppScore)
+                {
+                    return 1;
+                }
+                else if(OppScore > MyScore)
+                {
+                    return -1;
+                }
+                else if(OppScore == MyScore)
+                {
+                    if (TotalMyAnts > TotalOppAnts)
+                    {
+                        return 1;
+                    }
+                    else if (TotalOppAnts > TotalMyAnts)
+                    {
+                        return -1;
+                    }
+                    else return 0;
+                }
+            }
+            if (Turn == 100 & !winner.HasValue)
             {
                 return 0;
             }

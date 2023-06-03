@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using GameSolution.Entities;
 using GameSolution.Game;
+using System.Diagnostics;
 
 /**
  * Auto-generated code below aims at helping you parse
@@ -54,7 +55,9 @@ class Player
         // game loop
         while (true)
         {
-            
+            inputs = Console.ReadLine().Split(' ');
+            int myScore = int.Parse(inputs[0]);
+            int oppScore = int.Parse(inputs[1]);
             for (int i = 0; i < numberOfCells; i++)
             {
                 inputs = Console.ReadLine().Split(' ');
@@ -70,11 +73,16 @@ class Player
 
             // Write an action using Console.WriteLine()
             // To debug: Console.Error.WriteLine("Debug messages...");
-            gameState.SetNextTurn(board);
+
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+
+            gameState.SetNextTurn(board, myScore, oppScore);
 
             GameHelper gameHelper = new GameHelper(gameState);
             Move move = gameHelper.GetMove();
 
+            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
 
             // WAIT | LINE <sourceIdx> <targetIdx> <strength> | BEACON <cellIdx> <strength> | MESSAGE <text>
             Console.WriteLine(move);

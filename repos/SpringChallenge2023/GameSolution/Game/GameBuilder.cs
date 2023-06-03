@@ -1,8 +1,5 @@
-﻿using Algorithms.Space;
-using GameSolution.Entities;
-using System;
+﻿using GameSolution.Entities;
 using System.Collections.Generic;
-using System.Text;
 
 namespace GameSolution.Game
 {

@@ -1,10 +1,5 @@
-﻿using Algorithms.GameComponent;
-using Algorithms.Space;
-using GameSolution.Entities;
-using GameSolution.Game;
+﻿using GameSolution.Game;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -26,11 +21,11 @@ namespace UnitTest
         public void TestGameState()
         {
             state = GameBuilder.BuildBasicGame();
-            var path = state.Graph.GetShortestPathAll(13, 25);
+            var path = state.Board.Graph.GetShortestPathAll(13, 25);
 
             Assert.Equal(25, path[0].EndNodeId);
 
-            path = state.Graph.GetShortestPathAll(13, 26);
+            path = state.Board.Graph.GetShortestPathAll(13, 26);
             Assert.Equal(2, path.Count);
 
         }
