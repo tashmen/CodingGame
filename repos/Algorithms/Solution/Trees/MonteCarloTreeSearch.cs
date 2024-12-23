@@ -1,5 +1,4 @@
 ﻿using Algorithms.GameComponent;
-using Algorithms.Trees;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,7 +17,7 @@ namespace Algorithms.Trees
             Random = 0,
             Sequential = 1
         }
-        public MonteCarloTreeSearch(bool showErrors = true, SearchStrategy searchStrategy = SearchStrategy.Random) 
+        public MonteCarloTreeSearch(bool showErrors = true, SearchStrategy searchStrategy = SearchStrategy.Random)
         {
             rand = new Random();
             printErrors = showErrors;
@@ -40,7 +39,7 @@ namespace Algorithms.Trees
         /// <returns></returns>
         public object GetNextMove(Stopwatch watch, int timeLimit, int depth = -1, int numRollouts = 1, double? exploration = null)
         {
-            if(exploration == null)
+            if (exploration == null)
             {
                 exploration = Math.Sqrt(2);
             }
@@ -48,9 +47,9 @@ namespace Algorithms.Trees
             do
             {
                 GameTreeNode selectedNode = SelectNodeWithUnplayedMoves(RootNode, exploration.Value);
-                if(selectedNode == null)
+                if (selectedNode == null)
                 {
-                    if(printErrors)
+                    if (printErrors)
                         Console.Error.WriteLine("Found no more moves!");
                     break;
                 }
@@ -63,7 +62,7 @@ namespace Algorithms.Trees
                 }
                 else
                 {
-                    for (int i = 0; i<numRollouts; i++)
+                    for (int i = 0; i < numRollouts; i++)
                     {
                         var clonedState = childNode.state.Clone();
                         winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
@@ -75,27 +74,27 @@ namespace Algorithms.Trees
                 }
             }
             while (watch.ElapsedMilliseconds < timeLimit);
-            if(printErrors)
+            if (printErrors)
                 Console.Error.WriteLine($"Played {count} games!");
-            
+
 
             GameTreeNode bestChild = null;
             double bestScore = double.MinValue;
-            for(int i = 0; i<RootNode.children.Count; i++)
+            for (int i = 0; i < RootNode.children.Count; i++)
             {
                 var child = RootNode.children[i];
                 double score = child.GetScore(RootNode.isMax);
-                if(bestScore < score)
+                if (bestScore < score)
                 {
                     bestChild = child;
                     bestScore = score;
                 }
-                if(printErrors)
-                    Console.Error.WriteLine($"w: {child.wins} l: {child.loses} total: {child.totalPlays} move: {child.state.GetMove(RootNode.isMax)} score: {score} isMax: {RootNode.isMax}");
+                if (printErrors)
+                    Console.Error.WriteLine($"w: {(RootNode.isMax ? child.wins : child.loses)} l: {(RootNode.isMax ? child.loses : child.wins)} total: {child.totalPlays} move: {child.state.GetMove(RootNode.isMax)} score: {score} isMax: {RootNode.isMax}");
             }
 
-            if(printErrors)
-                Console.Error.WriteLine($"Best: w: {bestChild.wins} l: {bestChild.loses} total: {bestChild.totalPlays} score: {bestScore} move: {bestChild.state.GetMove(RootNode.isMax)}");
+            if (printErrors)
+                Console.Error.WriteLine($"Best: w: {(RootNode.isMax ? bestChild.wins : bestChild.loses)} l: {(RootNode.isMax ? bestChild.loses : bestChild.wins)} total: {bestChild.totalPlays} score: {bestScore} move: {bestChild.state.GetMove(RootNode.isMax)}");
 
             return bestChild.state.GetMove(RootNode.isMax);
         }
@@ -104,7 +103,7 @@ namespace Algorithms.Trees
         {
             selectedNode.ApplyWinner(winner);
             GameTreeNode tempNode = selectedNode.parent;
-            while(tempNode != null)
+            while (tempNode != null)
             {
                 tempNode.ApplyWinner(winner);
                 tempNode = tempNode.parent;
@@ -131,7 +130,7 @@ namespace Algorithms.Trees
             }
             while (!winner.HasValue && depth != 0);
 
-            
+
             if (winner.HasValue)
             {
                 return winner;
@@ -164,20 +163,20 @@ namespace Algorithms.Trees
                 tempNode = queue.Dequeue();
                 if (tempNode.moves.Count == 0)
                 {
-                    for(int i = 0; i<tempNode.children.Count; i++)
+                    for (int i = 0; i < tempNode.children.Count; i++)
                     {
                         var child = tempNode.children[i];
                         queue.Enqueue(child);
                     }
                 }
-                else if(tempNode.parent != null)
+                else if (tempNode.parent != null)
                 {
                     double wins = RootNode.isMax ? tempNode.wins : tempNode.loses;
                     double nodeTotal = tempNode.TotalPlays();
                     double parentTotal = tempNode.parent.TotalPlays();
 
                     double value = wins / nodeTotal + exploration * Math.Sqrt(Math.Log(parentTotal) / nodeTotal);
-                    if(value > maxValue)
+                    if (value > maxValue)
                     {
                         maxValue = value;
                         bestNode = tempNode;
@@ -240,7 +239,7 @@ namespace Algorithms.Trees
                 move = node.moves[index];
                 node.moves.RemoveAt(index);
             }
-            
+
             return move;
         }
     }

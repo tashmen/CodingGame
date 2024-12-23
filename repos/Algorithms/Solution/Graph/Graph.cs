@@ -13,7 +13,7 @@ namespace Algorithms.Graph
         public Graph()
         {
             Nodes = new Dictionary<int, INode>();
-            
+
         }
 
         public void AddNode(INode node)
@@ -30,14 +30,94 @@ namespace Algorithms.Graph
 
             foreach (INode vertex in Nodes.Values)
             {
-                InternalBuildShortestPathsFromStartNode(vertex);
+                InternalBuildShortestPathsFromStartNode2(vertex);
             }
         }
 
         public void BuildShortestPathsFromStartNode(INode startNode, double maxDistance = double.MaxValue)
         {
             Paths = new Dictionary<int, Dictionary<int, List<ILink>>>();
-            InternalBuildShortestPathsFromStartNode(startNode, maxDistance);
+            InternalBuildShortestPathsFromStartNode2(startNode, maxDistance);
+        }
+
+        //With a little help from Chat GPT improved the performance significantly.
+        private void InternalBuildShortestPathsFromStartNode2(INode startNode, double maxDistance = double.MaxValue)
+        {
+            // Initialize exploration state and paths
+            foreach (INode node in Nodes.Values)
+            {
+                node.IsExplored = false;
+            }
+
+            var minimumSpanningTree = new HashSet<ILink>();
+            var priorityQueue = new SortedSet<(double Distance, int StepCount, ILink Link)>(Comparer<(double Distance, int StepCount, ILink Link)>.Create((a, b) =>
+            {
+                // Compare first by distance, then by step count (in case of tie)
+                int result = a.Distance.CompareTo(b.Distance);
+                if (result != 0) return result;
+                return a.StepCount.CompareTo(b.StepCount);
+            }));
+
+            Paths[startNode.Id] = new Dictionary<int, List<ILink>>();
+            Paths[startNode.Id][startNode.Id] = new List<ILink>();
+            startNode.IsExplored = true;
+
+            // Add initial links of the startNode to the priority queue
+            foreach (var link in startNode.GetLinks())
+            {
+                priorityQueue.Add((link.Distance, 1, link));  // Distance, StepCount (1), Link
+            }
+
+            while (minimumSpanningTree.Count < Nodes.Count && priorityQueue.Count > 0)
+            {
+                // Get the link with the minimum distance and fewest steps
+                var (currentDist, stepCount, bestLink) = priorityQueue.Min;
+                priorityQueue.Remove(priorityQueue.Min);
+
+                var currentNode = Nodes[bestLink.StartNodeId];
+                var adjacentNode = Nodes[bestLink.EndNodeId];
+
+                if (adjacentNode.IsExplored)
+                {
+                    continue; // Skip already explored nodes
+                }
+
+                adjacentNode.IsExplored = true;
+                minimumSpanningTree.Add(bestLink);
+
+                // Update paths
+                if (!Paths[startNode.Id].TryGetValue(currentNode.Id, out var currentPath))
+                {
+                    currentPath = new List<ILink>();
+                }
+                else
+                {
+                    currentPath = new List<ILink>(currentPath); // Copy the existing path
+                }
+
+                // Add the new link to the current path
+                currentPath.Add(bestLink);
+
+                // Store the complete path from the start node to the adjacent node
+                Paths[startNode.Id][bestLink.EndNodeId] = currentPath;
+
+                // Exit if the distance exceeds the maximum allowed
+                if (currentDist >= maxDistance)
+                    return;
+
+                // Add adjacent links of the newly explored node to the queue
+                foreach (var adjacentLink in adjacentNode.GetLinks())
+                {
+                    var nextNode = Nodes[adjacentLink.EndNodeId];
+                    if (!nextNode.IsExplored)
+                    {
+                        // Calculate the new distance and step count for the adjacent link
+                        double newDist = currentDist + adjacentLink.Distance;
+                        int newStepCount = stepCount + 1;
+                        priorityQueue.Add((newDist, newStepCount, adjacentLink));
+                    }
+                }
+            }
         }
 
         private void InternalBuildShortestPathsFromStartNode(INode startNode, double maxDistance = double.MaxValue)
@@ -46,7 +126,7 @@ namespace Algorithms.Graph
             {
                 node.IsExplored = false;
             }
-            
+
             List<ILink> minimumSpanningTree = new List<ILink>();
 
             Paths[startNode.Id] = new Dictionary<int, List<ILink>>();
@@ -118,7 +198,7 @@ namespace Algorithms.Graph
                 }
                 Paths[startNode.Id].Add(bestLink.EndNodeId, currentPath);
                 currentPath.Add(bestLink);
- 
+
                 if (minDist >= maxDistance)
                     return;
             }
