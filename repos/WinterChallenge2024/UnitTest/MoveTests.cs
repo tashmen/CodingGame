@@ -7,12 +7,12 @@ using Xunit.Abstractions;
 namespace UnitTest
 {
 
-    public class MoveTests
-    {
+     public class MoveTests
+     {
         public MoveTests(ITestOutputHelper output)
         {
-            var converter = new Converter(output);
-            Console.SetError(converter);
+          var converter = new Converter(output);
+          Console.SetError(converter);
         }
-    }
+     }
 }

@@ -1,23 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+     <TargetFramework>net6.0</TargetFramework>
 
-    <IsPackable>false</IsPackable>
+     <IsPackable>false</IsPackable>
 
-    <LangVersion>8.0</LangVersion>
+     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
-    <PackageReference Include="OpenCover" Version="4.7.922" />
-    <PackageReference Include="xunit" Version="2.4.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
-    <PackageReference Include="coverlet.collector" Version="1.0.1" />
+     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+     <PackageReference Include="OpenCover" Version="4.7.922" />
+     <PackageReference Include="xunit" Version="2.4.0" />
+     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
+     <PackageReference Include="coverlet.collector" Version="1.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GameSolution\GameSolution.csproj" />
+     <ProjectReference Include="..\GameSolution\GameSolution.csproj" />
   </ItemGroup>
 
 </Project>

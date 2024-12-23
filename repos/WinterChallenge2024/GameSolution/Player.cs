@@ -22,7 +22,7 @@ class Player
         int width = int.Parse(inputs[0]); // columns in the game grid
         int height = int.Parse(inputs[1]); // rows in the game grid
 
-        Board board = new Board(width, height);
+        Board board = null;
 
         // game loop
         while (true)
@@ -43,7 +43,6 @@ class Player
                 Entity entity = new Entity(x, y, type, owner, organId, organDir, organParentId, organRootId);
                 entities.Add(entity);
             }
-            board.SetEntities(entities);
             inputs = Console.ReadLine().Split(' ');
             int myA = int.Parse(inputs[0]);
             int myB = int.Parse(inputs[1]);
@@ -61,6 +60,13 @@ class Player
 
             Stopwatch watch = new Stopwatch();
             watch.Start();
+            if (gameState.Turn == 0)
+            {
+                board = new Board(width, height);
+            }
+            board.SetEntities(entities);
+
+            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
 
             gameState.SetNextTurn(board, myProtein, oppProtein);
 

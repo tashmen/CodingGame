@@ -48,8 +48,8 @@ namespace UnitTest
 
             Assert.Equal(5, state.GetGlobalOrganId());
 
-            oldState.Board.GetEntities()[new Point2d(2, 2)] = new Entity(2, 2, "BASIC", 1, 3, "N", 1, 1);
-            oldState.Board.GetEntities()[new Point2d(2, 6)] = new Entity(2, 6, "BASIC", 0, 4, "N", 2, 2);
+            oldState.Board.GetEntities()[oldState.Board.GetNodeIndex(2, 2)] = new Entity(2, 2, "BASIC", 1, 3, "N", 1, 1);
+            oldState.Board.GetEntities()[oldState.Board.GetNodeIndex(2, 6)] = new Entity(2, 6, "BASIC", 0, 4, "N", 2, 2);
             oldState.Board.GlobalOrganId = 5;
             oldState.Turn++;
             oldState.MyProtein[0]--;
@@ -65,7 +65,7 @@ namespace UnitTest
         {
             state = GameBuilder.BuildWood2Game();
             List<Move> myMoves = (List<Move>)state.GetPossibleMoves(true);
-            Assert.Equal(7, myMoves.Count);
+            Assert.Equal(3, myMoves.Count);
         }
 
     }

@@ -20,7 +20,7 @@ namespace TestSimulation
                 watch.Reset();
                 watch.Start();
                 search.SetState(game, true, false);
-                Move move = (Move)search.GetNextMove(watch, 5000, 10, 1);
+                Move move = (Move)search.GetNextMove(watch, 2000, 20, 1);
                 game.ApplyMove(move, true);
                 watch.Stop();
 
@@ -28,7 +28,7 @@ namespace TestSimulation
                 watch.Reset();
                 watch.Start();
                 oppSearch.SetState(game, false, false);
-                move = (Move)oppSearch.GetNextMove(watch, 5000, 10, 1);
+                move = (Move)oppSearch.GetNextMove(watch, 2000, 20, 1);
                 game.ApplyMove(move, false);
                 watch.Stop();
 
