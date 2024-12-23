@@ -52,12 +52,20 @@ namespace UnitTest
             oldState.Board.GetEntities()[new Point2d(2, 6)] = new Entity(2, 6, "BASIC", 0, 4, "N", 2, 2);
             oldState.Board.GlobalOrganId = 5;
             oldState.Turn++;
-            oldState.MyProtein[EntityType.A]--;
-            oldState.OppProtein[EntityType.A]--;
+            oldState.MyProtein[0]--;
+            oldState.OppProtein[0]--;
             oldState.minMove = oppMove;
             oldState.maxMove = myMove;
 
             Assert.True(oldState.Equals(state));
+        }
+
+        [Fact]
+        public void TestStartMoves_Wood2()
+        {
+            state = GameBuilder.BuildWood2Game();
+            List<Move> myMoves = (List<Move>)state.GetPossibleMoves(true);
+            Assert.Equal(7, myMoves.Count);
         }
 
     }

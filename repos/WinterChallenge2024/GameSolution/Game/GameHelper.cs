@@ -1,8 +1,4 @@
-﻿using Algorithms.Graph;
-using GameSolution.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using GameSolution.Entities;
 
 namespace GameSolution.Game
 {

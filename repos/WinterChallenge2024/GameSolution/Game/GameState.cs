@@ -2,7 +2,6 @@
 using GameSolution.Entities;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace GameSolution.Game
@@ -13,8 +12,8 @@ namespace GameSolution.Game
         public Board Board { get; private set; }
         public int Turn { get; set; }
 
-        public Dictionary<EntityType, int> MyProtein { get; set; }
-        public Dictionary<EntityType, int> OppProtein { get; set; }
+        public int[] MyProtein { get; set; }
+        public int[] OppProtein { get; set; }
 
         public Move? maxMove { get; set; }
         public Move? minMove { get; set; }
@@ -30,13 +29,13 @@ namespace GameSolution.Game
         {
             Board = state.Board.Clone();
             Turn = state.Turn;
-            MyProtein = state.MyProtein.ToDictionary(e => e.Key, e => e.Value);
-            OppProtein = state.OppProtein.ToDictionary(e => e.Key, e => e.Value);
+            MyProtein = state.MyProtein.ToArray();
+            OppProtein = state.OppProtein.ToArray();
             maxMove = state.maxMove;
             minMove = state.minMove;
         }
 
-        public void SetNextTurn(Board board, Dictionary<EntityType, int> myProtein, Dictionary<EntityType, int> oppProtein)
+        public void SetNextTurn(Board board, int[] myProtein, int[] oppProtein)
         {
             Turn++;
             this.Board = board;
@@ -47,7 +46,7 @@ namespace GameSolution.Game
 
         public void UpdateGameState()
         {
-
+            Board.UpdateBoard();
         }
 
         public void ApplyMove(object move, bool isMax)
@@ -70,43 +69,41 @@ namespace GameSolution.Game
                 ApplyMove(maxMove, MyProtein);
                 ApplyMove(minMove, OppProtein);
 
-                Board.ApplyMove(maxMove, true);
-                Board.ApplyMove(minMove, false);
+                Board.ApplyMove(maxMove, minMove);
 
                 Board.Harvest(true, MyProtein);
                 Board.Harvest(false, OppProtein);
+
+                Board.Attack();
 
                 SetNextTurn(Board, MyProtein, OppProtein);
             }
         }
 
-        public void ApplyMove(Move move, Dictionary<EntityType, int> Proteins)
+        public void ApplyMove(Move move, int[] proteins)
         {
             foreach (MoveAction action in move.Actions)
             {
-                if (action.Type == MoveType.GROW)
+                if (action.Type == MoveType.GROW || action.Type == MoveType.SPORE)
                 {
-                    Proteins[EntityType.A]--;
-                    Entity entity = Board.GetEntityByLocation(action.Location);
-                    if (entity != null)
+                    ApplyCost(proteins, action.GetCost());
+                    if (action.EntityType == EntityType.BASIC)
                     {
-                        switch (entity.Type)
+                        Entity entity = Board.GetEntityByLocation(action.Location);
+                        if (entity != null)
                         {
-                            case EntityType.A:
-                                Proteins[EntityType.A] += 3;
-                                break;
-                            case EntityType.B:
-                                Proteins[EntityType.B] += 3;
-                                break;
-                            case EntityType.C:
-                                Proteins[EntityType.C] += 3;
-                                break;
-                            case EntityType.D:
-                                Proteins[EntityType.D] += 3;
-                                break;
+                            proteins[entity.Type - EntityType.A] += 3;
                         }
                     }
                 }
+            }
+        }
+
+        public void ApplyCost(int[] proteins, int[] cost)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                proteins[i] -= cost[i];
             }
         }
 
@@ -127,11 +124,11 @@ namespace GameSolution.Game
             if ((minMove == null && gameState.minMove != null) || (minMove != null && gameState.minMove == null))
                 return false;
 
-            foreach (EntityType type in MyProtein.Keys)
+            for (int i = 0; i < 4; i++)
             {
-                if (this.MyProtein[type] != gameState.MyProtein[type])
+                if (this.MyProtein[i] != gameState.MyProtein[i])
                     return false;
-                if (this.OppProtein[type] != gameState.OppProtein[type])
+                if (this.OppProtein[i] != gameState.OppProtein[i])
                     return false;
             }
 
@@ -153,9 +150,9 @@ namespace GameSolution.Game
             var myEntities = Board.GetMyEntityCount();
             var oppEntities = Board.GetOppEntityCount();
 
-            var myProteinA = MyProtein[EntityType.A];
-            var oppProteinA = OppProtein[EntityType.A];
-            value = (((double)myEntities - oppEntities) / (myEntities + oppEntities)) + (((double)myProteinA - oppProteinA) / (myProteinA + oppProteinA + 1) * 0.001);
+            var myProtein = MyProtein.Sum();
+            var oppProtein = OppProtein.Sum();
+            value = (((double)myEntities - oppEntities) / (myEntities + oppEntities + 1)) + (((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001);
 
             return value;
         }
@@ -165,25 +162,16 @@ namespace GameSolution.Game
             return isMax ? maxMove : minMove;
         }
 
-        public Dictionary<EntityType, int> GetProteins(bool isMine)
+        public int[] GetProteins(bool isMine)
         {
             return isMine ? MyProtein : OppProtein;
         }
 
         public IList GetPossibleMoves(bool isMax)
         {
-            var moves = new List<Move>();
-            var move = new Move();
-            move.AddAction(MoveAction.CreateWait());
-            moves.Add(move);
+            int[] proteins = GetProteins(isMax);
 
-            Dictionary<EntityType, int> proteins = GetProteins(isMax);
-            if (proteins[EntityType.A] > 0)
-            {
-                moves.AddRange(Board.GetGrowMoves(isMax));
-            }
-
-            return moves;
+            return Board.GetMoves(proteins, isMax);
         }
 
         public double? GetWinner()
@@ -195,15 +183,18 @@ namespace GameSolution.Game
 
             if (Turn < 100)
             {
-                if (MyProtein[EntityType.A] == 0 && myEntities < oppEntities)
+                bool hasNoMyProteinsToBuild = MyProtein[0] == 0 && ((MyProtein[1] == 0 && MyProtein[2] == 0) || (MyProtein[1] == 0 && MyProtein[3] == 0) || (MyProtein[2] == 0 && MyProtein[3] == 0));
+                bool hasNoOppProteinsToBuild = OppProtein[0] == 0 && ((OppProtein[1] == 0 && OppProtein[2] == 0) || (OppProtein[1] == 0 && OppProtein[3] == 0) || (OppProtein[2] == 0 && OppProtein[3] == 0));
+
+                if (hasNoMyProteinsToBuild && myEntities < oppEntities)
                     winner = -1;
-                if (OppProtein[EntityType.A] == 0 && oppEntities < myEntities)
+                if (hasNoOppProteinsToBuild && oppEntities < myEntities)
                     winner = 1;
-                if (MyProtein[EntityType.A] == 0 && OppProtein[EntityType.A] == 0 && myEntities == oppEntities)
+                if (hasNoMyProteinsToBuild && hasNoOppProteinsToBuild && myEntities == oppEntities)
                     winner = 0;
             }
 
-            if (Turn == 100)
+            if (Turn == 100 || Board.IsFull())
             {
                 if (myEntities > oppEntities)
                 {
@@ -215,11 +206,11 @@ namespace GameSolution.Game
                 }
                 else
                 {
-                    if (MyProtein[EntityType.A] > OppProtein[EntityType.A])
+                    if (MyProtein.Sum() > OppProtein.Sum())
                     {
                         winner = 1;
                     }
-                    else if (MyProtein[EntityType.A] < OppProtein[EntityType.A])
+                    else if (MyProtein.Sum() < OppProtein.Sum())
                     {
                         winner = -1;
                     }
@@ -233,8 +224,8 @@ namespace GameSolution.Game
         public void Print()
         {
             Console.Error.WriteLine(Turn);
-            Console.Error.WriteLine(string.Join(',', MyProtein.Values));
-            Console.Error.WriteLine(string.Join(',', OppProtein.Values));
+            Console.Error.WriteLine(string.Join(',', MyProtein));
+            Console.Error.WriteLine(string.Join(',', OppProtein));
             Board.Print();
         }
     }

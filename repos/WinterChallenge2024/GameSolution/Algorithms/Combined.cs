@@ -8,587 +8,19 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-//*** SourceCombiner -> original file IGameState.cs ***
 namespace Algorithms.GameComponent
 {
     public interface IGameState
     {
-        /// <summary>
-        /// Retrieve the possible moves
-        /// </summary>
-        /// <param name="isMax">Whether or not to retrieve moves for max</param>
-        /// <returns>list of all possible moves</returns>
         IList GetPossibleMoves(bool isMax);
-        /// <summary>
-        /// Applies a move to the game state.  The game state must remember this move so that it can be retrieves with GetMove.
-        /// </summary>
-        /// <param name="isMax">Whether or not the move is for max</param>
-        /// <param name="move">the move to apply</param>
         void ApplyMove(object move, bool isMax);
-        /// <summary>
-        /// Retrieves the move that was played to reach this state.
-        /// </summary>
-        /// <param name="isMax">Whether or not the move is for max</param>
-        /// <returns>The move</returns>
         object GetMove(bool isMax);
-        /// <summary>
-        /// Clones the game state
-        /// </summary>
-        /// <returns>The copy of the state</returns>
         IGameState Clone();
-        /// <summary>
-        /// Returns whether or not the game is over and who won (1 - max wins, 0 - draw, -1 - min wins, null - game is not over)
-        /// </summary>
-        /// <returns>Who won the game</returns>
         double? GetWinner();
-        /// <summary>
-        /// Determines if the game state is the same as this one
-        /// </summary>
-        /// <param name="">the state to compare against</param>
-        /// <returns>true if equal</returns>
         bool Equals(IGameState state);
-        /// <summary>
-        /// Evaluates the current game board closer to 1 is max wins closer to -1 is min wins
-        /// </summary>
-        /// <param name="isMax">true if it is max's turn else false</param>
-        /// <returns>A number between [-1, 1]</returns>
         double Evaluate(bool isMax);
     }
 }
-//*** SourceCombiner -> original file Graph.cs ***
-namespace Algorithms.Graph
-{
-    public class Graph
-    {
-        private Dictionary<int, INode> Nodes;
-        //Will hold shortest paths from a start node id to an end node id
-        private Dictionary<int, Dictionary<int, List<ILink>>> Paths;
-        public Graph()
-        {
-            Nodes = new Dictionary<int, INode>();
-        }
-        public void AddNode(INode node)
-        {
-            Nodes[node.Id] = node;
-        }
-        /// <summary>
-        /// Calculates all of the shortest paths in the node links
-        /// </summary>
-        public void CalculateShortestPaths()
-        {
-            Paths = new Dictionary<int, Dictionary<int, List<ILink>>>();
-            foreach (INode vertex in Nodes.Values)
-            {
-                InternalBuildShortestPathsFromStartNode(vertex);
-            }
-        }
-        public void BuildShortestPathsFromStartNode(INode startNode, double maxDistance = double.MaxValue)
-        {
-            Paths = new Dictionary<int, Dictionary<int, List<ILink>>>();
-            InternalBuildShortestPathsFromStartNode(startNode, maxDistance);
-        }
-        private void InternalBuildShortestPathsFromStartNode(INode startNode, double maxDistance = double.MaxValue)
-        {
-            foreach (INode node in Nodes.Values)
-            {
-                node.IsExplored = false;
-            }
-            List<ILink> minimumSpanningTree = new List<ILink>();
-            Paths[startNode.Id] = new Dictionary<int, List<ILink>>();
-            Paths[startNode.Id][startNode.Id] = new List<ILink>();
-            minimumSpanningTree.Add(new Link(startNode.Id, startNode.Id, 0));
-            startNode.IsExplored = true;
-            int vertexCount = Nodes.Count;
-            double currentDist;
-            while (minimumSpanningTree.Count < vertexCount)
-            {
-                double minDist = 99999;
-                ILink bestLink = null;
-                ILink parentLink = null;
-                foreach (ILink currentLink in minimumSpanningTree)
-                {
-                    INode currentNode = Nodes[currentLink.EndNodeId];
-                    currentDist = currentLink.GetDistance(Paths[startNode.Id][currentNode.Id]);
-                    foreach (ILink adjacent in currentNode.GetLinks())
-                    {
-                        INode adjacentNode = Nodes[adjacent.EndNodeId];
-                        if (adjacentNode.IsExplored)
-                        {
-                            continue;//skip nodes already in minimum spanning tree
-                        }
-                        double distance = currentDist + adjacent.Distance;
-                        if (distance < minDist)
-                        {
-                            minDist = distance;
-                            bestLink = adjacent;
-                            parentLink = currentLink;
-                        }
-                        else if (distance == minDist)//When the distances are equivalent pick the one with the shortest path
-                        {
-                            Paths[startNode.Id].TryGetValue(currentNode.Id, out List<ILink> pathCurrent);
-                            int lengthCurrent = pathCurrent == null ? 0 : pathCurrent.Count;
-                            Paths[startNode.Id].TryGetValue(parentLink.EndNodeId, out List<ILink> pathPrevious);
-                            int lengthPrevious = pathPrevious == null ? 0 : pathPrevious.Count;
-                            if (lengthCurrent < lengthPrevious)
-                            {
-                                minDist = distance;
-                                bestLink = adjacent;
-                                parentLink = currentLink;
-                            }
-                        }
-                    }
-                }
-                if (parentLink == null)
-                {
-                    return;//no possible paths
-                }
-                minimumSpanningTree.Add(bestLink);
-                Nodes[bestLink.EndNodeId].IsExplored = true;
-                List<ILink> currentPath = null;
-                if (!parentLink.EndNodeId.Equals(startNode.Id))
-                {
-                    Paths[startNode.Id].TryGetValue(parentLink.EndNodeId, out currentPath);
-                }
-                if (currentPath == null)
-                {
-                    currentPath = new List<ILink>();
-                }
-                else
-                {
-                    currentPath = new List<ILink>(currentPath);
-                }
-                Paths[startNode.Id].Add(bestLink.EndNodeId, currentPath);
-                currentPath.Add(bestLink);
-                if (minDist >= maxDistance)
-                    return;
-            }
-        }
-        /// <summary>
-        /// Retrieves the next node along the path from start to end
-        /// </summary>
-        /// <param name="startId">The starting node id</param>
-        /// <param name="endId">The ending node id</param>
-        /// <returns>The next node in the path</returns>
-        public INode GetNextNodeInShortestPath(INode startNode, INode endNode)
-        {
-            Paths.TryGetValue(startNode.Id, out Dictionary<int, List<ILink>> endPoints);
-            if (endPoints == null)
-            {
-                Console.Error.WriteLine("|||Start not found: " + startNode.Id);
-                throw new InvalidOperationException();
-            }
-            endPoints.TryGetValue(endNode.Id, out List<ILink> paths);
-            if (paths == null)
-            {
-                Console.Error.WriteLine("|||End not found: " + endNode.Id + " start: " + startNode.Id);
-                throw new InvalidOperationException();
-            }
-            INode shortest = Nodes[paths.First().EndNodeId];
-            Console.Error.WriteLine("|||Shortest: " + shortest + " from: " + startNode.Id + " to: " + endNode.Id);
-            return shortest;
-        }
-        /// <summary>
-        /// Retrieves all nodes along the shortest path between two points
-        /// </summary>
-        /// <param name="startNodeId">Start node id</param>
-        /// <param name="endNodeId">End node id</param>
-        /// <returns>The full path from start to end</returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        public IList<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
-        {
-            Paths.TryGetValue(startNodeId, out Dictionary<int, List<ILink>> endPoints);
-            if (endPoints == null)
-            {
-                Console.Error.WriteLine("|||Start not found: " + startNodeId);
-                throw new InvalidOperationException();
-            }
-            endPoints.TryGetValue(endNodeId, out List<ILink> paths);
-            if (paths == null)
-            {
-                Console.Error.WriteLine("|||End not found: " + endNodeId + " start: " + startNodeId);
-                throw new InvalidOperationException();
-            }
-            return paths;
-        }
-        /// <summary>
-        /// Retrieves the distance following the shortest path from start to end.
-        /// </summary>
-        /// <param name="startId">The starting node</param>
-        /// <param name="endId">The ending node</param>
-        /// <returns>The distance along the shortest path</returns>
-        public double GetShortestPathDistance(INode startNode, INode endNode)
-        {
-            return GetShortestPathDistance(startNode.Id, endNode.Id);
-        }
-        /// <summary>
-        /// Retrieves the distance following the shortest path from start to end.
-        /// </summary>
-        /// <param name="startId">The starting node id</param>
-        /// <param name="endId">The ending node id</param>
-        /// <returns>The distance along the shortest path</returns>
-        public double GetShortestPathDistance(int startId, int endId)
-        {
-            Paths.TryGetValue(startId, out Dictionary<int, List<ILink>> endPoints);
-            if (endPoints == null)
-            {
-                return double.MaxValue;
-            }
-            endPoints.TryGetValue(endId, out List<ILink> paths);
-            if (paths == null)
-            {
-                return double.MaxValue;
-            }
-            return paths.First().GetDistance(paths);
-        }
-        /// <summary>
-        /// Retrieves the straight line distance from start to end
-        /// </summary>
-        /// <param name="startId">The starting node</param>
-        /// <param name="endId">The ending node</param>
-        /// <returns>The distance from start to end</returns>
-        public double GetDistance(Node startNode, Node endNode)
-        {
-            return startNode.GetLinks().Where(l => l.EndNodeId.Equals(endNode.Id)).First().Distance;
-        }
-    }
-}
-//*** SourceCombiner -> original file GraphLinks.cs ***
-namespace Algorithms.Graph
-{
-    public class GraphLinks
-    {
-        public class Node
-        {
-            public int Id;
-            public double Distance;
-            public bool IsExplored;
-            public Node(int id, double distance)
-            {
-                Id = id;
-                Distance = distance;
-            }
-            /// <summary>
-            /// Creates a clone of the node from the current distance.  This is used while building the minimum spanning tree.
-            /// </summary>
-            /// <param name="currentDist">The current distance from the starting node</param>
-            /// <returns>A clone of the node with the proper distance</returns>
-            public Node CreateAtDistance(double currentDist)
-            {
-                return new Node(Id, currentDist + Distance);
-            }
-        }
-        private Dictionary<int, List<Node>> Links;
-        private Dictionary<int, Dictionary<int, List<Node>>> Paths;
-        private bool IsByDirectional;
-        public GraphLinks(bool isByDirectional = true)
-        {
-            Links = new Dictionary<int, List<Node>>();
-            IsByDirectional = isByDirectional;
-        }
-        public bool ContainsLink(int id1, int id2)
-        {
-            return Links.ContainsKey(id1) && Links[id1].Where(n => n.Id == id2).Any();
-        }
-        /// <summary>
-        /// Adds a link to the list
-        /// </summary>
-        /// <param name="id1">First id</param>
-        /// <param name="id2">Second id</param>
-        /// <param name="distance">The distance between the two nodes</param>
-        public void AddLink(int id1, int id2, double distance)
-        {
-            //Console.Error.WriteLine(id1 + " " + id2 + " " + distance);
-            if (ContainsLink(id1, id2))
-                return;
-            AddLinkInternal(id1, id2, distance);
-            if (IsByDirectional)
-                AddLinkInternal(id2, id1, distance);
-        }
-        public void RemoveLink(int id1, int id2)
-        {
-            Links[id1].RemoveAll(n => n.Id == id2);
-            Links[id2].RemoveAll(n => n.Id == id1);
-        }
-        /// <summary>
-        /// Calculates all of the shortest paths in the node links
-        /// </summary>
-        public void CalculateShortestPaths()
-        {
-            Paths = new Dictionary<int, Dictionary<int, List<Node>>>();
-            List<int> vertices = Links.Keys.ToList();
-            int vertexCount = vertices.Count;
-            foreach (int vertex in vertices)
-            {
-                CalculateShortestPathFromStartNode(vertex, vertexCount, 9999999);
-            }
-        }
-        /// <summary>
-        /// Calculates the shortest paths from a start node
-        /// </summary>
-        /// <param name="startNode">id of the start node</param>
-        /// <param name="maxDistance">the fartheset distance to travel</param>
-        public void CalculateShortestPathsFromStartNode(int startNode, int maxDistance)
-        {
-            Paths = new Dictionary<int, Dictionary<int, List<Node>>>();
-            CalculateShortestPathFromStartNode(startNode, Links.Keys.Count, maxDistance);
-        }
-        /// <summary>
-        /// Calculates the shortest paths from the start node to all other nodes
-        /// </summary>
-        /// <param name="startNode">The starting id</param>
-        /// <param name="vertexCount">The number of nodes</param>
-        /// <param name="maxDistance">the farthest distance to travel</param>
-        private void CalculateShortestPathFromStartNode(int startNode, int vertexCount, int maxDistance)
-        {
-            List<Node> minimumSpanningTree = new List<Node>();
-            //Console.Error.WriteLine("Starting with " + startNode);
-            double currentDist = 0;
-            Paths[startNode] = new Dictionary<int, List<Node>>();
-            minimumSpanningTree.Add(new Node(startNode, currentDist));
-            while (minimumSpanningTree.Count < vertexCount)
-            {
-                double minDist = 99999;
-                Node bestNode = null;
-                Node parentNode = null;
-                foreach (Node currentNode in minimumSpanningTree)
-                {
-                    currentDist = currentNode.Distance;
-                    //Console.Error.WriteLine("Inspecting: " + currentNode.FactoryId + " distance " + currentDist);
-                    foreach (Node adjacent in GetLinks(currentNode.Id))
-                    {
-                        if (adjacent.IsExplored || minimumSpanningTree.Where(n => n.Id == adjacent.Id).Any())
-                        {
-                            adjacent.IsExplored = true;
-                            continue;//skip nodes already in minimum spanning tree
-                        }
-                        double distance = currentDist + adjacent.Distance;
-                        if (distance < minDist)
-                        {
-                            minDist = distance;
-                            bestNode = adjacent.CreateAtDistance(currentDist);
-                            parentNode = currentNode;
-                        }
-                        else if (distance == minDist)//When the distances are equivalent pick the one with the shortest path
-                        {
-                            Paths[startNode].TryGetValue(currentNode.Id, out List<Node> pathCurrent);
-                            int lengthCurrent = pathCurrent == null ? 0 : pathCurrent.Count;
-                            Paths[startNode].TryGetValue(parentNode.Id, out List<Node> pathPrevious);
-                            int lengthPrevious = pathPrevious == null ? 0 : pathPrevious.Count;
-                            if (lengthCurrent < lengthPrevious)
-                            {
-                                minDist = distance;
-                                bestNode = adjacent.CreateAtDistance(currentDist);
-                                parentNode = currentNode;
-                            }
-                        }
-                    }
-                }
-                if (parentNode == null)
-                {
-                    return;//no possible paths
-                }
-                minimumSpanningTree.Add(bestNode);
-                List<Node> currentPath = null;
-                if (parentNode.Id != startNode)
-                {
-                    Paths[startNode].TryGetValue(parentNode.Id, out currentPath);
-                }
-                if (currentPath == null)
-                {
-                    currentPath = new List<Node>();
-                }
-                else
-                {
-                    currentPath = new List<Node>(currentPath);
-                }
-                Paths[startNode].Add(bestNode.Id, currentPath);
-                currentPath.Add(bestNode);
-                /*
-                if (startNode == 0)
-                {
-                    Console.Error.WriteLine("Parent node: " + parentNode.FactoryId + " distance: " + parentNode.Distance);
-                    Console.Error.WriteLine("Shortest Node: " + bestNode.FactoryId + " distance: " + bestNode.Distance);
-                }
-                */
-                if (minDist >= maxDistance)
-                    return;
-            }
-        }
-        /// <summary>
-        /// Retrieves the links that are adjacent to the given node
-        /// </summary>
-        /// <param name="id">The node id</param>
-        /// <returns></returns>
-        public List<Node> GetLinks(int id)
-        {
-            return Links[id];
-        }
-        public Dictionary<int, List<Node>> GetPaths(int startId)
-        {
-            return Paths[startId];
-        }
-        /// <summary>
-        /// Retrieves the straight line distance from start to end
-        /// </summary>
-        /// <param name="startId">The starting node id</param>
-        /// <param name="endId">The ending node id</param>
-        /// <returns>The distance from start to end</returns>
-        public double GetDistance(int startId, int endId)
-        {
-            return GetLinks(startId).Where(l => l.Id == endId).First().Distance;
-        }
-        /// <summary>
-        /// Retrieves the distance following the shortest path from start to end.
-        /// </summary>
-        /// <param name="startId">The starting node id</param>
-        /// <param name="endId">The ending node id</param>
-        /// <returns>The distance along the shortest path</returns>
-        public double GetShortestPathDistance(int startId, int endId)
-        {
-            Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
-            if (endPoints == null)
-            {
-                return 99999;
-            }
-            endPoints.TryGetValue(endId, out List<Node> paths);
-            if (paths == null)
-            {
-                return 99999;
-            }
-            return paths.Last().Distance;
-        }
-        /// <summary>
-        /// Retrieves the next node along the path from start to end
-        /// </summary>
-        /// <param name="startId">The starting node id</param>
-        /// <param name="endId">The ending node id</param>
-        /// <returns>The factory id that is first in the path</returns>
-        public int GetShortestPath(int startId, int endId)
-        {
-            Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
-            if (endPoints == null)
-            {
-                Console.Error.WriteLine("|||Start not found: " + startId);
-                throw new InvalidOperationException();
-            }
-            endPoints.TryGetValue(endId, out List<Node> paths);
-            if (paths == null)
-            {
-                Console.Error.WriteLine("|||End not found: " + endId + " start: " + startId);
-                throw new InvalidOperationException();
-            }
-            int shortest = paths.First().Id;
-            Console.Error.WriteLine("|||Shortest: " + shortest + " from: " + startId + " to: " + endId);
-            return shortest;
-        }
-        /// <summary>
-        /// Retrieves the full path from start to end
-        /// </summary>
-        /// <param name="startId">the start id</param>
-        /// <param name="endId">the end id</param>
-        /// <returns>The full path</returns>
-        public List<Node> GetShortestPathAll(int startId, int endId)
-        {
-            Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
-            if (endPoints == null)
-            {
-                Console.Error.WriteLine("|||Start not found: " + startId);
-                throw new InvalidOperationException();
-            }
-            endPoints.TryGetValue(endId, out List<Node> paths);
-            if (paths == null)
-            {
-                Console.Error.WriteLine("|||End not found: " + endId + " start: " + startId);
-                throw new InvalidOperationException();
-            }
-            return paths;
-        }
-        //Adds links to the node links
-        private void AddLinkInternal(int startNode, int endNode, double distance)
-        {
-            List<Node> nodeLinks;
-            if (Links.ContainsKey(startNode))
-            {
-                nodeLinks = Links[startNode];
-            }
-            else
-            {
-                nodeLinks = new List<Node>();
-                Links[startNode] = nodeLinks;
-            }
-            nodeLinks.Add(new Node(endNode, distance));
-        }
-    }
-}
-//*** SourceCombiner -> original file INode.cs ***
-namespace Algorithms.Graph
-{
-    public interface INode
-    {
-        int Id { get; }
-        bool IsExplored { get; set; }
-        List<ILink> GetLinks();
-    }
-    public class Node : INode
-    {
-        public int Id { get; private set; }
-        public bool IsExplored { get; set; }
-        private List<ILink> Links;
-        public Node(int id)
-        {
-            Id = id;
-            IsExplored = false;
-            Links = new List<ILink>();
-        }
-        public void AddLink(ILink link)
-        {
-            Links.Add(link);
-        }
-        public List<ILink> GetLinks()
-        {
-            return Links;
-        }
-        public bool Equals(INode node)
-        {
-            return node.Id == Id;
-        }
-    }
-    public interface ILink
-    {
-        int StartNodeId { get; }
-        int EndNodeId { get; }
-        double Distance { get; }
-        double GetDistance(List<ILink> currentPath);
-    }
-    public class Link : ILink
-    {
-        public int StartNodeId { get; private set; }
-        public int EndNodeId { get; private set; }
-        public double Distance { get; private set; }
-        public Link(int startNodeId, int endNodeId, double distance)
-        {
-            StartNodeId = startNodeId;
-            EndNodeId = endNodeId;
-            Distance = distance;
-        }
-        public Link(INode startNode, INode endNode, double distance)
-        {
-            StartNodeId = startNode.Id;
-            EndNodeId = endNode.Id;
-            Distance = distance;
-        }
-        public double GetDistance(List<ILink> currentPath)
-        {
-            double distance = 0;
-            foreach (ILink link in currentPath)
-            {
-                distance += link.Distance;
-            }
-            return distance;
-        }
-    }
-}
-//*** SourceCombiner -> original file GameTreeNode.cs ***
 namespace Algorithms.Trees
 {
     public class GameTreeNode
@@ -604,14 +36,14 @@ namespace Algorithms.Trees
         public GameTreeNode(IGameState state, bool isMax, GameTreeNode parent = null)
         {
             this.state = state;
-            moves = new List<object>(50);
+            moves = new List<object>(200);
             var possibleMoves = state.GetPossibleMoves(isMax);
             for (int i = 0; i < possibleMoves.Count; i++)
             {
                 var obj = possibleMoves[i];
                 moves.Add(obj);
             }
-            children = new List<GameTreeNode>(50);
+            children = new List<GameTreeNode>(200);
             this.parent = parent;
             this.isMax = isMax;
         }
@@ -658,7 +90,6 @@ namespace Algorithms.Trees
         }
     }
 }
-//*** SourceCombiner -> original file Minimax.cs ***
 namespace Algorithms.Trees
 {
     public class Minimax : TreeAlgorithm
@@ -733,7 +164,6 @@ namespace Algorithms.Trees
         }
     }
 }
-//*** SourceCombiner -> original file MonteCarloTreeSearch.cs ***
 namespace Algorithms.Trees
 {
     public class MonteCarloTreeSearch : TreeAlgorithm
@@ -756,14 +186,6 @@ namespace Algorithms.Trees
         {
             return RootNode.state;
         }
-        /// <summary>
-        /// Get the next move
-        /// </summary>
-        /// <param name="watch">timer</param>
-        /// <param name="timeLimit">The amount of time to give to the search in milliseconds</param>
-        /// <param name="depth">How deep to run the simulations; does not impact how deep it goes in the game tree.</param>
-        /// <param name="numRollouts">The number of roll outs to play per expansion</param>
-        /// <returns></returns>
         public object GetNextMove(Stopwatch watch, int timeLimit, int depth = -1, int numRollouts = 1, double? exploration = null)
         {
             if (exploration == null)
@@ -794,7 +216,7 @@ namespace Algorithms.Trees
                         var clonedState = childNode.state.Clone();
                         winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
                         if (!winner.HasValue)
-                            break;//We simulated a game, but it didn't end so we are out of time...
+                            break;
                         BackPropagate(childNode, winner);
                         count++;
                     }
@@ -951,7 +373,6 @@ namespace Algorithms.Trees
         }
     }
 }
-//*** SourceCombiner -> original file TreeAlgorithm.cs ***
 namespace Algorithms.Trees
 {
     public class TreeAlgorithm
@@ -961,16 +382,12 @@ namespace Algorithms.Trees
         {
             if (RootNode != null && findState)
             {
-                //if we have already started searching then continue to search as we go if possible; the search will scan two layers to see if only one move was played or if 2 moves were played to get back to the original players turn.
-                //find the child that matches the new node
                 bool isFound = false;
-                //Expand any moves left in the root node (if any)
                 for (int i = 0; i < RootNode.moves.Count; i++)
                 {
                     var move = RootNode.moves[i];
                     Expand(RootNode, move);
                 }
-                //Begin scanning the children
                 for (int i = 0; i < RootNode.children.Count; i++)
                 {
                     var child = RootNode.children[i];
@@ -1011,12 +428,6 @@ namespace Algorithms.Trees
                 RootNode = new GameTreeNode(rootState.Clone(), isMax);
             }
         }
-        /// <summary>
-        /// Expands the given node by create a clone, applying the move and then adding it to the list of children.
-        /// </summary>
-        /// <param name="node">The node to expand</param>
-        /// <param name="move">The move to play on the expanded node</param>
-        /// <returns></returns>
         protected GameTreeNode Expand(GameTreeNode node, object move)
         {
             IGameState nextState = node.state.Clone();
@@ -1027,7 +438,6 @@ namespace Algorithms.Trees
         }
     }
 }
-//*** SourceCombiner -> original file BitFunctions.cs ***
 namespace Algorithms.Utility
 {
     public static class BitFunctions
@@ -1200,6 +610,437 @@ namespace Algorithms.Space
         public static Point2d GetMidPoint(double x1, double y1, double x2, double y2)
         {
             return new Point2d((x1 + x2) / 2, (y1 + y2) / 2);
+        }
+    }
+}
+namespace Algorithms.Graph
+{
+    public class Graph
+    {
+        private Dictionary<int, INode> Nodes;
+        private Dictionary<int, Dictionary<int, List<ILink>>> Paths;
+        public Graph()
+        {
+            Nodes = new Dictionary<int, INode>();
+        }
+        public void AddNode(INode node)
+        {
+            Nodes[node.Id] = node;
+        }
+        public void CalculateShortestPaths()
+        {
+            Paths = new Dictionary<int, Dictionary<int, List<ILink>>>();
+            foreach (INode vertex in Nodes.Values)
+            {
+                InternalBuildShortestPathsFromStartNode(vertex);
+            }
+        }
+        public void BuildShortestPathsFromStartNode(INode startNode, double maxDistance = double.MaxValue)
+        {
+            Paths = new Dictionary<int, Dictionary<int, List<ILink>>>();
+            InternalBuildShortestPathsFromStartNode(startNode, maxDistance);
+        }
+        private void InternalBuildShortestPathsFromStartNode(INode startNode, double maxDistance = double.MaxValue)
+        {
+            foreach (INode node in Nodes.Values)
+            {
+                node.IsExplored = false;
+            }
+            List<ILink> minimumSpanningTree = new List<ILink>();
+            Paths[startNode.Id] = new Dictionary<int, List<ILink>>();
+            Paths[startNode.Id][startNode.Id] = new List<ILink>();
+            minimumSpanningTree.Add(new Link(startNode.Id, startNode.Id, 0));
+            startNode.IsExplored = true;
+            int vertexCount = Nodes.Count;
+            double currentDist;
+            while (minimumSpanningTree.Count < vertexCount)
+            {
+                double minDist = 99999;
+                ILink bestLink = null;
+                ILink parentLink = null;
+                foreach (ILink currentLink in minimumSpanningTree)
+                {
+                    INode currentNode = Nodes[currentLink.EndNodeId];
+                    currentDist = currentLink.GetDistance(Paths[startNode.Id][currentNode.Id]);
+                    foreach (ILink adjacent in currentNode.GetLinks())
+                    {
+                        INode adjacentNode = Nodes[adjacent.EndNodeId];
+                        if (adjacentNode.IsExplored)
+                        {
+                            continue;
+                        }
+                        double distance = currentDist + adjacent.Distance;
+                        if (distance < minDist)
+                        {
+                            minDist = distance;
+                            bestLink = adjacent;
+                            parentLink = currentLink;
+                        }
+                        else if (distance == minDist)
+                        {
+                            Paths[startNode.Id].TryGetValue(currentNode.Id, out List<ILink> pathCurrent);
+                            int lengthCurrent = pathCurrent == null ? 0 : pathCurrent.Count;
+                            Paths[startNode.Id].TryGetValue(parentLink.EndNodeId, out List<ILink> pathPrevious);
+                            int lengthPrevious = pathPrevious == null ? 0 : pathPrevious.Count;
+                            if (lengthCurrent < lengthPrevious)
+                            {
+                                minDist = distance;
+                                bestLink = adjacent;
+                                parentLink = currentLink;
+                            }
+                        }
+                    }
+                }
+                if (parentLink == null)
+                {
+                    return;
+                }
+                minimumSpanningTree.Add(bestLink);
+                Nodes[bestLink.EndNodeId].IsExplored = true;
+                List<ILink> currentPath = null;
+                if (!parentLink.EndNodeId.Equals(startNode.Id))
+                {
+                    Paths[startNode.Id].TryGetValue(parentLink.EndNodeId, out currentPath);
+                }
+                if (currentPath == null)
+                {
+                    currentPath = new List<ILink>();
+                }
+                else
+                {
+                    currentPath = new List<ILink>(currentPath);
+                }
+                Paths[startNode.Id].Add(bestLink.EndNodeId, currentPath);
+                currentPath.Add(bestLink);
+                if (minDist >= maxDistance)
+                    return;
+            }
+        }
+        public INode GetNextNodeInShortestPath(INode startNode, INode endNode)
+        {
+            Paths.TryGetValue(startNode.Id, out Dictionary<int, List<ILink>> endPoints);
+            if (endPoints == null)
+            {
+                Console.Error.WriteLine("|||Start not found: " + startNode.Id);
+                throw new InvalidOperationException();
+            }
+            endPoints.TryGetValue(endNode.Id, out List<ILink> paths);
+            if (paths == null)
+            {
+                Console.Error.WriteLine("|||End not found: " + endNode.Id + " start: " + startNode.Id);
+                throw new InvalidOperationException();
+            }
+            INode shortest = Nodes[paths.First().EndNodeId];
+            Console.Error.WriteLine("|||Shortest: " + shortest + " from: " + startNode.Id + " to: " + endNode.Id);
+            return shortest;
+        }
+        public IList<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
+        {
+            Paths.TryGetValue(startNodeId, out Dictionary<int, List<ILink>> endPoints);
+            if (endPoints == null)
+            {
+                Console.Error.WriteLine("|||Start not found: " + startNodeId);
+                throw new InvalidOperationException();
+            }
+            endPoints.TryGetValue(endNodeId, out List<ILink> paths);
+            if (paths == null)
+            {
+                Console.Error.WriteLine("|||End not found: " + endNodeId + " start: " + startNodeId);
+                throw new InvalidOperationException();
+            }
+            return paths;
+        }
+        public double GetShortestPathDistance(INode startNode, INode endNode)
+        {
+            return GetShortestPathDistance(startNode.Id, endNode.Id);
+        }
+        public double GetShortestPathDistance(int startId, int endId)
+        {
+            Paths.TryGetValue(startId, out Dictionary<int, List<ILink>> endPoints);
+            if (endPoints == null)
+            {
+                return double.MaxValue;
+            }
+            endPoints.TryGetValue(endId, out List<ILink> paths);
+            if (paths == null)
+            {
+                return double.MaxValue;
+            }
+            return paths.First().GetDistance(paths);
+        }
+        public double GetDistance(Node startNode, Node endNode)
+        {
+            return startNode.GetLinks().Where(l => l.EndNodeId.Equals(endNode.Id)).First().Distance;
+        }
+    }
+}
+namespace Algorithms.Graph
+{
+    public class GraphLinks
+    {
+        public class Node
+        {
+            public int Id;
+            public double Distance;
+            public bool IsExplored;
+            public Node(int id, double distance)
+            {
+                Id = id;
+                Distance = distance;
+            }
+            public Node CreateAtDistance(double currentDist)
+            {
+                return new Node(Id, currentDist + Distance);
+            }
+        }
+        private Dictionary<int, List<Node>> Links;
+        private Dictionary<int, Dictionary<int, List<Node>>> Paths;
+        private bool IsByDirectional;
+        public GraphLinks(bool isByDirectional = true)
+        {
+            Links = new Dictionary<int, List<Node>>();
+            IsByDirectional = isByDirectional;
+        }
+        public bool ContainsLink(int id1, int id2)
+        {
+            return Links.ContainsKey(id1) && Links[id1].Where(n => n.Id == id2).Any();
+        }
+        public void AddLink(int id1, int id2, double distance)
+        {
+            if (ContainsLink(id1, id2))
+                return;
+            AddLinkInternal(id1, id2, distance);
+            if (IsByDirectional)
+                AddLinkInternal(id2, id1, distance);
+        }
+        public void RemoveLink(int id1, int id2)
+        {
+            Links[id1].RemoveAll(n => n.Id == id2);
+            Links[id2].RemoveAll(n => n.Id == id1);
+        }
+        public void CalculateShortestPaths()
+        {
+            Paths = new Dictionary<int, Dictionary<int, List<Node>>>();
+            List<int> vertices = Links.Keys.ToList();
+            int vertexCount = vertices.Count;
+            foreach (int vertex in vertices)
+            {
+                CalculateShortestPathFromStartNode(vertex, vertexCount, 9999999);
+            }
+        }
+        public void CalculateShortestPathsFromStartNode(int startNode, int maxDistance)
+        {
+            Paths = new Dictionary<int, Dictionary<int, List<Node>>>();
+            CalculateShortestPathFromStartNode(startNode, Links.Keys.Count, maxDistance);
+        }
+        private void CalculateShortestPathFromStartNode(int startNode, int vertexCount, int maxDistance)
+        {
+            List<Node> minimumSpanningTree = new List<Node>();
+            //Console.Error.WriteLine("Starting with " + startNode);
+            double currentDist = 0;
+            Paths[startNode] = new Dictionary<int, List<Node>>();
+            minimumSpanningTree.Add(new Node(startNode, currentDist));
+            while (minimumSpanningTree.Count < vertexCount)
+            {
+                double minDist = 99999;
+                Node bestNode = null;
+                Node parentNode = null;
+                foreach (Node currentNode in minimumSpanningTree)
+                {
+                    currentDist = currentNode.Distance;
+                    foreach (Node adjacent in GetLinks(currentNode.Id))
+                    {
+                        if (adjacent.IsExplored || minimumSpanningTree.Where(n => n.Id == adjacent.Id).Any())
+                        {
+                            adjacent.IsExplored = true;
+                            continue;
+                        }
+                        double distance = currentDist + adjacent.Distance;
+                        if (distance < minDist)
+                        {
+                            minDist = distance;
+                            bestNode = adjacent.CreateAtDistance(currentDist);
+                            parentNode = currentNode;
+                        }
+                        else if (distance == minDist)
+                        {
+                            Paths[startNode].TryGetValue(currentNode.Id, out List<Node> pathCurrent);
+                            int lengthCurrent = pathCurrent == null ? 0 : pathCurrent.Count;
+                            Paths[startNode].TryGetValue(parentNode.Id, out List<Node> pathPrevious);
+                            int lengthPrevious = pathPrevious == null ? 0 : pathPrevious.Count;
+                            if (lengthCurrent < lengthPrevious)
+                            {
+                                minDist = distance;
+                                bestNode = adjacent.CreateAtDistance(currentDist);
+                                parentNode = currentNode;
+                            }
+                        }
+                    }
+                }
+                if (parentNode == null)
+                {
+                    return;
+                }
+                minimumSpanningTree.Add(bestNode);
+                List<Node> currentPath = null;
+                if (parentNode.Id != startNode)
+                {
+                    Paths[startNode].TryGetValue(parentNode.Id, out currentPath);
+                }
+                if (currentPath == null)
+                {
+                    currentPath = new List<Node>();
+                }
+                else
+                {
+                    currentPath = new List<Node>(currentPath);
+                }
+                Paths[startNode].Add(bestNode.Id, currentPath);
+                currentPath.Add(bestNode);
+                if (minDist >= maxDistance)
+                    return;
+            }
+        }
+        public List<Node> GetLinks(int id)
+        {
+            return Links[id];
+        }
+        public Dictionary<int, List<Node>> GetPaths(int startId)
+        {
+            return Paths[startId];
+        }
+        public double GetDistance(int startId, int endId)
+        {
+            return GetLinks(startId).Where(l => l.Id == endId).First().Distance;
+        }
+        public double GetShortestPathDistance(int startId, int endId)
+        {
+            Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
+            if (endPoints == null)
+            {
+                return 99999;
+            }
+            endPoints.TryGetValue(endId, out List<Node> paths);
+            if (paths == null)
+            {
+                return 99999;
+            }
+            return paths.Last().Distance;
+        }
+        public int GetShortestPath(int startId, int endId)
+        {
+            Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
+            if (endPoints == null)
+            {
+                Console.Error.WriteLine("|||Start not found: " + startId);
+                throw new InvalidOperationException();
+            }
+            endPoints.TryGetValue(endId, out List<Node> paths);
+            if (paths == null)
+            {
+                Console.Error.WriteLine("|||End not found: " + endId + " start: " + startId);
+                throw new InvalidOperationException();
+            }
+            int shortest = paths.First().Id;
+            Console.Error.WriteLine("|||Shortest: " + shortest + " from: " + startId + " to: " + endId);
+            return shortest;
+        }
+        public List<Node> GetShortestPathAll(int startId, int endId)
+        {
+            Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
+            if (endPoints == null)
+            {
+                Console.Error.WriteLine("|||Start not found: " + startId);
+                throw new InvalidOperationException();
+            }
+            endPoints.TryGetValue(endId, out List<Node> paths);
+            if (paths == null)
+            {
+                Console.Error.WriteLine("|||End not found: " + endId + " start: " + startId);
+                throw new InvalidOperationException();
+            }
+            return paths;
+        }
+        private void AddLinkInternal(int startNode, int endNode, double distance)
+        {
+            List<Node> nodeLinks;
+            if (Links.ContainsKey(startNode))
+            {
+                nodeLinks = Links[startNode];
+            }
+            else
+            {
+                nodeLinks = new List<Node>();
+                Links[startNode] = nodeLinks;
+            }
+            nodeLinks.Add(new Node(endNode, distance));
+        }
+    }
+}
+namespace Algorithms.Graph
+{
+    public interface INode
+    {
+        int Id { get; }
+        bool IsExplored { get; set; }
+        List<ILink> GetLinks();
+    }
+    public class Node : INode
+    {
+        public int Id { get; private set; }
+        public bool IsExplored { get; set; }
+        private List<ILink> Links;
+        public Node(int id)
+        {
+            Id = id;
+            IsExplored = false;
+            Links = new List<ILink>();
+        }
+        public void AddLink(ILink link)
+        {
+            Links.Add(link);
+        }
+        public List<ILink> GetLinks()
+        {
+            return Links;
+        }
+        public bool Equals(INode node)
+        {
+            return node.Id == Id;
+        }
+    }
+    public interface ILink
+    {
+        int StartNodeId { get; }
+        int EndNodeId { get; }
+        double Distance { get; }
+        double GetDistance(List<ILink> currentPath);
+    }
+    public class Link : ILink
+    {
+        public int StartNodeId { get; private set; }
+        public int EndNodeId { get; private set; }
+        public double Distance { get; private set; }
+        public Link(int startNodeId, int endNodeId, double distance)
+        {
+            StartNodeId = startNodeId;
+            EndNodeId = endNodeId;
+            Distance = distance;
+        }
+        public Link(INode startNode, INode endNode, double distance)
+        {
+            StartNodeId = startNode.Id;
+            EndNodeId = endNode.Id;
+            Distance = distance;
+        }
+        public double GetDistance(List<ILink> currentPath)
+        {
+            double distance = 0;
+            foreach (ILink link in currentPath)
+            {
+                distance += link.Distance;
+            }
+            return distance;
         }
     }
 }

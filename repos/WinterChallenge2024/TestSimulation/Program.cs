@@ -10,7 +10,7 @@ namespace TestSimulation
     {
         static void Main(string[] args)
         {
-            GameState game = GameBuilder.BuildWood3Game();
+            GameState game = GameBuilder.BuildWood1Game();
             MonteCarloTreeSearch search = new MonteCarloTreeSearch();
             MonteCarloTreeSearch oppSearch = new MonteCarloTreeSearch();
             Stopwatch watch = new Stopwatch();
@@ -19,16 +19,16 @@ namespace TestSimulation
             {
                 watch.Reset();
                 watch.Start();
-                search.SetState(game, true, true);
-                Move move = (Move)search.GetNextMove(watch, 48, 80, 2);
+                search.SetState(game, true, false);
+                Move move = (Move)search.GetNextMove(watch, 5000, 10, 1);
                 game.ApplyMove(move, true);
                 watch.Stop();
 
 
                 watch.Reset();
                 watch.Start();
-                oppSearch.SetState(game, false, true);
-                move = (Move)oppSearch.GetNextMove(watch, 48, 80, 2);
+                oppSearch.SetState(game, false, false);
+                move = (Move)oppSearch.GetNextMove(watch, 5000, 10, 1);
                 game.ApplyMove(move, false);
                 watch.Stop();
 

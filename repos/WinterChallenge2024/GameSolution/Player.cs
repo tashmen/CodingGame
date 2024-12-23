@@ -33,11 +33,11 @@ class Player
             {
                 inputs = Console.ReadLine().Split(' ');
                 int x = int.Parse(inputs[0]);
-                int y = int.Parse(inputs[1]); // grid coordinate
-                string type = inputs[2]; // WALL, ROOT, BASIC, TENTACLE, HARVESTER, SPORER, A, B, C, D
-                int owner = int.Parse(inputs[3]); // 1 if your organ, 0 if enemy organ, -1 if neither
-                int organId = int.Parse(inputs[4]); // id of this entity if it's an organ, 0 otherwise
-                string organDir = inputs[5]; // N,E,S,W or X if not an organ
+                int y = int.Parse(inputs[1]);
+                string type = inputs[2];
+                int owner = int.Parse(inputs[3]);
+                int organId = int.Parse(inputs[4]);
+                string organDir = inputs[5];
                 int organParentId = int.Parse(inputs[6]);
                 int organRootId = int.Parse(inputs[7]);
                 Entity entity = new Entity(x, y, type, owner, organId, organDir, organParentId, organRootId);
@@ -48,42 +48,30 @@ class Player
             int myA = int.Parse(inputs[0]);
             int myB = int.Parse(inputs[1]);
             int myC = int.Parse(inputs[2]);
-            int myD = int.Parse(inputs[3]); // your protein stock
+            int myD = int.Parse(inputs[3]);
             inputs = Console.ReadLine().Split(' ');
             int oppA = int.Parse(inputs[0]);
             int oppB = int.Parse(inputs[1]);
             int oppC = int.Parse(inputs[2]);
-            int oppD = int.Parse(inputs[3]); // opponent's protein stock
-            int requiredActionsCount = int.Parse(Console.ReadLine()); // your number of organisms, output an action for each one in any order
+            int oppD = int.Parse(inputs[3]);
+            int requiredActionsCount = int.Parse(Console.ReadLine());
 
-            Dictionary<EntityType, int> myProtein = new Dictionary<EntityType, int>();
-            myProtein[EntityType.A] = myA;
-            myProtein[EntityType.B] = myB;
-            myProtein[EntityType.C] = myC;
-            myProtein[EntityType.D] = myD;
-
-            Dictionary<EntityType, int> oppProtein = new Dictionary<EntityType, int>();
-            oppProtein[EntityType.A] = oppA;
-            oppProtein[EntityType.B] = oppB;
-            oppProtein[EntityType.C] = oppC;
-            oppProtein[EntityType.D] = oppD;
+            int[] myProtein = new int[] { myA, myB, myC, myD };
+            int[] oppProtein = new int[] { oppA, oppB, oppC, oppD };
 
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
             gameState.SetNextTurn(board, myProtein, oppProtein);
 
-            /*
-            GameHelper gameHelper = new GameHelper(gameState);
-            Move move = gameHelper.GetMove();
-            */
             MonteCarloTreeSearch search = new MonteCarloTreeSearch();
-            search.SetState(gameState, true, false);
-            Move move = (Move)search.GetNextMove(watch, 48, 80, 2);
+            search.SetState(gameState, true, gameState.Turn < 3);
+            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 10, 1);
 
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-
             board.Print();
+            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+            watch.Stop();
 
             move.Print();
         }

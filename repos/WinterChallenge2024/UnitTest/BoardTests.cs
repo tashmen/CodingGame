@@ -1,6 +1,5 @@
 ﻿using GameSolution.Entities;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
@@ -31,7 +30,7 @@ namespace UnitTest
 
             board.SetEntities(entities);
 
-            Assert.Equal(2, board.GlobalOrganId);
+            Assert.Equal(3, board.GlobalOrganId);
             Assert.Equal(1, board.GetMyEntityCount());
             Assert.Equal(1, board.GetOppEntityCount());
         }

@@ -7,6 +7,7 @@ namespace GameSolution.Entities
     public enum EntityType
     {
         WALL = 0,
+        NONE,
         ROOT,
         BASIC,
         TENTACLE,
@@ -15,7 +16,7 @@ namespace GameSolution.Entities
         A,
         B,
         C,
-        D
+        D,
     }
 
     public enum OrganDirection
@@ -47,7 +48,7 @@ namespace GameSolution.Entities
             OrganRootId = organRootId;
         }
 
-        public Entity(Point2d location, EntityType type, bool isMine, int organId, int organParentId, int organRootId, OrganDirection organDirection)
+        public Entity(Point2d location, EntityType type, bool? isMine, int organId, int organParentId, int organRootId, OrganDirection organDirection)
         {
             Location = location;
             IsMine = isMine;
