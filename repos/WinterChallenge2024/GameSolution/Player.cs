@@ -71,8 +71,8 @@ class Player
             gameState.SetNextTurn(board, myProtein, oppProtein);
 
             MonteCarloTreeSearch search = new MonteCarloTreeSearch();
-            search.SetState(gameState, true, gameState.Turn < 3);
-            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 10, 1);
+            search.SetState(gameState, true, gameState.Turn < 5);
+            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 20, 1);
 
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
             board.Print();

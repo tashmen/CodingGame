@@ -345,7 +345,18 @@ namespace GameSolution.Entities
             {
                 foreach (OrganDirection sporerDirection in PossibleDirections)
                 {
-                    if (IsOpenSpace(growAction.Location, sporerDirection))
+                    var location = growAction.Location;
+                    bool isOpen = true;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (!IsOpenSpace(location, sporerDirection))
+                        {
+                            isOpen = false;
+                            break;
+                        }
+                        location = GetNextLocation(location, sporerDirection);
+                    }
+                    if (isOpen)
                     {
                         moveActions.Add(MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.SPORER, growAction.OrganRootId, sporerDirection));
                     }

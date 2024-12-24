@@ -24,14 +24,16 @@ namespace UnitTest
         [Fact]
         public void TestGameState()
         {
-            state = GameBuilder.BuildBasicGame();
+            state = GameBuilder.BuildWood4Game();
 
+            var distance = state.Board.Graph.GetShortestPathDistance(state.Board.GetNodeIndex(new Point2d(1, 2)), state.Board.GetNodeIndex(new Point2d(16, 2)));
+            Assert.Equal(15, distance);
         }
 
         [Fact]
         public void TestStartMoves()
         {
-            state = GameBuilder.BuildBasicGame();
+            state = GameBuilder.BuildWood4Game();
             List<Move> myMoves = (List<Move>)state.GetPossibleMoves(true);
             Assert.Equal(4, myMoves.Count);
 

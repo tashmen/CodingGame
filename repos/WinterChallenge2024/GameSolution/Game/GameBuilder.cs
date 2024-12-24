@@ -3,22 +3,22 @@ using System.Collections.Generic;
 
 namespace GameSolution.Game
 {
-     public static class GameBuilder
-     {
+    public static class GameBuilder
+    {
         public static GameState BuildEmptyGame(bool setNextTurn = true)
         {
-          GameState game = new GameState();
+            GameState game = new GameState();
 
 
-          return game;
+            return game;
         }
 
-        public static GameState BuildBasicGame()
+        public static GameState BuildWood4Game()
         {
-          GameState game = new GameState();
+            GameState game = new GameState();
 
-          Board board = new Board(18, 9);
-          List<Entity> entities = new List<Entity>()
+            Board board = new Board(18, 9);
+            List<Entity> entities = new List<Entity>()
           {
              new Entity(0, 0, "WALL", -1, 0, "X", 0, 0),
              new Entity(1, 0, "WALL", -1, 0, "X", 0, 0),
@@ -112,20 +112,20 @@ namespace GameSolution.Game
              new Entity(10, 7, "A", -1, 0, "X", 0, 0),
              new Entity(14, 7, "A", -1, 0, "X", 0, 0)
           };
-          board.SetEntities(entities);
-          board.Print();
+            board.SetEntities(entities);
+            board.Print();
 
-          game.SetNextTurn(board, new int[] { 10, 0, 0, 0 }, new int[] { 10, 0, 0, 0 });
+            game.SetNextTurn(board, new int[] { 10, 0, 0, 0 }, new int[] { 10, 0, 0, 0 });
 
-          return game;
+            return game;
         }
 
         public static GameState BuildWood3Game()
         {
-          GameState game = new GameState();
+            GameState game = new GameState();
 
-          Board board = new Board(18, 9);
-          List<Entity> entities = new List<Entity>()
+            Board board = new Board(18, 9);
+            List<Entity> entities = new List<Entity>()
           {
              new Entity(0, 0, "WALL", -1, 0, "X", 0, 0),
              new Entity(1, 0, "WALL", -1, 0, "X", 0, 0),
@@ -203,20 +203,20 @@ namespace GameSolution.Game
              new Entity(4, 1, "A", -1, 0, "X", 0, 0),
              new Entity(4, 5, "A", -1, 0, "X", 0, 0)
           };
-          board.SetEntities(entities);
-          board.Print();
+            board.SetEntities(entities);
+            board.Print();
 
-          game.SetNextTurn(board, new int[] { 10, 0, 1, 1 }, new int[] { 10, 0, 1, 1 });
+            game.SetNextTurn(board, new int[] { 10, 0, 1, 1 }, new int[] { 10, 0, 1, 1 });
 
-          return game;
+            return game;
         }
 
         public static GameState BuildWood2Game()
         {
-          GameState game = new GameState();
+            GameState game = new GameState();
 
-          Board board = new Board(18, 8);
-          List<Entity> entities = new List<Entity>()
+            Board board = new Board(18, 8);
+            List<Entity> entities = new List<Entity>()
           {
              new Entity(0, 0, "WALL", -1, 0, "X", 0, 0),
              new Entity(1, 0, "WALL", -1, 0, "X", 0, 0),
@@ -314,20 +314,20 @@ namespace GameSolution.Game
              new Entity(1, 2, "ROOT", 1, 1, "N", 1, 1),
              new Entity(16, 5, "ROOT", 0, 2, "N", 2, 2)
           };
-          board.SetEntities(entities);
-          board.Print();
+            board.SetEntities(entities);
+            board.Print();
 
-          game.SetNextTurn(board, new int[] { 50, 05, 05, 0 }, new int[] { 50, 05, 05, 0 });
+            game.SetNextTurn(board, new int[] { 50, 05, 05, 0 }, new int[] { 50, 05, 05, 0 });
 
-          return game;
+            return game;
         }
 
         public static GameState BuildWood1Game()
         {
-          GameState game = new GameState();
+            GameState game = new GameState();
 
-          Board board = new Board(18, 9);
-          List<Entity> entities = new List<Entity>()
+            Board board = new Board(18, 9);
+            List<Entity> entities = new List<Entity>()
           {
              new Entity(0, 0, "WALL", -1, 0, "X", 0, 0),
              new Entity(1, 0, "WALL", -1, 0, "X", 0, 0),
@@ -405,12 +405,12 @@ namespace GameSolution.Game
              new Entity(16, 1, "A", -1, 0, "X", 0, 0),
              new Entity(16, 5, "A", -1, 0, "X", 0, 0)
           };
-          board.SetEntities(entities);
-          board.Print();
+            board.SetEntities(entities);
+            board.Print();
 
-          game.SetNextTurn(board, new int[] { 6, 2, 2, 3 }, new int[] { 6, 2, 2, 3 });
+            game.SetNextTurn(board, new int[] { 6, 2, 2, 3 }, new int[] { 6, 2, 2, 3 });
 
-          return game;
+            return game;
         }
-     }
+    }
 }

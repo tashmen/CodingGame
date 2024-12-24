@@ -644,6 +644,7 @@ namespace Algorithms.Graph
             Paths = new Dictionary<int, Dictionary<int, List<ILink>>>();
             InternalBuildShortestPathsFromStartNode2(startNode, maxDistance);
         }
+        //With a little help from Chat GPT improved the performance significantly.
         private void InternalBuildShortestPathsFromStartNode2(INode startNode, double maxDistance = double.MaxValue)
         {
             // Initialize exploration state and paths
@@ -657,7 +658,9 @@ namespace Algorithms.Graph
                 // Compare first by distance, then by step count (in case of tie)
                 int result = a.Distance.CompareTo(b.Distance);
                 if (result != 0) return result;
-                return a.StepCount.CompareTo(b.StepCount);
+                result = a.StepCount.CompareTo(b.StepCount);
+                if (result != 0) return result;
+                return a.Link.EndNodeId.CompareTo(b.Link.EndNodeId);
             }));
             Paths[startNode.Id] = new Dictionary<int, List<ILink>>();
             Paths[startNode.Id][startNode.Id] = new List<ILink>();
@@ -697,7 +700,7 @@ namespace Algorithms.Graph
                 if (currentDist >= maxDistance)
                     return;
                 // Add adjacent links of the newly explored node to the queue
-                foreach (var adjacentLink in adjacentNode.GetLinks())
+                foreach (ILink adjacentLink in adjacentNode.GetLinks())
                 {
                     var nextNode = Nodes[adjacentLink.EndNodeId];
                     if (!nextNode.IsExplored)
