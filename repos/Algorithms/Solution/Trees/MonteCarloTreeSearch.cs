@@ -115,6 +115,11 @@ namespace Algorithms.Trees
             double? winner;
             do
             {
+                if (watch.ElapsedMilliseconds >= timeLimit)
+                {
+                    return null;
+                }
+
                 object move = SelectMoveAtRandom(state, isMax);
                 state.ApplyMove(move, isMax);
 
