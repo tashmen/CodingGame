@@ -164,6 +164,7 @@ namespace Algorithms.Trees
         }
     }
 }
+//*** SourceCombiner -> original file MonteCarloTreeSearch.cs ***
 namespace Algorithms.Trees
 {
     public class MonteCarloTreeSearch : TreeAlgorithm
@@ -186,6 +187,14 @@ namespace Algorithms.Trees
         {
             return RootNode.state;
         }
+        /// <summary>
+        /// Get the next move
+        /// </summary>
+        /// <param name="watch">timer</param>
+        /// <param name="timeLimit">The amount of time to give to the search in milliseconds</param>
+        /// <param name="depth">How deep to run the simulations; does not impact how deep it goes in the game tree.</param>
+        /// <param name="numRollouts">The number of roll outs to play per expansion</param>
+        /// <returns></returns>
         public object GetNextMove(Stopwatch watch, int timeLimit, int depth = -1, int numRollouts = 1, double? exploration = null)
         {
             if (exploration == null)
@@ -216,7 +225,7 @@ namespace Algorithms.Trees
                         var clonedState = childNode.state.Clone();
                         winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
                         if (!winner.HasValue)
-                            break;
+                            break;//We simulated a game, but it didn't end so we are out of time...
                         BackPropagate(childNode, winner);
                         count++;
                     }
@@ -239,7 +248,6 @@ namespace Algorithms.Trees
                 if (printErrors)
                     Console.Error.WriteLine($"w: {(RootNode.isMax ? child.wins : child.loses)} l: {(RootNode.isMax ? child.loses : child.wins)} total: {child.totalPlays} move: {child.state.GetMove(RootNode.isMax)} score: {score} isMax: {RootNode.isMax}");
             }
-
             if (printErrors)
                 Console.Error.WriteLine($"Best: w: {(RootNode.isMax ? bestChild.wins : bestChild.loses)} l: {(RootNode.isMax ? bestChild.loses : bestChild.wins)} total: {bestChild.totalPlays} score: {bestScore} move: {bestChild.state.GetMove(RootNode.isMax)}");
             return bestChild.state.GetMove(RootNode.isMax);
@@ -259,6 +267,10 @@ namespace Algorithms.Trees
             double? winner;
             do
             {
+                if (watch.ElapsedMilliseconds >= timeLimit)
+                {
+                    return null;
+                }
                 object move = SelectMoveAtRandom(state, isMax);
                 state.ApplyMove(move, isMax);
                 if (watch.ElapsedMilliseconds >= timeLimit)

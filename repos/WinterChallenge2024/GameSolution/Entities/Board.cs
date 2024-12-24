@@ -83,7 +83,7 @@ namespace GameSolution.Entities
             }
             foreach (Entity deadEntity in deadEntities)
             {
-                var deathToChildren = Entities.Where(e => e.OrganParentId == deadEntity.OrganId);
+                var deathToChildren = GetEntitiesList().Where(e => e.OrganParentId == deadEntity.OrganId);
                 foreach (Entity kill in deathToChildren)
                 {
                     Entities[GetNodeIndex(kill.Location)] = null;
@@ -143,57 +143,61 @@ namespace GameSolution.Entities
             var moves = new List<Move>();
 
             var rootEntities = GetRootEntities(isMine);
+            rootEntities.Sort((e1, e2) => e2.OrganId.CompareTo(e1.OrganId));
             var organismCount = rootEntities.Count();
             MoveAction[][] organismToMoveActions = new MoveAction[organismCount][];
 
             int i = 0;
+            int maxOrgans = 3;//Put a limit on the number of organs we calculate moves for as this is exploding the action space
             foreach (Entity root in rootEntities)
             {
                 var moveActions = new List<MoveAction>
                 {
                     MoveAction.CreateWait()
                 };
-
-
-                bool canHarvest = false;
-                if (proteins[2] > 0 && proteins[3] > 0)
+                if (maxOrgans > 0)
                 {
-                    var harvestActions = GetHarvestMoveActions(root.OrganRootId, isMine);
-                    moveActions.AddRange(harvestActions);
-                    canHarvest = harvestActions.Count > 0;
-                }
-
-                if (!canHarvest && proteins[0] > 0)
-                {
-                    moveActions.AddRange(GetGrowBasicMoveActions(root.OrganRootId, isMine));
-                }
-
-                if (!canHarvest && proteins[1] > 0 && proteins[2] > 0)
-                {
-                    moveActions.AddRange(GetTentacleMoveActions(root.OrganRootId, isMine));
-                }
-
-                if (!canHarvest && proteins[1] > 0 && proteins[3] > 0)
-                {
-                    moveActions.AddRange(GetSporerMoveActions(root.OrganRootId, isMine));
-                }
-
-                bool canRoot = true;
-                for (int j = 0; j < 4; j++)
-                {
-                    if (proteins[j] <= 0)
+                    bool canHarvest = false;
+                    if (proteins[2] > 0 && proteins[3] > 0)
                     {
-                        canRoot = false;
-                        break;
+                        var harvestActions = GetHarvestMoveActions(root.OrganRootId, isMine);
+                        moveActions.AddRange(harvestActions);
+                        canHarvest = harvestActions.Count > 0;
                     }
-                }
-                if (!canHarvest && canRoot)
-                {
-                    moveActions.AddRange(GetSporeMoveActions(root.OrganRootId, isMine));
+
+                    if (!canHarvest && proteins[0] > 0)
+                    {
+                        moveActions.AddRange(GetGrowBasicMoveActions(root.OrganRootId, isMine));
+                    }
+
+                    if (!canHarvest && proteins[1] > 0 && proteins[2] > 0)
+                    {
+                        moveActions.AddRange(GetTentacleMoveActions(root.OrganRootId, isMine, moveActions.Count > 1));
+                    }
+
+                    if (!canHarvest && proteins[1] > 0 && proteins[3] > 0)
+                    {
+                        moveActions.AddRange(GetSporerMoveActions(root.OrganRootId, isMine));
+                    }
+
+                    bool canRoot = true;
+                    for (int j = 0; j < 4; j++)
+                    {
+                        if (proteins[j] <= 0)
+                        {
+                            canRoot = false;
+                            break;
+                        }
+                    }
+                    if (!canHarvest && canRoot)
+                    {
+                        moveActions.AddRange(GetSporeMoveActions(root.OrganRootId, isMine));
+                    }
                 }
 
                 organismToMoveActions[i] = moveActions.ToArray();
                 i++;
+                maxOrgans--;
             }
 
 
@@ -366,7 +370,7 @@ namespace GameSolution.Entities
             return moveActions;
         }
 
-        public List<MoveAction> GetTentacleMoveActions(int organRootId, bool isMine)
+        public List<MoveAction> GetTentacleMoveActions(int organRootId, bool isMine, bool hasActions)
         {
             List<MoveAction> moveActions = new List<MoveAction>();
 
@@ -378,7 +382,7 @@ namespace GameSolution.Entities
                 {
                     if (IsOpponentOrEmptySpace(growAction.Location, tentacleDirection, isMine))
                     {
-                        if (IsOpponentWithin3Spaces(growAction.Location, isMine))
+                        if (!hasActions || IsOpponentWithin3Spaces(growAction.Location, isMine))
                         {
                             moveActions.Add(MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, tentacleDirection));
                         }
@@ -408,6 +412,7 @@ namespace GameSolution.Entities
             if (!_moveActionCache.TryGetValue(key, out List<MoveAction> moveActions))
             {
                 moveActions = new List<MoveAction>();
+                var potentialMoveActions = new List<MoveAction>();
                 var entities = GetEntitiesByRoot(organRootId, isMine);
                 foreach (Entity entity in entities)
                 {
@@ -415,11 +420,34 @@ namespace GameSolution.Entities
                     {
                         if (IsOpenSpace(entity.Location, direction))
                         {
-                            moveActions.Add(MoveAction.CreateGrow(entity.OrganId, GetNextLocation(entity.Location, direction), EntityType.BASIC, entity.OrganRootId));
+                            var moveAction = MoveAction.CreateGrow(entity.OrganId, GetNextLocation(entity.Location, direction), EntityType.BASIC, entity.OrganRootId);
+                            if (!IsHarvesting(GetNextLocation(entity.Location, direction), isMine))
+                            {
+                                moveActions.Add(moveAction);
+                            }
+                            else
+                            {
+                                potentialMoveActions.Add(moveAction);
+                            }
                         }
                     }
                 }
+                if (moveActions.Count == 0)
+                {
+                    moveActions = potentialMoveActions;
+                }
                 _moveActionCache[key] = moveActions;
+            }
+
+            int maxMoves = 5;
+            if (moveActions.Count > maxMoves)
+            {
+                var oppRootEntities = GetEntitiesByRoot(organRootId, !isMine);
+                foreach (Entity oppRoot in oppRootEntities)
+                {
+                    moveActions.Sort((m1, m2) => Graph.GetShortestPathDistance(GetNodeIndex(oppRoot.Location), GetNodeIndex(m1.Location)).CompareTo(Graph.GetShortestPathDistance(GetNodeIndex(oppRoot.Location), GetNodeIndex(m2.Location))));
+                    moveActions = moveActions.Take(maxMoves).ToList();
+                }
             }
 
             return moveActions;
@@ -434,14 +462,55 @@ namespace GameSolution.Entities
             {
                 foreach (OrganDirection direction in PossibleDirections)
                 {
-                    if (IsHarvestSpace(growAction.Location, direction))
+                    if (IsHarvestSpace(growAction.Location, direction) && !IsHarvesting(GetNextLocation(growAction.Location, direction), isMine))
                     {
-                        moveActions.Add(MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.HARVESTER, growAction.OrganRootId, direction));
+                        var harvestAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.HARVESTER, growAction.OrganRootId, direction);
+                        //Prioritize A harvests
+                        if (GetEntityWithDirection(growAction.Location, direction, out Entity entity) && entity.Type == EntityType.A)
+                        {
+                            return new List<MoveAction>()
+                            {
+                                harvestAction
+                            };
+                        }
+                        moveActions.Add(harvestAction);
                     }
                 }
             }
 
             return moveActions;
+        }
+
+        public bool IsHarvesting(Point2d location, bool isMine)
+        {
+            if (ValidateLocation(location) && GetEntity(location, out Entity harvestSpace) && harvestSpace.IsOpenSpace())
+            {
+                foreach (OrganDirection direction in PossibleDirections)
+                {
+                    var locationCheck = GetNextLocation(location, direction);
+                    if (ValidateLocation(locationCheck) && GetEntity(locationCheck, out Entity entity) && entity.Type == EntityType.HARVESTER && entity.IsMine.HasValue && entity.IsMine == isMine && entity.OrganDirection == GetOpposingDirection(direction))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public OrganDirection GetOpposingDirection(OrganDirection direction)
+        {
+            switch (direction)
+            {
+                case OrganDirection.North:
+                    return OrganDirection.South;
+                case OrganDirection.South:
+                    return OrganDirection.North;
+                case OrganDirection.East:
+                    return OrganDirection.West;
+                case OrganDirection.West:
+                    return OrganDirection.East;
+            }
+            throw new Exception("No direction given");
         }
 
         public bool IsHarvestWithin3Spaces(Point2d location)
@@ -492,7 +561,12 @@ namespace GameSolution.Entities
 
         public bool ValidateLocation(Point2d location, OrganDirection nextDirection)
         {
-            return GetNextLocation(location, nextDirection) != null;
+            return ValidateLocation(GetNextLocation(location, nextDirection));
+        }
+
+        public bool ValidateLocation(Point2d location)
+        {
+            return location != null;
         }
 
         public bool GetEntityWithDirection(Point2d currentLocation, OrganDirection nextDirection, out Entity entity)
@@ -525,11 +599,13 @@ namespace GameSolution.Entities
         public void Harvest(bool isMine, int[] proteins)
         {
             var harvesters = GetEntities(isMine).Where(e => e.Type == EntityType.HARVESTER);
+            List<int> harvestedLocations = new List<int>();
             foreach (Entity harvester in harvesters)
             {
-                if (GetEntityWithDirection(harvester.Location, harvester.OrganDirection, out Entity entity) && entity.IsOpenSpace())
+                if (GetEntityWithDirection(harvester.Location, harvester.OrganDirection, out Entity entity) && entity.IsOpenSpace() && !harvestedLocations.Contains(GetNodeIndex(entity.Location)))
                 {
                     proteins[entity.Type - EntityType.A]++;
+                    harvestedLocations.Add(GetNodeIndex(entity.Location));
                 }
             }
         }

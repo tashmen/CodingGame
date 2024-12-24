@@ -72,7 +72,7 @@ class Player
 
             MonteCarloTreeSearch search = new MonteCarloTreeSearch();
             search.SetState(gameState, true, gameState.Turn < 5);
-            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 20, 1);
+            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 20 : 970, 20, 1);
 
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
             board.Print();
