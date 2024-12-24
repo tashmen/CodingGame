@@ -1,5 +1,4 @@
-﻿using Algorithms.Space;
-using GameSolution.Entities;
+﻿using GameSolution.Entities;
 using GameSolution.Game;
 using System;
 using System.Collections.Generic;

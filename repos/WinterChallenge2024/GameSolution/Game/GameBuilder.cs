@@ -412,5 +412,62 @@ namespace GameSolution.Game
 
             return game;
         }
+
+        public static GameState BuildSilverGame()
+        {
+            GameState game = new GameState();
+
+            Board board = new Board(16, 8);
+            List<Entity> entities = new List<Entity>()
+          {
+             new Entity(1, 2, "WALL", -1, 0, "X", 0, 0),
+             new Entity(2, 2, "WALL", -1, 0, "X", 0, 0),
+             new Entity(6, 1, "WALL", -1, 0, "X", 0, 0),
+             new Entity(9, 1, "WALL", -1, 0, "X", 0, 0),
+             new Entity(13, 1, "WALL", -1, 0, "X", 0, 0),
+             new Entity(14, 1, "WALL", -1, 0, "X", 0, 0),
+             new Entity(12, 2, "WALL", -1, 0, "X", 0, 0),
+             new Entity(5, 3, "WALL", -1, 0, "X", 0, 0),
+             new Entity(8, 3, "WALL", -1, 0, "X", 0, 0),
+             new Entity(7, 4, "WALL", -1, 0, "X", 0, 0),
+             new Entity(10, 4, "WALL", -1, 0, "X", 0, 0),
+             new Entity(3, 5, "WALL", -1, 0, "X", 0, 0),
+             new Entity(13, 5, "WALL", -1, 0, "X", 0, 0),
+             new Entity(14, 5, "WALL", -1, 0, "X", 0, 0),
+             new Entity(1, 6, "WALL", -1, 0, "X", 0, 0),
+             new Entity(2, 6, "WALL", -1, 0, "X", 0, 0),
+             new Entity(6, 6, "WALL", -1, 0, "X", 0, 0),
+             new Entity(9, 6, "WALL", -1, 0, "X", 0, 0),
+
+             new Entity(3, 1, "ROOT", 1, 1, "N", 1, 1),
+             new Entity(12, 6, "ROOT", 0, 2, "N", 2, 2),
+
+             new Entity(10, 1, "A", -1, 0, "X", 0, 0),
+             new Entity(0, 2, "A", -1, 0, "X", 0, 0),
+             new Entity(15, 5, "A", -1, 0, "X", 0, 0),
+             new Entity(5, 6, "A", -1, 0, "X", 0, 0),
+
+             new Entity(6, 0, "B", -1, 0, "X", 0, 0),
+             new Entity(4, 2, "B", -1, 0, "X", 0, 0),
+             new Entity(11, 5, "B", -1, 0, "X", 0, 0),
+             new Entity(9, 7, "B", -1, 0, "X", 0, 0),
+
+             new Entity(2, 1, "C", -1, 0, "X", 0, 0),
+             new Entity(6, 2, "C", -1, 0, "X", 0, 0),
+             new Entity(9, 5, "C", -1, 0, "X", 0, 0),
+             new Entity(13, 6, "C", -1, 0, "X", 0, 0),
+
+             new Entity(5, 0, "D", -1, 0, "X", 0, 0),
+             new Entity(13, 0, "D", -1, 0, "X", 0, 0),
+             new Entity(2, 7, "D", -1, 0, "X", 0, 0),
+             new Entity(10, 7, "D", -1, 0, "X", 0, 0)
+          };
+            board.SetEntities(entities);
+            board.Print();
+
+            game.SetNextTurn(board, new int[] { 6, 2, 2, 3 }, new int[] { 6, 2, 2, 3 });
+
+            return game;
+        }
     }
 }

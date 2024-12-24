@@ -104,6 +104,10 @@ namespace GameSolution.Game
             for (int i = 0; i < 4; i++)
             {
                 proteins[i] -= cost[i];
+                if (proteins[i] < 0)
+                {
+                    throw new Exception("Invalid move played; proteins can't be negative");
+                }
             }
         }
 

@@ -10,7 +10,7 @@ namespace TestSimulation
     {
         static void Main(string[] args)
         {
-            GameState game = GameBuilder.BuildWood1Game();
+            GameState game = GameBuilder.BuildSilverGame();
             MonteCarloTreeSearch search = new MonteCarloTreeSearch();
             MonteCarloTreeSearch oppSearch = new MonteCarloTreeSearch();
             Stopwatch watch = new Stopwatch();

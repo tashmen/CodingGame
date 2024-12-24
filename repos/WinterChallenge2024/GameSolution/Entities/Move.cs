@@ -1,5 +1,7 @@
 ﻿using Algorithms.Space;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -71,7 +73,7 @@ namespace GameSolution.Entities
         }
     }
 
-    public class Move
+    public class Move : IEnumerable<MoveAction>
     {
         public MoveAction[] Actions { get; set; }
         private int _actionIndex = 0;
@@ -85,6 +87,22 @@ namespace GameSolution.Entities
         {
             Actions = move.Actions.Select(m => m).ToArray();
             _actionIndex = move.Actions.Count(a => a != null);
+        }
+
+        public IEnumerator<MoveAction> GetEnumerator()
+        {
+            if (Actions == null)
+                yield break;
+
+            for (int i = 0; i < _actionIndex; i++)
+            {
+                yield return Actions[i];
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         private int[] _costs = null;
