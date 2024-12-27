@@ -154,9 +154,26 @@ namespace GameSolution.Game
             var myEntities = Board.GetMyEntityCount();
             var oppEntities = Board.GetOppEntityCount();
 
+            var myHarvestProteins = Board.GetHarvestProteins(true);
+            double myHarvestProteinsSum = myHarvestProteins.Sum();
+            var oppHarvestProteins = Board.GetHarvestProteins(false);
+            double oppHarvestProteinsSum = oppHarvestProteins.Sum();
+
+            bool hasAllMyProteins = myHarvestProteins.All(p => p > 1);
+            bool hasAllOppProteins = oppHarvestProteins.All(p => p > 1);
+
+            int myProteinBoost = hasAllMyProteins ? 20 : 0;
+            int oppProteinBoost = hasAllOppProteins ? 20 : 0;
+
+            var proteinValue = (myHarvestProteinsSum + myProteinBoost - oppProteinBoost - oppHarvestProteinsSum) / (myHarvestProteinsSum + oppHarvestProteinsSum + 1 + myProteinBoost + oppProteinBoost) * 0.2;
+
+
             var myProtein = MyProtein.Sum();
             var oppProtein = OppProtein.Sum();
-            value = (((double)myEntities - oppEntities) / (myEntities + oppEntities + 1)) + (((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001);
+            value = (((double)myEntities - oppEntities) / (myEntities + oppEntities + 1) * 0.1) + (((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001) + proteinValue;
+
+            if (value > 1 || value < -1)
+                Console.Error.WriteLine("Evaluation too high");
 
             return value;
         }
@@ -187,6 +204,13 @@ namespace GameSolution.Game
 
             if (Turn < 100)
             {
+                if (myEntities == 0 && oppEntities > 0)
+                    winner = -1;
+                else if (myEntities > 0 && oppEntities == 0)
+                    winner = 1;
+                else if (myEntities == 0 && oppEntities == 0)
+                    winner = 0;
+
                 bool hasNoMyProteinsToBuild = MyProtein[0] == 0 && ((MyProtein[1] == 0 && MyProtein[2] == 0) || (MyProtein[1] == 0 && MyProtein[3] == 0) || (MyProtein[2] == 0 && MyProtein[3] == 0));
                 bool hasNoOppProteinsToBuild = OppProtein[0] == 0 && ((OppProtein[1] == 0 && OppProtein[2] == 0) || (OppProtein[1] == 0 && OppProtein[3] == 0) || (OppProtein[2] == 0 && OppProtein[3] == 0));
 

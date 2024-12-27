@@ -13,7 +13,7 @@ class Player
 {
     static void Main(string[] args)
     {
-
+        MonteCarloTreeSearch search = new MonteCarloTreeSearch();
         GameState gameState = new GameState();
 
 
@@ -22,7 +22,11 @@ class Player
         int width = int.Parse(inputs[0]); // columns in the game grid
         int height = int.Parse(inputs[1]); // rows in the game grid
 
-        Board board = null;
+        Stopwatch watch = new Stopwatch();
+        watch.Start();
+        Board board = new Board(width, height);
+        Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+
 
         // game loop
         while (true)
@@ -40,7 +44,7 @@ class Player
                 string organDir = inputs[5];
                 int organParentId = int.Parse(inputs[6]);
                 int organRootId = int.Parse(inputs[7]);
-                Entity entity = new Entity(x, y, type, owner, organId, organDir, organParentId, organRootId);
+                Entity entity = new Entity(x, y, board.GetNodeIndex(x, y), type, owner, organId, organDir, organParentId, organRootId);
                 entities.Add(entity);
             }
             inputs = Console.ReadLine().Split(' ');
@@ -58,26 +62,22 @@ class Player
             int[] myProtein = new int[] { myA, myB, myC, myD };
             int[] oppProtein = new int[] { oppA, oppB, oppC, oppD };
 
-            Stopwatch watch = new Stopwatch();
             watch.Start();
-            if (gameState.Turn == 0)
-            {
-                board = new Board(width, height);
-            }
             board.SetEntities(entities);
-
-            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-
             gameState.SetNextTurn(board, myProtein, oppProtein);
+            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
 
-            MonteCarloTreeSearch search = new MonteCarloTreeSearch(requiredActionsCount > 4 ? false : true);
-            search.SetState(gameState, true, gameState.Turn < 5);
-            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 48 : 990, 20, 1);
+            search.SetState(gameState, true, false);
+            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 990, 20, 1);
 
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-            board.Print();
-            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+            if (watch.ElapsedMilliseconds < 48)
+            {
+                board.Print();
+                Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+            }
             watch.Stop();
+            watch.Reset();
 
             move.Print();
         }

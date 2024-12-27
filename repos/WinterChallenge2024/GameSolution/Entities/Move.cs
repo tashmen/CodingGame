@@ -1,7 +1,4 @@
-﻿using Algorithms.Space;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Text;
 
@@ -21,6 +18,7 @@ namespace GameSolution.Entities
         public Point2d Location { get; set; }
         public EntityType EntityType { get; set; }
         public int OrganRootId { get; set; }
+        public double Score { get; set; }
 
         public OrganDirection OrganDirection { get; set; }
 
@@ -73,36 +71,16 @@ namespace GameSolution.Entities
         }
     }
 
-    public class Move : IEnumerable<MoveAction>
+    public class Move
     {
         public MoveAction[] Actions { get; set; }
-        private int _actionIndex = 0;
 
         public Move()
         {
-            Actions = new MoveAction[50];
-            _actionIndex = 0;
         }
         public Move(Move move)
         {
             Actions = move.Actions.Select(m => m).ToArray();
-            _actionIndex = move.Actions.Count(a => a != null);
-        }
-
-        public IEnumerator<MoveAction> GetEnumerator()
-        {
-            if (Actions == null)
-                yield break;
-
-            for (int i = 0; i < _actionIndex; i++)
-            {
-                yield return Actions[i];
-            }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
 
         private int[] _costs = null;
@@ -125,15 +103,9 @@ namespace GameSolution.Entities
             return _costs;
         }
 
-        public void AddAction(MoveAction move)
-        {
-            Actions[_actionIndex++] = move;
-        }
-
         public void SetActions(MoveAction[] actions)
         {
             Actions = actions;
-            _actionIndex = actions.Count(a => a != null);
         }
 
         public Move Clone()

@@ -25,7 +25,7 @@ namespace UnitTest
         {
             state = GameBuilder.BuildWood4Game();
 
-            var distance = state.Board.Graph.GetShortestPathDistance(state.Board.GetNodeIndex(new Point2d(1, 2)), state.Board.GetNodeIndex(new Point2d(16, 2)));
+            var distance = state.Board.Graph.GetShortestPathDistance(state.Board.GetNodeIndex(1, 2), state.Board.GetNodeIndex(16, 2));
             Assert.Equal(15, distance);
         }
 
@@ -39,8 +39,8 @@ namespace UnitTest
             List<Move> oppMoves = (List<Move>)state.GetPossibleMoves(false);
             Assert.Equal(4, oppMoves.Count);
 
-            Move myMove = myMoves.First(m => m.Actions[0].Type == MoveType.GROW && m.Actions[0].Location.Equals(new Point2d(2, 2)));
-            Move oppMove = oppMoves.First(m => m.Actions[0].Type == MoveType.GROW && m.Actions[0].Location.Equals(new Point2d(2, 6)));
+            Move myMove = myMoves.First(m => m.Actions[0].Type == MoveType.GROW && m.Actions[0].Location.Equals(new Point2d(2, 2, state.Board.GetNodeIndex(2, 2))));
+            Move oppMove = oppMoves.First(m => m.Actions[0].Type == MoveType.GROW && m.Actions[0].Location.Equals(new Point2d(2, 6, state.Board.GetNodeIndex(2, 6))));
 
             GameState oldState = state.Clone() as GameState;
 
@@ -49,8 +49,8 @@ namespace UnitTest
 
             Assert.Equal(5, state.GetGlobalOrganId());
 
-            oldState.Board.GetEntities()[oldState.Board.GetNodeIndex(2, 2)] = new Entity(2, 2, "BASIC", 1, 3, "N", 1, 1);
-            oldState.Board.GetEntities()[oldState.Board.GetNodeIndex(2, 6)] = new Entity(2, 6, "BASIC", 0, 4, "N", 2, 2);
+            oldState.Board.GetEntities()[oldState.Board.GetNodeIndex(2, 2)] = new Entity(2, 2, state.Board.GetNodeIndex(2, 2), "BASIC", 1, 3, "N", 1, 1);
+            oldState.Board.GetEntities()[oldState.Board.GetNodeIndex(2, 6)] = new Entity(2, 6, state.Board.GetNodeIndex(2, 6), "BASIC", 0, 4, "N", 2, 2);
             oldState.Board.GlobalOrganId = 5;
             oldState.Turn++;
             oldState.MyProtein[0]--;

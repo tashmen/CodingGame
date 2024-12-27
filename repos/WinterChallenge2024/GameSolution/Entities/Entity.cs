@@ -1,5 +1,4 @@
-﻿using Algorithms.Space;
-using System;
+﻿using System;
 
 namespace GameSolution.Entities
 {
@@ -37,15 +36,19 @@ namespace GameSolution.Entities
         public OrganDirection OrganDirection { get; set; }
         public int OrganParentId { get; set; }
         public int OrganRootId { get; set; }
-        public Entity(int x, int y, string type, int owner, int organId, string organDir, int organParentId, int organRootId)
+
+        private bool _IsOpenSpace { get; set; }
+        public Entity(int x, int y, int index, string type, int owner, int organId, string organDir, int organParentId, int organRootId)
         {
-            Location = new Point2d(x, y);
+            Location = new Point2d(x, y, index);
             IsMine = owner == 1 ? true : owner == -1 ? (bool?)null : false;
             Type = GetType(type);
             OrganDirection = GetOrganDirection(organDir);
             OrganId = organId;
             OrganParentId = organParentId;
             OrganRootId = organRootId;
+            _IsOpenSpace = IsOpenSpaceInternal();
+
         }
 
         public Entity(Point2d location, EntityType type, bool? isMine, int organId, int organParentId, int organRootId, OrganDirection organDirection)
@@ -57,6 +60,7 @@ namespace GameSolution.Entities
             OrganParentId = organParentId;
             OrganRootId = organRootId;
             OrganDirection = organDirection;
+            _IsOpenSpace = IsOpenSpaceInternal();
         }
 
         public Entity(Entity entity)
@@ -68,6 +72,7 @@ namespace GameSolution.Entities
             this.OrganId = entity.OrganId;
             this.OrganParentId = entity.OrganParentId;
             this.OrganRootId = entity.OrganRootId;
+            _IsOpenSpace = entity._IsOpenSpace;
         }
 
         public OrganDirection GetOrganDirection(string organDir)
@@ -116,6 +121,10 @@ namespace GameSolution.Entities
         }
 
         public bool IsOpenSpace()
+        {
+            return _IsOpenSpace;
+        }
+        private bool IsOpenSpaceInternal()
         {
             return Type == EntityType.A || Type == EntityType.B || Type == EntityType.C || Type == EntityType.D;
         }

@@ -2,20 +2,20 @@
 
 namespace GameSolution.Game
 {
-     public class GameHelper
-     {
+    public class GameHelper
+    {
         GameState State { get; set; }
         public GameHelper(GameState state)
         {
-          State = state;
+            State = state;
         }
 
         public Move GetMove()
         {
-          Move move = new Move();
-          move.AddAction(MoveAction.CreateWait());
-          return move;
+            Move move = new Move();
+            move.SetActions(new MoveAction[] { MoveAction.CreateWait() });
+            return move;
         }
-     }
+    }
 }
 
