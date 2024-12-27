@@ -19,13 +19,7 @@ namespace Algorithms.Trees
         public GameTreeNode(IGameState state, bool isMax, GameTreeNode parent = null)
         {
             this.state = state;
-            moves = new List<object>(50);
-            var possibleMoves = state.GetPossibleMoves(isMax);
-            for(int i = 0; i < possibleMoves.Count; i++)
-            {
-                var obj = possibleMoves[i];
-                moves.Add(obj);
-            }
+            moves = state.GetPossibleMoves(isMax);
             children = new List<GameTreeNode>(50);
             this.parent = parent;
             this.isMax = isMax;
@@ -61,11 +55,11 @@ namespace Algorithms.Trees
         {
             if (winner.HasValue)
             {
-                if(winner > 0)
+                if (winner > 0)
                 {
                     wins += winner.Value;
                 }
-                else if(winner < 0)
+                else if (winner < 0)
                 {
                     loses += Math.Abs(winner.Value);
                 }

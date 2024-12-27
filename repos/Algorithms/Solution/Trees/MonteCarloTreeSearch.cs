@@ -59,6 +59,7 @@ namespace Algorithms.Trees
                 if (winner.HasValue)
                 {
                     BackPropagate(childNode, winner);
+                    count++;
                 }
                 else
                 {
@@ -90,7 +91,7 @@ namespace Algorithms.Trees
                     bestScore = score;
                 }
                 if (printErrors)
-                    Console.Error.WriteLine($"w: {(RootNode.isMax ? child.wins : child.loses)} l: {(RootNode.isMax ? child.loses : child.wins)} total: {child.totalPlays} move: {child.state.GetMove(RootNode.isMax)} score: {score} isMax: {RootNode.isMax}");
+                    Console.Error.WriteLine($"w: {(RootNode.isMax ? child.wins : child.loses)} l: {(RootNode.isMax ? child.loses : child.wins)} total: {child.totalPlays} score: {score} isMax: {RootNode.isMax} move: {child.state.GetMove(RootNode.isMax)}");
             }
 
             if (printErrors)
