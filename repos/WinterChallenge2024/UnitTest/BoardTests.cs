@@ -37,7 +37,7 @@ namespace UnitTest
         }
 
         [Fact]
-        public void Test_PrunedCartesianProduct()
+        public void Test_PrunedCartesianProduct_Full()
         {
             MoveAction[][] moveActions = new MoveAction[3][];
             for (int i = 0; i < 3; i++)
@@ -45,13 +45,103 @@ namespace UnitTest
                 moveActions[i] = new MoveAction[4];
                 for (int j = 0; j < 4; j++)
                 {
-                    moveActions[i][j] = MoveAction.CreateGrow(j, new Point2d(i, j, 0), EntityType.BASIC, 1);
+                    moveActions[i][j] = MoveAction.CreateGrow(0, new Point2d(i, j, i * 4 + j), EntityType.BASIC, 1);
                 }
             }
 
-            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 2, 0, 0, 0 }).ToList();
+            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
 
-            Assert.Equal(24, moves.Count);
+            Assert.Equal(64, moves.Count);
+
+        }
+
+
+        [Fact]
+        public void Test_PrunedCartesianProduct_ProteinLimited()
+        {
+            var moveActions = new MoveAction[3][];
+            for (int i = 0; i < 3; i++)
+            {
+                moveActions[i] = new MoveAction[4];
+                for (int j = 0; j < 4; j++)
+                {
+                    if (j == 0)
+                    {
+                        moveActions[i][j] = MoveAction.CreateWait();
+                    }
+                    else moveActions[i][j] = MoveAction.CreateGrow(0, new Point2d(i, j, i * 4 + j), EntityType.BASIC, 1);
+                }
+            }
+
+            var moves = board.PrunedCartesianProduct(moveActions, false, new int[4] { 2, 0, 0, 0 }).ToList();
+
+            Assert.Equal(37, moves.Count);
+        }
+
+        [Fact]
+        public void Test_PrunedCartesianProduct_ProteinExtraLimited()
+        {
+            var moveActions = new MoveAction[3][];
+            for (int i = 0; i < 3; i++)
+            {
+                moveActions[i] = new MoveAction[4];
+                for (int j = 0; j < 4; j++)
+                {
+                    if (j == 0)
+                    {
+                        moveActions[i][j] = MoveAction.CreateWait();
+                    }
+                    else moveActions[i][j] = MoveAction.CreateGrow(0, new Point2d(i, j, i * 4 + j), EntityType.BASIC, 1);
+                }
+            }
+
+            var moves = board.PrunedCartesianProduct(moveActions, false, new int[4] { 1, 0, 0, 0 }).ToList();
+
+            Assert.Equal(10, moves.Count);
+        }
+
+        [Fact]
+        public void Test_PrunedCartesianProduct_LocationLimited()
+        {
+            var moveActions = new MoveAction[3][];
+            for (int i = 0; i < 3; i++)
+            {
+                moveActions[i] = new MoveAction[4];
+                for (int j = 0; j < 4; j++)
+                {
+                    if (j == 0)
+                    {
+                        moveActions[i][j] = MoveAction.CreateWait();
+                    }
+                    else moveActions[i][j] = MoveAction.CreateGrow(0, new Point2d(0, j, 0 * 4 + j), EntityType.BASIC, 1);
+                }
+            }
+
+            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 4, 0, 0, 0 }).ToList();
+
+            Assert.Equal(34, moves.Count);
+        }
+
+        [Fact]
+        public void Test_PrunedCartesianProduct_LocationExtraLimited()
+        {
+            var moveActions = new MoveAction[3][];
+            for (int i = 0; i < 3; i++)
+            {
+                moveActions[i] = new MoveAction[4];
+                for (int j = 0; j < 4; j++)
+                {
+                    if (j == 0)
+                    {
+                        moveActions[i][j] = MoveAction.CreateWait();
+                    }
+                    else moveActions[i][j] = MoveAction.CreateGrow(0, new Point2d(0, 0, 0 * 4 + 0), EntityType.BASIC, 1);
+                }
+            }
+
+            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 4, 0, 0, 0 }).ToList();
+
+            Assert.Equal(10, moves.Count);
         }
     }
 }

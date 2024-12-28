@@ -290,30 +290,43 @@ namespace GameSolution.Entities
             return Helper(0);
         }
 
+
         //should be faster with pruning
         public IEnumerable<Move> PrunedCartesianProduct(MoveAction[][] sequences, bool hasSufficientProteins, int[] proteins)
         {
             if (sequences == null || sequences.Length == 0)
                 yield break;
 
-            var sequenceArrays = sequences.Select(s => s.ToArray()).ToArray();
+            var sequenceArrays = sequences;
             var dimensions = sequenceArrays.Length;
 
             // Indexes to keep track of positions in each sequence
             var indices = new int[dimensions];
 
+            var currentCombination = new MoveAction[dimensions];
+
+            int position = 0;
+            var partialCosts = new int[dimensions][];
+            var partialCollision = new HashSet<int>[dimensions];
+
             while (true)
             {
                 // Build the current combination
-                var currentCombination = new MoveAction[dimensions];
                 bool hasCollision = false;
                 bool hasProteins = true;
 
-                var partialCosts = new int[4] { 0, 0, 0, 0 };
-                var partialCollision = new HashSet<int>();
-
-                for (int i = 0; i < dimensions; i++)
+                for (int i = position; i < dimensions; i++)
                 {
+                    if (i > 0)
+                    {
+                        partialCosts[i] = partialCosts[i - 1].ToArray();
+                        partialCollision[i] = partialCollision[i - 1].ToHashSet();
+                    }
+                    else
+                    {
+                        partialCosts[i] = new int[4] { 0, 0, 0, 0 };
+                        partialCollision[i] = new HashSet<int>();
+                    }
                     currentCombination[i] = sequenceArrays[i][indices[i]];
 
                     // Update partial costs for each protein based on current combination
@@ -322,8 +335,8 @@ namespace GameSolution.Entities
                         var cost = currentCombination[i].GetCost();
                         for (int j = 0; j < proteins.Length; j++)
                         {
-                            partialCosts[j] += cost[j];
-                            if (partialCosts[j] > proteins[j]) // Compare individual protein costs across all dimensions
+                            partialCosts[i][j] += cost[j];
+                            if (partialCosts[position][j] > proteins[j]) // Compare individual protein costs across all dimensions
                             {
                                 hasProteins = false;
                                 break;
@@ -339,9 +352,10 @@ namespace GameSolution.Entities
                     // Update partial collisions
                     if (ValidateLocation(currentCombination[i].Location))
                     {
-                        if (!partialCollision.Add(currentCombination[i].Location.index))
+                        if (!partialCollision[i].Add(currentCombination[i].Location.index))
                         {
                             hasCollision = true;
+                            break;
                         }
                     }
                 }
@@ -354,10 +368,10 @@ namespace GameSolution.Entities
                     var move = new Move();
                     move.SetActions(currentCombination);
                     yield return move;
+                    position = dimensions - 1;
                 }
 
                 // Increment indices iteratively
-                int position = dimensions - 1;
                 while (position >= 0)
                 {
                     indices[position]++;
