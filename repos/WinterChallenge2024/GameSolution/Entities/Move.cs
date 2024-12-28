@@ -113,6 +113,56 @@ namespace GameSolution.Entities
             return new Move(this);
         }
 
+        public override bool Equals(object obj)
+        {
+            // Check if the object is the same reference or of the same type
+            if (ReferenceEquals(this, obj))
+                return true;
+
+            // Check if the object is of the same type
+            if (obj is Move otherMove)
+            {
+                // Ensure Actions are compared (null checks included)
+                if (this.Actions == null && otherMove.Actions == null)
+                    return true;
+
+                if (this.Actions == null || otherMove.Actions == null)
+                    return false;
+
+                // Compare Actions arrays element-by-element
+                if (this.Actions.Length != otherMove.Actions.Length)
+                    return false;
+
+                for (int i = 0; i < this.Actions.Length; i++)
+                {
+                    // Compare each MoveAction (assuming MoveAction also overrides Equals and GetHashCode)
+                    if (!this.Actions[i].Equals(otherMove.Actions[i]))
+                        return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        // Override GetHashCode based on Actions
+        public override int GetHashCode()
+        {
+            // Use a base hash code for the class and incorporate each Action into the hash calculation
+            int hash = 17; // Arbitrary non-zero number
+            if (Actions != null)
+            {
+                foreach (var action in Actions)
+                {
+                    hash = hash * 23 + (action?.GetHashCode() ?? 0); // Use 23 as another multiplier (common convention)
+                }
+            }
+
+            return hash;
+        }
+
+
         public override string ToString()
         {
             StringBuilder moveStr = new StringBuilder();

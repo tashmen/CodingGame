@@ -267,30 +267,6 @@ namespace GameSolution.Entities
             return true;
         }
 
-        //slower
-        public static IEnumerable<MoveAction[]> CartesianProductRecursive(MoveAction[][] arrays)
-        {
-            IEnumerable<MoveAction[]> Helper(int depth)
-            {
-                if (depth == arrays.Length)
-                {
-                    yield return new MoveAction[0];
-                    yield break;
-                }
-
-                foreach (var item in arrays[depth])
-                {
-                    foreach (var product in Helper(depth + 1))
-                    {
-                        yield return new[] { item }.Concat(product).ToArray();
-                    }
-                }
-            }
-
-            return Helper(0);
-        }
-
-
         //should be faster with pruning
         public IEnumerable<Move> PrunedCartesianProduct(MoveAction[][] sequences, bool hasSufficientProteins, int[] proteins)
         {
@@ -303,29 +279,38 @@ namespace GameSolution.Entities
             // Indexes to keep track of positions in each sequence
             var indices = new int[dimensions];
 
-            var currentCombination = new MoveAction[dimensions];
-
-            int position = 0;
+            // Pre-allocate arrays for partial costs and collisions
             var partialCosts = new int[dimensions][];
             var partialCollision = new HashSet<int>[dimensions];
+            for (int i = 0; i < dimensions; i++)
+            {
+                partialCosts[i] = new int[4]; // Assuming a constant size for protein cost array
+                partialCollision[i] = new HashSet<int>();
+            }
+            var initialCost = new int[4] { 0, 0, 0, 0 };
+            var initialCollision = new HashSet<int>();
+
+            var currentCombination = new MoveAction[dimensions];
+            int position = 0;
 
             while (true)
             {
-                // Build the current combination
                 bool hasCollision = false;
                 bool hasProteins = true;
 
+                // Build the current combination
                 for (int i = position; i < dimensions; i++)
                 {
+                    // Reuse partial costs and collisions arrays instead of re-allocating them
                     if (i > 0)
                     {
-                        partialCosts[i] = partialCosts[i - 1].ToArray();
-                        partialCollision[i] = partialCollision[i - 1].ToHashSet();
+                        Array.Copy(partialCosts[i - 1], partialCosts[i], partialCosts[i - 1].Length);
+                        partialCollision[i] = new HashSet<int>(partialCollision[i - 1]);
                     }
                     else
                     {
-                        partialCosts[i] = new int[4] { 0, 0, 0, 0 };
-                        partialCollision[i] = new HashSet<int>();
+                        Array.Copy(initialCost, partialCosts[i], initialCost.Length);
+                        partialCollision[i] = new HashSet<int>(initialCollision);
                     }
                     currentCombination[i] = sequenceArrays[i][indices[i]];
 
@@ -336,7 +321,7 @@ namespace GameSolution.Entities
                         for (int j = 0; j < proteins.Length; j++)
                         {
                             partialCosts[i][j] += cost[j];
-                            if (partialCosts[position][j] > proteins[j]) // Compare individual protein costs across all dimensions
+                            if (partialCosts[i][j] > proteins[j])
                             {
                                 hasProteins = false;
                                 break;
@@ -360,13 +345,11 @@ namespace GameSolution.Entities
                     }
                 }
 
-
                 // Validate the combination
-                if (!hasCollision &&
-                    (hasSufficientProteins || hasProteins))
+                if (!hasCollision && (hasSufficientProteins || hasProteins))
                 {
                     var move = new Move();
-                    move.SetActions(currentCombination);
+                    move.SetActions(currentCombination.ToArray());
                     yield return move;
                     position = dimensions - 1;
                 }
@@ -388,6 +371,7 @@ namespace GameSolution.Entities
                     break;
             }
         }
+
 
         public List<MoveAction> GetSporeMoveActions(int organRootId, bool isMine)
         {

@@ -51,7 +51,8 @@ namespace UnitTest
 
             var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
 
-            Assert.Equal(64, moves.Count);
+            Assert.Equal(64, moves.Distinct().Count());
+
 
         }
 
