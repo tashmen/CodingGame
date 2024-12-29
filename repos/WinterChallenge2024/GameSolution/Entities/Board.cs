@@ -367,9 +367,9 @@ namespace GameSolution.Entities
                 while (true)
                 {
                     distance++;
-                    if (IsOpenSpace(location, sporer.OrganDirection, isMine))
+                    location = GetNextLocation(location, sporer.OrganDirection);
+                    if (ValidateLocation(location) && IsOpenSpace(location.index, isMine))
                     {
-                        location = GetNextLocation(location, sporer.OrganDirection);
                         if (distance <= 3)
                         {
                             continue;
@@ -381,6 +381,11 @@ namespace GameSolution.Entities
                         }
                     }
                     else
+                    {
+                        break;
+                    }
+
+                    if (moveActions.Count > 3)
                     {
                         break;
                     }
@@ -471,12 +476,13 @@ namespace GameSolution.Entities
                     bool isOpen = true;
                     for (int i = 0; i < 4; i++)
                     {
-                        if (!IsOpenSpace(location, locationNeighbor.direction, isMine))
+                        location = GetNextLocation(location, locationNeighbor.direction);
+                        if (!ValidateLocation(location) || !IsOpenSpace(location.index, isMine))
                         {
                             isOpen = false;
                             break;
                         }
-                        location = GetNextLocation(location, locationNeighbor.direction);
+
                     }
                     if (isOpen)
                     {
@@ -773,51 +779,33 @@ namespace GameSolution.Entities
             return GetEntityWithDirection(location, nextDirection, out Entity entity) && entity.IsOpenSpace();
         }
 
-        public bool IsOpenSpace(Point2d location, OrganDirection nextDirection, bool isMine)
+        public bool IsOpenSpace(int location, bool isMine)
         {
-            var locationToCheck = GetNextLocation(location, nextDirection);
-            if (ValidateLocation(locationToCheck))
+            string key = (isMine ? "openspace_1" : "openspace_2") + location.ToString();
+            if (!_locationCheckCache.TryGetValue(key, out bool result))
             {
-                if (!GetEntityByLocation(locationToCheck, out Entity entity) || entity.IsOpenSpace())
+                if (!GetEntity(location, out Entity entity) || entity.IsOpenSpace())
                 {
-                    var tentacles = GetTentacleEntities(!isMine);
-                    if (tentacles.Count > 0)
+                    foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(location))
                     {
-                        foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(locationToCheck))
+                        if (GetEntity(locationNeighbor.point.index, out Entity checkForTentacleEntity))
                         {
-                            if (GetEntity(locationNeighbor.point.index, out Entity checkForTentacleEntity))
+                            if (checkForTentacleEntity.Type == EntityType.TENTACLE && GetOpposingDirection(checkForTentacleEntity.OrganDirection) == locationNeighbor.direction && checkForTentacleEntity.IsMine != isMine)
                             {
-                                if (checkForTentacleEntity.Type == EntityType.TENTACLE && GetOpposingDirection(checkForTentacleEntity.OrganDirection) == locationNeighbor.direction && checkForTentacleEntity.IsMine != isMine)
-                                {
-                                    return false;
-                                }
+                                result = false;
+                                _locationCheckCache[key] = result;
+                                return result;
                             }
                         }
                     }
-                    return true;
+                    result = true;
+                    _locationCheckCache[key] = result;
+                    return result;
                 }
+                result = false;
+                _locationCheckCache[key] = result;
             }
-
-            return false;
-        }
-
-        public bool IsOpenSpace(int location, bool isMine)
-        {
-            if (!GetEntity(location, out Entity entity) || entity.IsOpenSpace())
-            {
-                foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(location))
-                {
-                    if (GetEntity(locationNeighbor.point.index, out Entity checkForTentacleEntity))
-                    {
-                        if (checkForTentacleEntity.Type == EntityType.TENTACLE && GetOpposingDirection(checkForTentacleEntity.OrganDirection) == locationNeighbor.direction && checkForTentacleEntity.IsMine != isMine)
-                        {
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            }
-            return false;
+            return result;
         }
 
         public bool ValidateLocation(Point2d location, OrganDirection nextDirection)
