@@ -122,6 +122,11 @@ namespace Algorithms.Trees
                 }
 
                 object move = SelectMoveAtRandom(state, isMax);
+                if (watch.ElapsedMilliseconds >= timeLimit)
+                {
+                    return null;
+                }
+
                 state.ApplyMove(move, isMax);
 
                 if (watch.ElapsedMilliseconds >= timeLimit)
