@@ -21,19 +21,26 @@ namespace TestSimulation
                 //simulationTime = 5000;
                 watch.Reset();
                 watch.Start();
+                GC.Collect();
                 search.SetState(game, true, false);
                 Move move = (Move)search.GetNextMove(watch, simulationTime, 20, 1);
-                game.ApplyMove(move, true);
                 watch.Stop();
+                if (game.Turn > 1 && watch.ElapsedMilliseconds > 50)
+                    throw new Exception();
+
+                game.ApplyMove(move, true);
+
 
 
                 watch.Reset();
                 watch.Start();
                 oppSearch.SetState(game, false, false);
                 move = (Move)oppSearch.GetNextMove(watch, simulationTime, 20, 1);
-                game.ApplyMove(move, false);
                 watch.Stop();
+                if (game.Turn > 2 && watch.ElapsedMilliseconds > 50)
+                    throw new Exception();
 
+                game.ApplyMove(move, false);
                 game.Print();
             }
             while (!game.GetWinner().HasValue);

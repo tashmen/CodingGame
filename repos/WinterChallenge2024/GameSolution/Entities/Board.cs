@@ -450,6 +450,8 @@ namespace GameSolution.Entities
                     moveActions.AddRange(GetHarvestMoveActions(organRootId, isMine, true));
                 if (hasBasicProteins)
                     moveActions.AddRange(GetGrowMoveActions(organRootId, isMine));
+                if (hasTentacleProteins)
+                    moveActions.AddRange(GetTentacleMoveActions(organRootId, isMine, true));
             }
 
             return moveActions;
@@ -500,9 +502,9 @@ namespace GameSolution.Entities
                 bool isOppIn3Spaces = IsOpponentWithin3Spaces(growAction.Location, isMine);
                 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(growAction.Location))
                 {
-                    if (IsOpponentOrEmptySpace(locationNeighbor.point.index, isMine))
+                    if (shouldProduce || IsOpponentOrEmptySpace(locationNeighbor.point.index, isMine))
                     {
-                        if (shouldProduce || isOppIn3Spaces)
+                        if (isOppIn3Spaces)
                         {
                             MoveAction tentacleAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, locationNeighbor.direction);
                             tentacleMoveActions.Add(tentacleAction);

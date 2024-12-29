@@ -67,6 +67,7 @@ class Player
             watch.Start();
             board.SetEntities(entities);
             gameState.SetNextTurn(board, myProtein, oppProtein);
+            GC.Collect();
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
 
             search.SetState(gameState, true, false);

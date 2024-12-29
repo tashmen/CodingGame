@@ -2,6 +2,7 @@
 using GameSolution.Entities;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace GameSolution.Game
@@ -190,9 +191,13 @@ namespace GameSolution.Game
 
         public IList GetPossibleMoves(bool isMax)
         {
-            int[] proteins = GetProteins(isMax);
+            if (Turn <= 100)
+            {
+                int[] proteins = GetProteins(isMax);
 
-            return Board.GetMoves(proteins, isMax);
+                return Board.GetMoves(proteins, isMax);
+            }
+            else return new List<Move>();
         }
 
         public double? GetWinner()
