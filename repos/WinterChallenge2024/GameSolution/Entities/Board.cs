@@ -149,7 +149,7 @@ namespace GameSolution.Entities
             }
         }
 
-        public List<Move> GetMoves(int[] proteins, bool isMine)
+        public List<Move> GetMoves(int[] proteins, bool isMine, bool debug = false)
         {
             var moves = new List<Move>();
 
@@ -157,15 +157,11 @@ namespace GameSolution.Entities
             var organismCount = rootEntities.Count();
             MoveAction[][] organismToMoveActions = new MoveAction[organismCount][];
             List<bool> hasProteins = proteins.Select(p => p > 0).ToList();
-            bool hasHarvestProteins = hasProteins[2] && hasProteins[3];
-            bool hasBasicProteins = hasProteins[0];
-            bool hasTentacleProteins = hasProteins[1] && hasProteins[2];
-            bool hasSporerProteins = hasProteins[1] && hasProteins[3];
+
             bool hasRootProteins = hasProteins.All(m => m);
             List<bool> hasManyProteins = proteins.Select(p => p > 10).ToList();
-            bool hasManyTentacleProteins = hasManyProteins[1] && hasManyProteins[2];
-            bool hasManySporerProteins = hasManyProteins[1] && hasManyProteins[3];
-            bool hasAtLeastTwoMany = hasManyProteins.Count(value => value) > 1;
+            bool hasManyRootProteins = hasManyProteins.All(m => m);
+
 
             int i = 0;
             int maxOrgans = 3;//Put a limit on the number of organs we calculate moves for as this is exploding the action space
@@ -182,39 +178,23 @@ namespace GameSolution.Entities
                     MoveAction.CreateWait()
                 };
 
-                bool canHarvest = false;
-                if (hasHarvestProteins)
+
+                if (hasRootProteins && (organismCount < 2 || hasManyRootProteins))
                 {
-                    var harvestActions = GetHarvestMoveActions(root.OrganRootId, isMine);
-                    moveActions.AddRange(harvestActions);
-                    canHarvest = harvestActions.Count > 0;
+                    AddSporeMoveActions(moveActions, root.OrganRootId, isMine);
                 }
 
-                if (!canHarvest)
+                if (moveActions.Count <= 1)
                 {
-                    if (hasBasicProteins && !hasManyTentacleProteins)
-                    {
-                        moveActions.AddRange(GetGrowBasicMoveActions(root.OrganRootId, isMine));
-                    }
+                    AddGrowMoveActions(moveActions, root.OrganRootId, isMine, hasProteins, hasManyProteins, debug);
                 }
 
-                if (hasTentacleProteins)
-                {
-                    moveActions.AddRange(GetTentacleMoveActions(root.OrganRootId, isMine, moveActions.Count > 1));
-                }
 
-                if ((!canHarvest || hasManySporerProteins) && hasSporerProteins)
-                {
-                    moveActions.AddRange(GetSporerMoveActions(root.OrganRootId, isMine));
-                }
-
-                if (hasRootProteins)
-                {
-                    moveActions.AddRange(GetSporeMoveActions(root.OrganRootId, isMine));
-                }
 
 
                 organismToMoveActions[i] = moveActions.ToArray();
+                if (debug)
+                    Console.Error.WriteLine($"{i}: " + string.Join('\n', moveActions));
                 i++;
             }
             for (; i < organismCount; i++)
@@ -373,10 +353,8 @@ namespace GameSolution.Entities
         }
 
 
-        public List<MoveAction> GetSporeMoveActions(int organRootId, bool isMine)
+        public List<MoveAction> AddSporeMoveActions(List<MoveAction> moveActions, int organRootId, bool isMine)
         {
-            List<MoveAction> moveActions = new List<MoveAction>();
-
             IEnumerable<Entity> sporers = GetSporerEntities(organRootId, isMine);
 
             foreach (Entity sporer in sporers)
@@ -393,7 +371,8 @@ namespace GameSolution.Entities
                         {
                             continue;
                         }
-                        if (!IsHarvesting(location, isMine) && IsHarvestExactly2paces(location))
+                        bool? isHarvesting = IsHarvesting(location, isMine);
+                        if (!(isHarvesting.HasValue && isHarvesting.Value) && IsHarvestExactly2paces(location))
                         {
                             moveActions.Add(MoveAction.CreateSpore(sporer.OrganId, location));
                         }
@@ -408,11 +387,68 @@ namespace GameSolution.Entities
             return moveActions;
         }
 
+        public List<MoveAction> AddGrowMoveActions(List<MoveAction> moveActions, int organRootId, bool isMine, List<bool> hasProteins, List<bool> hasManyProteins, bool debug = false)
+        {
+            bool hasHarvestProteins = hasProteins[2] && hasProteins[3];
+            bool hasBasicProteins = hasProteins[0];
+            bool hasTentacleProteins = hasProteins[1] && hasProteins[2];
+            bool hasSporerProteins = hasProteins[1] && hasProteins[3];
+            bool hasManyTentacleProteins = hasManyProteins[1] && hasManyProteins[2];
+            bool hasManySporerProteins = hasManyProteins[1] && hasManyProteins[3];
+            bool hasAtLeastTwoMany = hasManyProteins.Count(value => value) > 1;
+
+
+            if (debug)
+            {
+                List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine);
+                Console.Error.WriteLine($"All: {organRootId}: " + string.Join('\n', growMoveActions));
+            }
+
+            if (debug)
+                Console.Error.WriteLine($"Current: {organRootId}: " + string.Join('\n', moveActions));
+
+            bool canHarvest = false;
+            if (hasHarvestProteins)
+            {
+                var harvestActions = GetHarvestMoveActions(organRootId, isMine);
+                moveActions.AddRange(harvestActions);
+                canHarvest = harvestActions.Count > 0;
+                if (debug)
+                    Console.Error.WriteLine($"Harvest: {organRootId}: " + string.Join('\n', harvestActions));
+            }
+
+            if (hasTentacleProteins)
+            {
+                var tentacleActions = GetTentacleMoveActions(organRootId, isMine, moveActions.Count <= 1 && hasManyTentacleProteins);
+                moveActions.AddRange(tentacleActions);
+                if (debug)
+                    Console.Error.WriteLine($"Tentacle: {organRootId}: " + string.Join('\n', tentacleActions));
+            }
+
+            if (!canHarvest && hasBasicProteins)
+            {
+                var basicActions = GetGrowMoveActions(organRootId, isMine);
+                moveActions.AddRange(basicActions);
+                if (debug)
+                    Console.Error.WriteLine($"Basic: {organRootId}: " + string.Join('\n', basicActions));
+            }
+
+            if (!canHarvest && hasSporerProteins)
+            {
+                var sporerActions = GetSporerMoveActions(organRootId, isMine);
+                moveActions.AddRange(sporerActions);
+                if (debug)
+                    Console.Error.WriteLine($"Sporer: {organRootId}: " + string.Join('\n', sporerActions));
+            }
+
+            return moveActions;
+        }
+
         public List<MoveAction> GetSporerMoveActions(int organRootId, bool isMine)
         {
             List<MoveAction> moveActions = new List<MoveAction>();
 
-            List<MoveAction> growMoveActions = GetGrowBasicMoveActions(organRootId, isMine);
+            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine);
 
             foreach (MoveAction growAction in growMoveActions)
             {
@@ -439,27 +475,29 @@ namespace GameSolution.Entities
             return moveActions;
         }
 
-        public List<MoveAction> GetTentacleMoveActions(int organRootId, bool isMine, bool hasActions)
+        public List<MoveAction> GetTentacleMoveActions(int organRootId, bool isMine, bool shouldProduce)
         {
             List<MoveAction> moveActions = new List<MoveAction>();
 
-            List<MoveAction> growMoveActions = GetGrowBasicMoveActions(organRootId, isMine);
+            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine);
 
             foreach (MoveAction growAction in growMoveActions)
             {
                 List<MoveAction> tentacleMoveActions = new List<MoveAction>();
                 List<MoveAction> tentacleMoveActionsToAdd = new List<MoveAction>();
+                //Could suggest the direction based on the shortest path.
+                bool isOppIn3Spaces = IsOpponentWithin3Spaces(growAction.Location, isMine);
                 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(growAction.Location))
                 {
                     if (IsOpponentOrEmptySpace(locationNeighbor.point.index, isMine))
                     {
-                        if (!hasActions || IsOpponentWithin3Spaces(growAction.Location, isMine))
+                        if (shouldProduce || isOppIn3Spaces)
                         {
                             MoveAction tentacleAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, locationNeighbor.direction);
                             tentacleMoveActions.Add(tentacleAction);
 
                             //Check to see if any are facing the enemy and use those as priority
-                            if (GetEntityWithDirection(tentacleAction.Location, tentacleAction.OrganDirection, out Entity entity) && entity.IsMine.HasValue && entity.IsMine != isMine)
+                            if (GetEntity(locationNeighbor.point.index, out Entity entity) && entity.IsMine.HasValue && entity.IsMine != isMine)
                             {
                                 tentacleMoveActionsToAdd.Add(tentacleAction);
                             }
@@ -483,28 +521,34 @@ namespace GameSolution.Entities
 
 
         private Dictionary<string, List<MoveAction>> _moveActionCache = new Dictionary<string, List<MoveAction>>();
-        public List<MoveAction> GetGrowBasicMoveActions(int organRootId, bool isMine)
+
+        public List<MoveAction> GetGrowMoveActions(int organRootId, bool isMine)
         {
-            var key = (isMine ? "growbasic1_" : "growbasic0_") + organRootId.ToString();
+            var key = (isMine ? "grow1_" : "grow0_") + organRootId.ToString();
             if (!_moveActionCache.TryGetValue(key, out List<MoveAction> moveActions))
             {
                 moveActions = new List<MoveAction>();
                 var potentialMoveActions = new List<MoveAction>();
                 var entities = GetEntitiesByRoot(organRootId, isMine);
+                HashSet<int> locationsChecked = new HashSet<int>();
                 foreach (Entity entity in entities)
                 {
                     foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(entity.Location))
                     {
                         if (IsOpenSpace(locationNeighbor.point.index, isMine))
                         {
-                            var moveAction = MoveAction.CreateGrow(entity.OrganId, locationNeighbor.point, EntityType.BASIC, entity.OrganRootId);
-                            if (!IsHarvesting(locationNeighbor.point.index, isMine))
+                            if (locationsChecked.Add(locationNeighbor.point.index))
                             {
-                                moveActions.Add(moveAction);
-                            }
-                            else
-                            {
-                                potentialMoveActions.Add(moveAction);
+                                var moveAction = MoveAction.CreateGrow(entity.OrganId, locationNeighbor.point, EntityType.BASIC, entity.OrganRootId);
+                                bool? isHarvesting = IsHarvesting(moveAction.Location.index, isMine);
+                                if (!(isHarvesting.HasValue && isHarvesting.Value) || IsOpponentWithin3Spaces(moveAction.Location, isMine))
+                                {
+                                    moveActions.Add(moveAction);
+                                }
+                                else
+                                {
+                                    potentialMoveActions.Add(moveAction);
+                                }
                             }
                         }
                     }
@@ -519,12 +563,14 @@ namespace GameSolution.Entities
                 {
                     var oppRootEntities = GetRootEntities(!isMine);
                     var harvestableEntities = GetHarvestableEntities();
+                    var harvestingEntities = GetHarvestedEntities(isMine);
+                    var toHarvestEntities = harvestableEntities.Except(harvestingEntities).ToList();
                     bool hasOppRoot = false;
                     bool hasHarvestable = false;
 
                     if (oppRootEntities.Count > 0)
                         hasOppRoot = true;
-                    if (harvestableEntities.Count > 0)
+                    if (toHarvestEntities.Count > 0)
                         hasHarvestable = true;
 
                     foreach (MoveAction action in moveActions)
@@ -533,7 +579,7 @@ namespace GameSolution.Entities
 
                         if (hasHarvestable)
                         {
-                            action.Score += harvestableEntities.Min(r => Graph.GetShortestPathDistance(r.Location.index, action.Location.index));
+                            action.Score += toHarvestEntities.Min(r => Graph.GetShortestPathDistance(r.Location.index, action.Location.index));
                         }
                         else if (hasOppRoot)
                         {
@@ -541,7 +587,7 @@ namespace GameSolution.Entities
                         }
                     }
 
-                    moveActions.Sort((m1, m2) => m2.Score.CompareTo(m1.Score));
+                    moveActions.Sort((m1, m2) => m1.Score.CompareTo(m2.Score));
                     moveActions = moveActions.Take(maxMoves).ToList();
 
                 }
@@ -556,25 +602,17 @@ namespace GameSolution.Entities
         public List<MoveAction> GetHarvestMoveActions(int organRootId, bool isMine)
         {
             List<MoveAction> moveActions = new List<MoveAction>();
-            List<MoveAction> growMoveActions = GetGrowBasicMoveActions(organRootId, isMine);
+            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine);
 
             foreach (MoveAction growAction in growMoveActions)
             {
+                bool isOppIn3Spaces = IsOpponentWithin3Spaces(growAction.Location, isMine);
                 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(growAction.Location))
                 {
-                    if (IsHarvestSpace(locationNeighbor.point.index) && !IsHarvesting(locationNeighbor.point.index, isMine))
+                    bool? isHarvesting = IsHarvesting(locationNeighbor.point.index, isMine);
+                    if (!isOppIn3Spaces && (isHarvesting.HasValue && !isHarvesting.Value))
                     {
                         var harvestAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.HARVESTER, growAction.OrganRootId, locationNeighbor.direction);
-                        //Prioritize A harvests
-                        /*
-                        if (GetEntity(locationNeighbor.point.index, out Entity entity) && entity.Type == EntityType.A)
-                        {
-                            return new List<MoveAction>()
-                            {
-                                harvestAction
-                            };
-                        }
-                        */
                         moveActions.Add(harvestAction);
                     }
                 }
@@ -583,21 +621,9 @@ namespace GameSolution.Entities
             return moveActions;
         }
 
-        public bool IsHarvesting(int location, bool isMine)
+        public bool? IsHarvesting(int location, bool isMine)
         {
-            foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(location))
-            {
-                if (GetEntity(locationNeighbor.point.index, out Entity entity) && entity.Type == EntityType.HARVESTER && entity.IsMine.HasValue && entity.IsMine == isMine && entity.OrganDirection == GetOpposingDirection(locationNeighbor.direction))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool IsHarvesting(Point2d location, bool isMine)
-        {
-            if (ValidateLocation(location) && GetEntity(location, out Entity harvestSpace) && harvestSpace.IsOpenSpace())
+            if (IsHarvestSpace(location))
             {
                 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(location))
                 {
@@ -606,8 +632,18 @@ namespace GameSolution.Entities
                         return true;
                     }
                 }
+                return false;
             }
-            return false;
+            return null;
+        }
+
+        public bool? IsHarvesting(Point2d location, bool isMine)
+        {
+            if (ValidateLocation(location))
+            {
+                return IsHarvesting(location.index, isMine);
+            }
+            return null;
         }
 
         public bool IsFull()
@@ -659,7 +695,7 @@ namespace GameSolution.Entities
             {
                 if (location.Equals(entity.Location))
                     continue;
-                double distance = Graph.GetShortestPathDistance(GetNodeIndex(location), GetNodeIndex(entity.Location));
+                double distance = Graph.GetShortestPathDistance(location.index, entity.Location.index);
                 if (distance == 2)
                 {
                     return true;
@@ -668,37 +704,34 @@ namespace GameSolution.Entities
             return false;
         }
 
+
+        Dictionary<string, bool> _locationCheckCache;
         public bool IsOpponentWithin3Spaces(Point2d location, bool isMine)
         {
-            var oppEntities = GetEntities(!isMine);
-            foreach (var oppEntity in oppEntities)
+            var key = (isMine ? "opponentclose_1" : "opponentclose_2") + location.index.ToString();
+            if (!_locationCheckCache.TryGetValue(key, out bool result))
             {
-                double distance = Graph.GetShortestPathDistance(GetNodeIndex(location), GetNodeIndex(oppEntity.Location));
-                if (distance <= 3)
-                    return true;
+                var oppEntities = GetEntities(!isMine);
+                foreach (var oppEntity in oppEntities)
+                {
+                    double distance = Graph.GetShortestPathDistance(location.index, oppEntity.Location.index);
+                    if (distance <= 3)
+                    {
+                        result = true;
+                        _locationCheckCache[key] = result;
+                        return result;
+                    }
+                }
+                result = false;
+                _locationCheckCache[key] = result;
             }
-            return false;
+
+            return result;
         }
 
-        public bool IsOpponentWithin3Spaces(int index, bool isMine)
-        {
-            var oppEntities = GetEntities(!isMine);
-            foreach (var oppEntity in oppEntities)
-            {
-                double distance = Graph.GetShortestPathDistance(index, GetNodeIndex(oppEntity.Location));
-                if (distance <= 3)
-                    return true;
-            }
-            return false;
-        }
-
-        public bool IsOpponentOrEmptySpace(Point2d location, OrganDirection direction, bool isMine)
-        {
-            return ValidateLocation(location, direction) && (!GetEntityWithDirection(location, direction, out Entity entity) || (entity.IsMine.HasValue && entity.IsMine != isMine));
-        }
         public bool IsOpponentOrEmptySpace(int index, bool isMine)
         {
-            return !GetEntity(index, out Entity entity) || (entity.IsMine.HasValue && entity.IsMine != isMine);
+            return !GetEntity(index, out Entity entity) || entity.IsOpenSpace() || (entity.IsMine.HasValue && entity.IsMine != isMine);
         }
         public bool IsOpponentSpace(Point2d location, OrganDirection direction, bool isMine)
         {
@@ -759,7 +792,6 @@ namespace GameSolution.Entities
                 }
                 return true;
             }
-
             return false;
         }
 
@@ -804,16 +836,31 @@ namespace GameSolution.Entities
 
         public void Harvest(bool isMine, int[] proteins)
         {
-            var harvesters = GetHarvesterEntities(isMine);
-            List<int> harvestedLocations = new List<int>();
-            foreach (Entity harvester in harvesters)
+            foreach (Entity entity in GetHarvestedEntities(isMine))
             {
-                if (GetEntityWithDirection(harvester.Location, harvester.OrganDirection, out Entity entity) && entity.IsOpenSpace() && !harvestedLocations.Contains(entity.Location.index))
-                {
-                    proteins[entity.Type - EntityType.A]++;
-                    harvestedLocations.Add(entity.Location.index);
-                }
+                proteins[entity.Type - EntityType.A]++;
             }
+        }
+
+        public List<Entity> GetHarvestedEntities(bool isMine)
+        {
+            var key = isMine ? "harvested_1" : "harvested_0";
+            if (!_entityCache.TryGetValue(key, out var entities))
+            {
+                entities = new List<Entity>();
+                var harvesters = GetHarvesterEntities(isMine);
+                HashSet<int> harvestedLocations = new HashSet<int>();
+                foreach (Entity harvester in harvesters)
+                {
+                    if (GetEntityWithDirection(harvester.Location, harvester.OrganDirection, out Entity entity) && entity.IsOpenSpace() && !harvestedLocations.Add(entity.Location.index))
+                    {
+                        entities.Add(entity);
+                    }
+                }
+
+                _entityCache[key] = entities;
+            }
+            return entities;
         }
 
         public bool GetEntity(int entityIndex, out Entity entity)
@@ -1047,6 +1094,7 @@ namespace GameSolution.Entities
             _oppEntityCount = -1;
             _moveActionCache = new Dictionary<string, List<MoveAction>>();
             _entityCache = new Dictionary<string, List<Entity>>();
+            _locationCheckCache = new Dictionary<string, bool>();
         }
 
         public readonly struct LocationNeighbor

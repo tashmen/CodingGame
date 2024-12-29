@@ -144,5 +144,41 @@ namespace UnitTest
 
             Assert.Equal(10, moves.Count);
         }
+
+        [Fact]
+        public void Test_IsOpenSpace()
+        {
+            Board board = new Board(2, 2);
+            board.SetEntities(new List<Entity>()
+            {
+                new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.TENTACLE, true, 1, 1, 1, OrganDirection.South),
+                new Entity(new Point2d(1, 0, board.GetNodeIndex(1, 0)), EntityType.WALL, null, 0, 0, 0, OrganDirection.None),
+                new Entity(new Point2d(1, 1, board.GetNodeIndex(1, 1)), EntityType.WALL, null, 0, 0, 0, OrganDirection.None)
+            });
+
+            Assert.True(board.IsOpenSpace(board.GetNodeIndex(0, 1), true));
+
+            Assert.Single(board.GetGrowMoveActions(1, true));
+
+            board.Print();
+
+            board = new Board(3, 3);
+            board.SetEntities(new List<Entity>()
+            {
+                new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.TENTACLE, true, 1, 1, 1, OrganDirection.South),
+                new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.TENTACLE, true, 2, 2, 2, OrganDirection.East),
+
+                new Entity(new Point2d(1, 0, board.GetNodeIndex(1, 0)), EntityType.TENTACLE, true, 4, 1, 1, OrganDirection.South),
+
+                new Entity(new Point2d(1, 2, board.GetNodeIndex(1, 2)), EntityType.TENTACLE, false, 3, 3, 3, OrganDirection.North),
+                new Entity(new Point2d(2, 0, board.GetNodeIndex(2, 0)), EntityType.TENTACLE, true, 5, 1, 1, OrganDirection.West),
+                new Entity(new Point2d(2, 1, board.GetNodeIndex(2, 1)), EntityType.WALL, null, 0, 0, 0, OrganDirection.None),
+                new Entity(new Point2d(2, 2, board.GetNodeIndex(2, 2)), EntityType.BASIC, false, 6, 3, 3, OrganDirection.North)
+            });
+
+            Assert.Single(board.GetGrowMoveActions(2, true));
+
+            board.Print();
+        }
     }
 }

@@ -68,12 +68,15 @@ class Player
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
 
             search.SetState(gameState, true, false);
+
+            //board.GetMoves(gameState.MyProtein, true, true);
+
             Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 990, 20, 1);
 
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
             if (watch.ElapsedMilliseconds < 48)
             {
-                board.Print();
+                gameState.Print();
                 Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
             }
             watch.Stop();

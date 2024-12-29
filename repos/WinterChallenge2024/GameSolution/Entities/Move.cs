@@ -69,6 +69,37 @@ namespace GameSolution.Entities
             action.EntityType = EntityType.ROOT;
             return action;
         }
+
+        public override string ToString()
+        {
+            var move = this;
+            switch (this.Type)
+            {
+                case MoveType.GROW:
+                    return "GROW " + move.OrganId + " " + move.Location.x + " " + move.Location.y + " " + move.EntityType.ToString() + " " + GetGrowDirection(move.OrganDirection) + ";";
+                case MoveType.SPORE:
+                    return "SPORE " + move.OrganId + " " + move.Location.x + " " + move.Location.y + ";";
+                case MoveType.WAIT:
+                    return "WAIT;";
+            }
+            return "";
+        }
+
+        public char GetGrowDirection(OrganDirection direction)
+        {
+            switch (direction)
+            {
+                case OrganDirection.North:
+                    return 'N';
+                case OrganDirection.South:
+                    return 'S';
+                case OrganDirection.West:
+                    return 'W';
+                case OrganDirection.East:
+                    return 'E';
+            }
+            throw new Exception("Invalid direction");
+        }
     }
 
     public class Move
@@ -168,37 +199,13 @@ namespace GameSolution.Entities
             StringBuilder moveStr = new StringBuilder();
             foreach (MoveAction move in Actions)
             {
-                switch (move.Type)
-                {
-                    case MoveType.GROW:
-                        moveStr.Append("GROW " + move.OrganId + " " + move.Location.x + " " + move.Location.y + " " + move.EntityType.ToString() + " " + GetGrowDirection(move.OrganDirection) + ";");
-                        break;
-                    case MoveType.SPORE:
-                        moveStr.Append("SPORE " + move.OrganId + " " + move.Location.x + " " + move.Location.y + ";");
-                        break;
-                    case MoveType.WAIT:
-                        moveStr.Append("WAIT;");
-                        break;
-                }
+                string actionStr = move.ToString();
+                moveStr.Append(actionStr);
             }
             return moveStr.ToString().Substring(0, moveStr.Length - 1);
         }
 
-        public char GetGrowDirection(OrganDirection direction)
-        {
-            switch (direction)
-            {
-                case OrganDirection.North:
-                    return 'N';
-                case OrganDirection.South:
-                    return 'S';
-                case OrganDirection.West:
-                    return 'W';
-                case OrganDirection.East:
-                    return 'E';
-            }
-            throw new Exception("Invalid direction");
-        }
+
 
         public void Print()
         {

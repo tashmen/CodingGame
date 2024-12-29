@@ -159,18 +159,18 @@ namespace GameSolution.Game
             var oppHarvestProteins = Board.GetHarvestProteins(false);
             double oppHarvestProteinsSum = oppHarvestProteins.Sum();
 
-            bool hasAllMyProteins = myHarvestProteins.All(p => p > 1);
-            bool hasAllOppProteins = oppHarvestProteins.All(p => p > 1);
+            int myNumUniqueProteins = myHarvestProteins.Where(p => p > 1).Count();
+            int oppNumUniqueProteins = oppHarvestProteins.Where(p => p > 1).Count();
 
-            int myProteinBoost = hasAllMyProteins ? 20 : 0;
-            int oppProteinBoost = hasAllOppProteins ? 20 : 0;
+            int myProteinBoost = myNumUniqueProteins * 5;
+            int oppProteinBoost = myNumUniqueProteins * 5;
 
             var proteinValue = (myHarvestProteinsSum + myProteinBoost - oppProteinBoost - oppHarvestProteinsSum) / (myHarvestProteinsSum + oppHarvestProteinsSum + 1 + myProteinBoost + oppProteinBoost) * 0.2;
 
 
             var myProtein = MyProtein.Sum();
             var oppProtein = OppProtein.Sum();
-            value = (((double)myEntities - oppEntities) / (myEntities + oppEntities + 1) * 0.1) + (((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001) + proteinValue;
+            value = (((double)myEntities - oppEntities) / (myEntities + oppEntities + 1) * 0.2) + (((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001) + proteinValue;
 
             if (value > 1 || value < -1)
                 Console.Error.WriteLine("Evaluation too high");
