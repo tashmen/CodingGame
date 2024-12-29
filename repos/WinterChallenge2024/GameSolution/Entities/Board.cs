@@ -502,13 +502,12 @@ namespace GameSolution.Entities
                 bool isOppIn3Spaces = IsOpponentWithin3Spaces(growAction.Location, isMine);
                 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(growAction.Location))
                 {
-                    if (shouldProduce || IsOpponentOrEmptySpace(locationNeighbor.point.index, isMine))
+                    MoveAction tentacleAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, locationNeighbor.direction);
+                    if (IsOpponentOrEmptySpace(locationNeighbor.point.index, isMine))
                     {
-                        if (isOppIn3Spaces)
+                        if (shouldProduce || isOppIn3Spaces)
                         {
-                            MoveAction tentacleAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, locationNeighbor.direction);
                             tentacleMoveActions.Add(tentacleAction);
-
                             //Check to see if any are facing the enemy and use those as priority
                             if (GetEntity(locationNeighbor.point.index, out Entity entity) && entity.IsMine.HasValue && entity.IsMine != isMine)
                             {
@@ -523,7 +522,10 @@ namespace GameSolution.Entities
                 }
                 else
                 {
-                    moveActions.AddRange(tentacleMoveActions);
+                    if (tentacleMoveActions.Count > 0)
+                        moveActions.AddRange(tentacleMoveActions);
+                    else if (shouldProduce)
+                        moveActions.Add(MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, OrganDirection.North));
                 }
 
             }
