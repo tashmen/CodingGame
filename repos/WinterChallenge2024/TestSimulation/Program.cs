@@ -17,7 +17,7 @@ namespace TestSimulation
 
             do
             {
-                int simulationTime = game.Turn > 1 ? 45 : 970;
+                int simulationTime = game.Turn > 1 ? 30 : 970;
                 //simulationTime = 5000;
                 watch.Reset();
                 watch.Start();
@@ -34,6 +34,7 @@ namespace TestSimulation
 
                 watch.Reset();
                 watch.Start();
+                GC.Collect();
                 oppSearch.SetState(game, false, false);
                 move = (Move)oppSearch.GetNextMove(watch, simulationTime, 20, 1);
                 watch.Stop();

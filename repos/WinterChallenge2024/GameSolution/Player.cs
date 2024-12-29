@@ -13,11 +13,9 @@ class Player
 {
     static void Main(string[] args)
     {
-        bool submit = false;
+        bool submit = true;
         MonteCarloTreeSearch search = new MonteCarloTreeSearch(!submit);
         GameState gameState = new GameState();
-
-
 
         string[] inputs;
         inputs = Console.ReadLine().Split(' ');
@@ -67,19 +65,16 @@ class Player
             watch.Start();
             board.SetEntities(entities);
             gameState.SetNextTurn(board, myProtein, oppProtein);
-            GC.Collect();
-            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-
             search.SetState(gameState, true, false);
-
+            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
             if (!submit)
                 board.GetMoves(gameState.MyProtein, true, true);
 
-            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 990, 14, 1);
-
+            GC.Collect();
+            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 35 : 970, 14, 1);
+            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
             if (!submit)
             {
-                Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
                 if (watch.ElapsedMilliseconds < 48)
                 {
                     gameState.Print();
