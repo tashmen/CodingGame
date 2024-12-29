@@ -52,6 +52,26 @@ namespace UnitTest
             var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
 
             Assert.Equal(64, moves.Distinct().Count());
+        }
+
+        [Fact]
+        public void Test_PrunedCartesianProduct_Full_Small()
+        {
+            MoveAction[][] moveActions = new MoveAction[2][];
+            for (int i = 0; i < 2; i++)
+            {
+                moveActions[i] = new MoveAction[2 - i];
+                for (int j = 0; j < 2; j++)
+                {
+                    if (2 - i == 1 && j == 1)
+                        continue;
+                    moveActions[i][j] = MoveAction.CreateGrow(0, new Point2d(i, j, i * 4 + j), EntityType.BASIC, 1);
+                }
+            }
+
+            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
+
+            Assert.Equal(2, moves.Distinct().Count());
 
 
         }

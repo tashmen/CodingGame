@@ -222,7 +222,7 @@ namespace GameSolution.Game
                     winner = 0;
             }
 
-            if (Turn == 100 || Board.IsFull())
+            if (Turn >= 100 || Board.IsFull())
             {
                 if (myEntities > oppEntities)
                 {

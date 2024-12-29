@@ -189,7 +189,10 @@ namespace GameSolution.Entities
                     AddGrowMoveActions(moveActions, root.OrganRootId, isMine, hasProteins, hasManyProteins, debug);
                 }
 
-
+                if (organismCount == 1 && moveActions.Count > 1)
+                {
+                    moveActions.RemoveAt(0);//if only one organism don't wait around...
+                }
 
 
                 organismToMoveActions[i] = moveActions.ToArray();
@@ -410,7 +413,7 @@ namespace GameSolution.Entities
             bool canHarvest = false;
             if (hasHarvestProteins)
             {
-                var harvestActions = GetHarvestMoveActions(organRootId, isMine);
+                var harvestActions = GetHarvestMoveActions(organRootId, isMine, false);
                 moveActions.AddRange(harvestActions);
                 canHarvest = harvestActions.Count > 0;
                 if (debug)
@@ -425,7 +428,7 @@ namespace GameSolution.Entities
                     Console.Error.WriteLine($"Tentacle: {organRootId}: " + string.Join('\n', tentacleActions));
             }
 
-            if (!canHarvest && hasBasicProteins)
+            if (moveActions.Count <= 1 && hasBasicProteins)
             {
                 var basicActions = GetGrowMoveActions(organRootId, isMine);
                 moveActions.AddRange(basicActions);
@@ -439,6 +442,14 @@ namespace GameSolution.Entities
                 moveActions.AddRange(sporerActions);
                 if (debug)
                     Console.Error.WriteLine($"Sporer: {organRootId}: " + string.Join('\n', sporerActions));
+            }
+
+            if (moveActions.Count <= 1)
+            {
+                if (hasHarvestProteins)
+                    moveActions.AddRange(GetHarvestMoveActions(organRootId, isMine, true));
+                if (hasBasicProteins)
+                    moveActions.AddRange(GetGrowMoveActions(organRootId, isMine));
             }
 
             return moveActions;
@@ -564,7 +575,17 @@ namespace GameSolution.Entities
                     var oppRootEntities = GetRootEntities(!isMine);
                     var harvestableEntities = GetHarvestableEntities();
                     var harvestingEntities = GetHarvestedEntities(isMine);
-                    var toHarvestEntities = harvestableEntities.Except(harvestingEntities).ToList();
+                    HashSet<EntityType> hasHarvestType = new HashSet<EntityType>(harvestingEntities.Select(harvestEntity => harvestEntity.Type));
+                    List<Entity> toHarvestEntities;
+                    if (hasHarvestType.Count != 4)
+                    {
+                        toHarvestEntities = harvestableEntities.Where(e => !hasHarvestType.Contains(e.Type)).ToList();
+                    }
+                    else
+                    {
+                        toHarvestEntities = harvestableEntities.Except(harvestingEntities).ToList();
+                    }
+
                     bool hasOppRoot = false;
                     bool hasHarvestable = false;
 
@@ -599,7 +620,7 @@ namespace GameSolution.Entities
             return moveActions;
         }
 
-        public List<MoveAction> GetHarvestMoveActions(int organRootId, bool isMine)
+        public List<MoveAction> GetHarvestMoveActions(int organRootId, bool isMine, bool shouldProduce)
         {
             List<MoveAction> moveActions = new List<MoveAction>();
             List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine);
@@ -610,7 +631,7 @@ namespace GameSolution.Entities
                 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(growAction.Location))
                 {
                     bool? isHarvesting = IsHarvesting(locationNeighbor.point.index, isMine);
-                    if (!isOppIn3Spaces && (isHarvesting.HasValue && !isHarvesting.Value))
+                    if ((!isOppIn3Spaces && (isHarvesting.HasValue && !isHarvesting.Value)) || shouldProduce)
                     {
                         var harvestAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.HARVESTER, growAction.OrganRootId, locationNeighbor.direction);
                         moveActions.Add(harvestAction);
