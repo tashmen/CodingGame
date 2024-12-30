@@ -6,9 +6,21 @@ namespace Algorithms.Graph
 {
     public class Graph
     {
+        public class DistancePath
+        {
+            public double Distance { get; set; }
+            public List<ILink> Paths { get; set; }
+
+            public DistancePath(double distanc, List<ILink> paths)
+            {
+                Distance = distanc;
+                Paths = paths;
+            }
+        }
+
         private Dictionary<int, INode> Nodes;
         //Will hold shortest paths from a start node id to an end node id
-        private Dictionary<int, Dictionary<int, Tuple<double, List<ILink>>>> Paths;
+        private Dictionary<int, Dictionary<int, DistancePath>> Paths;
 
         public Graph()
         {
@@ -26,7 +38,7 @@ namespace Algorithms.Graph
         /// </summary>
         public void CalculateShortestPaths()
         {
-            Paths = new Dictionary<int, Dictionary<int, Tuple<double, List<ILink>>>>();
+            Paths = new Dictionary<int, Dictionary<int, DistancePath>>();
 
             foreach (INode vertex in Nodes.Values)
             {
@@ -36,7 +48,7 @@ namespace Algorithms.Graph
 
         public void BuildShortestPathsFromStartNode(INode startNode, double maxDistance = double.MaxValue)
         {
-            Paths = new Dictionary<int, Dictionary<int, Tuple<double, List<ILink>>>>();
+            Paths = new Dictionary<int, Dictionary<int, DistancePath>>();
             InternalBuildShortestPathsFromStartNode2(startNode, maxDistance);
         }
 
@@ -60,8 +72,8 @@ namespace Algorithms.Graph
                 return a.Link.EndNodeId.CompareTo(b.Link.EndNodeId);
             }));
 
-            Paths[startNode.Id] = new Dictionary<int, Tuple<double, List<ILink>>>();
-            Paths[startNode.Id][startNode.Id] = Tuple.Create(0.0, new List<ILink>());
+            Paths[startNode.Id] = new Dictionary<int, DistancePath>();
+            Paths[startNode.Id][startNode.Id] = new DistancePath(0.0, new List<ILink>());
             startNode.IsExplored = true;
 
             // Add initial links of the startNode to the priority queue
@@ -90,15 +102,15 @@ namespace Algorithms.Graph
                 // Update paths
                 if (!Paths[startNode.Id].TryGetValue(currentNode.Id, out var currentPath))
                 {
-                    currentPath = Tuple.Create(0.0, new List<ILink>());
+                    currentPath = new DistancePath(0.0, new List<ILink>());
                 }
                 else
                 {
-                    currentPath = Tuple.Create(currentDist, new List<ILink>(currentPath.Item2)); // Copy the existing path
+                    currentPath = new DistancePath(currentDist, new List<ILink>(currentPath.Paths)); // Copy the existing path
                 }
 
                 // Add the new link to the current path
-                currentPath.Item2.Add(bestLink);
+                currentPath.Paths.Add(bestLink);
 
                 // Store the complete path from the start node to the adjacent node
                 Paths[startNode.Id][bestLink.EndNodeId] = currentPath;
@@ -216,20 +228,20 @@ namespace Algorithms.Graph
         /// <returns>The next node in the path</returns>
         public INode GetNextNodeInShortestPath(INode startNode, INode endNode)
         {
-            Paths.TryGetValue(startNode.Id, out Dictionary<int, Tuple<double, List<ILink>>> endPoints);
+            Paths.TryGetValue(startNode.Id, out Dictionary<int, DistancePath> endPoints);
             if (endPoints == null)
             {
                 Console.Error.WriteLine("|||Start not found: " + startNode.Id);
                 throw new InvalidOperationException();
             }
-            endPoints.TryGetValue(endNode.Id, out Tuple<double, List<ILink>> paths);
+            endPoints.TryGetValue(endNode.Id, out DistancePath paths);
             if (paths == null)
             {
                 Console.Error.WriteLine("|||End not found: " + endNode.Id + " start: " + startNode.Id);
                 throw new InvalidOperationException();
             }
 
-            INode shortest = Nodes[paths.Item2.First().EndNodeId];
+            INode shortest = Nodes[paths.Paths.First().EndNodeId];
             Console.Error.WriteLine("|||Shortest: " + shortest + " from: " + startNode.Id + " to: " + endNode.Id);
 
             return shortest;
@@ -244,20 +256,20 @@ namespace Algorithms.Graph
         /// <exception cref="InvalidOperationException"></exception>
         public IList<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
         {
-            Paths.TryGetValue(startNodeId, out Dictionary<int, Tuple<double, List<ILink>>> endPoints);
+            Paths.TryGetValue(startNodeId, out Dictionary<int, DistancePath> endPoints);
             if (endPoints == null)
             {
                 Console.Error.WriteLine("|||Start not found: " + startNodeId);
                 throw new InvalidOperationException();
             }
-            endPoints.TryGetValue(endNodeId, out Tuple<double, List<ILink>> paths);
+            endPoints.TryGetValue(endNodeId, out DistancePath paths);
             if (paths == null)
             {
                 Console.Error.WriteLine("|||End not found: " + endNodeId + " start: " + startNodeId);
                 throw new InvalidOperationException();
             }
 
-            return paths.Item2;
+            return paths.Paths;
         }
 
         /// <summary>
@@ -279,18 +291,19 @@ namespace Algorithms.Graph
         /// <returns>The distance along the shortest path</returns>
         public double GetShortestPathDistance(int startId, int endId)
         {
-            Paths.TryGetValue(startId, out Dictionary<int, Tuple<double, List<ILink>>> endPoints);
-            if (endPoints == null)
-            {
-                return double.MaxValue;
-            }
-            endPoints.TryGetValue(endId, out Tuple<double, List<ILink>> paths);
-            if (paths == null)
+            // Try to get the dictionary of endpoints for the startId
+            if (!Paths.TryGetValue(startId, out var endPoints) || endPoints == null)
             {
                 return double.MaxValue;
             }
 
-            return paths.Item1;
+            // Try to get the DistancePath for the endId
+            if (!endPoints.TryGetValue(endId, out var path) || path == null)
+            {
+                return double.MaxValue;
+            }
+
+            return path.Distance;
         }
 
         /// <summary>
