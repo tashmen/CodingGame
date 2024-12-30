@@ -173,8 +173,8 @@ namespace GameSolution.Game
             var oppProtein = OppProtein.Sum();
             value = (((double)myEntities - oppEntities) / (myEntities + oppEntities + 1) * 0.2) + (((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001) + proteinValue;
 
-            if (value > 1 || value < -1)
-                Console.Error.WriteLine("Evaluation too high");
+            if (value >= 1 || value <= -1)
+                throw new Exception("Evaluation too high");
 
             return value;
         }

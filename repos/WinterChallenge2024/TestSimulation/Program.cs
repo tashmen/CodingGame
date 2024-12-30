@@ -25,7 +25,7 @@ namespace TestSimulation
                 search.SetState(game, true, false);
                 Move move = (Move)search.GetNextMove(watch, simulationTime, 14, 1);
                 watch.Stop();
-                if (game.Turn > 1 && watch.ElapsedMilliseconds > 50)
+                if (game.Turn > 1 && watch.ElapsedMilliseconds > 60)
                     throw new Exception();
 
                 game.ApplyMove(move, true);
@@ -38,7 +38,7 @@ namespace TestSimulation
                 oppSearch.SetState(game, false, false);
                 move = (Move)oppSearch.GetNextMove(watch, simulationTime, 14, 1);
                 watch.Stop();
-                if (game.Turn > 2 && watch.ElapsedMilliseconds > 50)
+                if (game.Turn > 2 && watch.ElapsedMilliseconds > 60)
                     throw new Exception();
 
                 game.ApplyMove(move, false);

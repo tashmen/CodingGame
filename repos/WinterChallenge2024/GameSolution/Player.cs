@@ -63,7 +63,7 @@ class Player
             int[] oppProtein = new int[] { oppA, oppB, oppC, oppD };
 
             watch.Start();
-            board.SetEntities(entities);
+            board.SetEntities(entities, gameState.Turn == 0);
             gameState.SetNextTurn(board, myProtein, oppProtein);
             search.SetState(gameState, true, false);
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");

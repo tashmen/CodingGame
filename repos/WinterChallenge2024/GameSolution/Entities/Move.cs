@@ -58,6 +58,7 @@ namespace GameSolution.Entities
         {
             var action = new MoveAction(MoveType.WAIT);
             action.EntityType = EntityType.NONE;
+            action.Score = -9999;
             return action;
         }
 
@@ -76,11 +77,11 @@ namespace GameSolution.Entities
             switch (this.Type)
             {
                 case MoveType.GROW:
-                    return "GROW " + move.OrganId + " " + move.Location.x + " " + move.Location.y + " " + move.EntityType.ToString() + " " + GetGrowDirection(move.OrganDirection) + ";";
+                    return $"GROW {move.OrganId} {move.Location.x} {move.Location.y} {move.EntityType.ToString()} {GetGrowDirection(move.OrganDirection)} {move.Score};";
                 case MoveType.SPORE:
-                    return "SPORE " + move.OrganId + " " + move.Location.x + " " + move.Location.y + ";";
+                    return $"SPORE {move.OrganId} {move.Location.x} {move.Location.y} {move.Score};";
                 case MoveType.WAIT:
-                    return "WAIT;";
+                    return $"WAIT {move.Score};";
             }
             return "";
         }

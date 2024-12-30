@@ -16,7 +16,7 @@ namespace UnitTest
             var converter = new Converter(output);
             Console.SetError(converter);
 
-            board = new Board(18, 9);
+            board = new Board(22, 11);
         }
 
         [Fact]
@@ -29,7 +29,7 @@ namespace UnitTest
              new Entity(1, 6, board.GetNodeIndex(1,6), "ROOT", 0, 2, "N", 2, 2),
           };
 
-            board.SetEntities(entities);
+            board.SetEntities(entities, true);
 
             Assert.Equal(3, board.GlobalOrganId);
             Assert.Equal(1, board.GetMyEntityCount());
@@ -72,8 +72,26 @@ namespace UnitTest
             var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
 
             Assert.Equal(2, moves.Distinct().Count());
+        }
 
+        [Fact]
+        public void Test_PrunedCartesianProduct_Full_Uneven()
+        {
+            MoveAction[][] moveActions = new MoveAction[3][];
+            for (int i = 0; i < 3; i++)
+            {
+                moveActions[i] = new MoveAction[i == 1 ? 2 : 4];
+                for (int j = 0; j < 4; j++)
+                {
+                    if (i == 1 && j >= 2)
+                        continue;
+                    moveActions[i][j] = MoveAction.CreateGrow(0, new Point2d(i, j, i * 4 + j), EntityType.BASIC, 1);
+                }
+            }
 
+            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
+
+            Assert.Equal(32, moves.Distinct().Count());
         }
 
 
@@ -166,6 +184,43 @@ namespace UnitTest
         }
 
         [Fact]
+        public void Test_PrunedCartesianProduct_Specific_LimitedProtein()
+        {
+            /*
+             * 9: GROW 15 11 8 BASIC N -27;
+GROW 15 12 9 BASIC N -27;
+WAIT -9999;
+13: GROW 18 13 9 BASIC N -26;
+GROW 13 15 10 BASIC N -26;
+WAIT -9999;
+2: GROW 2 19 10 BASIC N -28;
+GROW 8 16 10 BASIC N -27;
+WAIT -9999;
+Proteins: 1,2,4,1
+             * */
+
+            MoveAction[][] moves = new MoveAction[3][];
+            moves[0] = new MoveAction[] {
+                MoveAction.CreateGrow(15, new Point2d(11, 8, board.GetNodeIndex(11, 8)), EntityType.BASIC, 1),
+                MoveAction.CreateGrow(15, new Point2d(12, 9, board.GetNodeIndex(12, 9)), EntityType.BASIC, 1),
+                MoveAction.CreateWait()
+            };
+            moves[1] = new MoveAction[] {
+                MoveAction.CreateGrow(18, new Point2d(13, 9, board.GetNodeIndex(13, 9)), EntityType.BASIC, 1),
+                MoveAction.CreateGrow(13, new Point2d(15, 0, board.GetNodeIndex(15, 0)), EntityType.BASIC, 1),
+                MoveAction.CreateWait()
+            };
+            moves[2] = new MoveAction[] {
+                MoveAction.CreateGrow(2, new Point2d(19, 10, board.GetNodeIndex(19, 10)), EntityType.BASIC, 1),
+                MoveAction.CreateGrow(8, new Point2d(16, 10, board.GetNodeIndex(16, 10)), EntityType.BASIC, 1),
+                MoveAction.CreateWait()
+            };
+            var finalMoves = board.PrunedCartesianProduct(moves, false, new int[] { 1, 2, 4, 1 });
+
+            Assert.Equal(7, finalMoves.Count());
+        }
+
+        [Fact]
         public void Test_IsOpenSpace()
         {
             Board board = new Board(2, 2);
@@ -174,15 +229,19 @@ namespace UnitTest
                 new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.TENTACLE, true, 1, 1, 1, OrganDirection.South),
                 new Entity(new Point2d(1, 0, board.GetNodeIndex(1, 0)), EntityType.WALL, null, 0, 0, 0, OrganDirection.None),
                 new Entity(new Point2d(1, 1, board.GetNodeIndex(1, 1)), EntityType.WALL, null, 0, 0, 0, OrganDirection.None)
-            });
+            }, true);
 
             Assert.True(board.IsOpenSpace(board.GetNodeIndex(0, 1), true));
 
-            Assert.Single(board.GetGrowMoveActions(1, true));
+            Assert.Single(board.GetGrowMoveActions(1, true, new HashSet<int>()));
 
             board.Print();
 
             board = new Board(3, 3);
+            board.SetEntities(new List<Entity>()
+            {
+                new Entity(new Point2d(2, 1, board.GetNodeIndex(2, 1)), EntityType.WALL, null, 0, 0, 0, OrganDirection.None)
+            }, true);
             board.SetEntities(new List<Entity>()
             {
                 new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.TENTACLE, true, 1, 1, 1, OrganDirection.South),
@@ -196,9 +255,25 @@ namespace UnitTest
                 new Entity(new Point2d(2, 2, board.GetNodeIndex(2, 2)), EntityType.BASIC, false, 6, 3, 3, OrganDirection.North)
             });
 
-            Assert.Single(board.GetGrowMoveActions(2, true));
-
             board.Print();
+
+            Assert.Single(board.GetGrowMoveActions(2, true, new HashSet<int>()));
+        }
+
+        [Fact]
+        public void Test_GetGrowMoves()
+        {
+            Board board = new Board(2, 1);
+            board.SetEntities(new List<Entity>(), true);
+            board.SetEntities(new List<Entity>()
+            {
+                new Entity(new Point2d(1, 0, board.GetNodeIndex(1, 0)), EntityType.HARVESTER, true, 3, 3, 3, OrganDirection.West),
+                new Entity(0, 0, board.GetNodeIndex(0, 0), "A", -1, 0, "X", 0, 0)
+            });
+
+            var moves = board.GetGrowMoveActions(3, true, new HashSet<int>());
+            Assert.Single(moves);
+            Assert.Equal(1000, moves[0].Score);
         }
     }
 }
