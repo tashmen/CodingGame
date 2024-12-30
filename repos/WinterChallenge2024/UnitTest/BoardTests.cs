@@ -258,6 +258,20 @@ Proteins: 1,2,4,1
             board.Print();
 
             Assert.Single(board.GetGrowMoveActions(2, true, new HashSet<int>()));
+
+            board = new Board(2, 2);
+            board.SetEntities(new List<Entity>()
+            {
+
+                new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.TENTACLE, true, 2, 2, 2, OrganDirection.North),
+
+                new Entity(new Point2d(1, 0, board.GetNodeIndex(1, 0)), EntityType.TENTACLE, false, 4, 1, 1, OrganDirection.East),
+                new Entity(new Point2d(1, 1, board.GetNodeIndex(1, 1)), EntityType.WALL, null, 0, 0, 0, OrganDirection.None)
+            }, true);
+
+            board.Print();
+
+            Assert.True(board.IsOpenSpace(board.GetNodeIndex(0, 0), true));
         }
 
         [Fact]

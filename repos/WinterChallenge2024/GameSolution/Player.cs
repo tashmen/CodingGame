@@ -67,8 +67,8 @@ class Player
             gameState.SetNextTurn(board, myProtein, oppProtein);
             search.SetState(gameState, true, false);
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-            if (!submit)
-                board.GetMoves(gameState.MyProtein, true, true);
+            //if (!submit)
+            //    board.GetMoves(gameState.MyProtein, true, true);
 
             GC.Collect();
             Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 14, 1);
