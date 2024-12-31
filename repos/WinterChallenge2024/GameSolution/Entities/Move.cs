@@ -44,7 +44,7 @@ namespace GameSolution.Entities
 
         public static MoveAction CreateGrow(int organId, Point2d location, EntityType type, int organRootId, OrganDirection organDirection = OrganDirection.North)
         {
-            var action = new MoveAction(MoveType.GROW);
+            MoveAction action = new MoveAction(MoveType.GROW);
             action.OrganId = organId;
             action.Location = location;
             action.EntityType = type;
@@ -56,7 +56,7 @@ namespace GameSolution.Entities
 
         public static MoveAction CreateWait()
         {
-            var action = new MoveAction(MoveType.WAIT);
+            MoveAction action = new MoveAction(MoveType.WAIT);
             action.EntityType = EntityType.NONE;
             action.Score = -9999;
             return action;
@@ -64,7 +64,7 @@ namespace GameSolution.Entities
 
         public static MoveAction CreateSpore(int sporeOrganId, Point2d location)
         {
-            var action = new MoveAction(MoveType.SPORE);
+            MoveAction action = new MoveAction(MoveType.SPORE);
             action.OrganId = sporeOrganId;
             action.Location = location;
             action.EntityType = EntityType.ROOT;
@@ -73,11 +73,11 @@ namespace GameSolution.Entities
 
         public override string ToString()
         {
-            var move = this;
+            MoveAction move = this;
             switch (this.Type)
             {
                 case MoveType.GROW:
-                    return $"GROW {move.OrganId} {move.Location.x} {move.Location.y} {move.EntityType.ToString()} {GetGrowDirection(move.OrganDirection)} {move.Score};";
+                    return $"GROW {move.OrganId} {move.Location.x} {move.Location.y} {move.EntityType} {GetGrowDirection(move.OrganDirection)} {move.Score};";
                 case MoveType.SPORE:
                     return $"SPORE {move.OrganId} {move.Location.x} {move.Location.y} {move.Score};";
                 case MoveType.WAIT:
@@ -185,7 +185,7 @@ namespace GameSolution.Entities
             int hash = 17; // Arbitrary non-zero number
             if (Actions != null)
             {
-                foreach (var action in Actions)
+                foreach (MoveAction action in Actions)
                 {
                     hash = hash * 23 + (action?.GetHashCode() ?? 0); // Use 23 as another multiplier (common convention)
                 }

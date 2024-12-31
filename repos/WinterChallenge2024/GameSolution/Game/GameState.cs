@@ -3,6 +3,7 @@ using GameSolution.Entities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace GameSolution.Game
@@ -34,6 +35,8 @@ namespace GameSolution.Game
             OppProtein = state.OppProtein.ToArray();
             maxMove = state.maxMove;
             minMove = state.minMove;
+            _myMoves = state._myMoves?.ToList();
+            _oppMoves = state._oppMoves?.ToList();
         }
 
         public void SetNextTurn(Board board, int[] myProtein, int[] oppProtein)
@@ -42,6 +45,8 @@ namespace GameSolution.Game
             this.Board = board;
             MyProtein = myProtein;
             OppProtein = oppProtein;
+            _myMoves = null;
+            _oppMoves = null;
             UpdateGameState();
         }
 
@@ -152,12 +157,12 @@ namespace GameSolution.Game
         {
             double value;
 
-            var myEntities = Board.GetMyEntityCount();
-            var oppEntities = Board.GetOppEntityCount();
+            int myEntities = Board.GetMyEntityCount();
+            int oppEntities = Board.GetOppEntityCount();
 
-            var myHarvestProteins = Board.GetHarvestProteins(true);
+            int[] myHarvestProteins = Board.GetHarvestProteins(true);
             double myHarvestProteinsSum = myHarvestProteins.Sum();
-            var oppHarvestProteins = Board.GetHarvestProteins(false);
+            int[] oppHarvestProteins = Board.GetHarvestProteins(false);
             double oppHarvestProteinsSum = oppHarvestProteins.Sum();
 
             int myNumUniqueProteins = myHarvestProteins.Where(p => p > 1).Count();
@@ -166,15 +171,15 @@ namespace GameSolution.Game
             int myProteinBoost = myNumUniqueProteins * 5;
             int oppProteinBoost = myNumUniqueProteins * 5;
 
-            var proteinValue = (myHarvestProteinsSum + myProteinBoost - oppProteinBoost - oppHarvestProteinsSum) / (myHarvestProteinsSum + oppHarvestProteinsSum + 1 + myProteinBoost + oppProteinBoost) * 0.2;
+            double proteinValue = (myHarvestProteinsSum + myProteinBoost - oppProteinBoost - oppHarvestProteinsSum) / (myHarvestProteinsSum + oppHarvestProteinsSum + 1 + myProteinBoost + oppProteinBoost) * 0.2;
 
 
-            var myProtein = MyProtein.Sum();
-            var oppProtein = OppProtein.Sum();
+            int myProtein = MyProtein.Sum();
+            int oppProtein = OppProtein.Sum();
             value = (((double)myEntities - oppEntities) / (myEntities + oppEntities + 1) * 0.2) + (((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001) + proteinValue;
 
             if (value >= 1 || value <= -1)
-                throw new Exception("Evaluation too high");
+                Console.Error.WriteLine("Evaluation too high");
 
             return value;
         }
@@ -189,69 +194,138 @@ namespace GameSolution.Game
             return isMine ? MyProtein : OppProtein;
         }
 
+        private List<Move> _myMoves;
+        private List<Move> _oppMoves;
+        private List<Move> GetMoves(bool isMax)
+        {
+            return isMax ? _myMoves : _oppMoves;
+        }
+        private void SetMoves(List<Move> moves, bool isMax)
+        {
+            if (isMax)
+            {
+                _myMoves = moves;
+            }
+            else
+            {
+                _oppMoves = moves;
+            }
+        }
         public IList GetPossibleMoves(bool isMax)
         {
             if (Turn <= 100)
             {
                 int[] proteins = GetProteins(isMax);
 
-                return Board.GetMoves(proteins, isMax);
+                List<Move> moves = GetMoves(isMax);
+                if (moves == null)
+                {
+                    Stopwatch watch = new Stopwatch();
+                    watch.Start();
+                    moves = Board.GetMoves(proteins, isMax);
+                    SetMoves(moves, isMax);
+                    watch.Stop();
+                    if (watch.ElapsedMilliseconds > 5)
+                    {
+                        Console.Error.WriteLine($"Move generation: {watch.ElapsedMilliseconds}ms");
+                        foreach (Move move in moves)
+                        {
+                            Console.Error.WriteLine($"{move}");
+                        }
+                    }
+                }
+
+                return moves;
             }
             else return new List<Move>();
         }
 
         public double? GetWinner()
         {
-            double? winner = null;
-
-            var myEntities = Board.GetMyEntityCount();
-            var oppEntities = Board.GetOppEntityCount();
+            int myEntitiesCount = Board.GetMyEntityCount();
+            int oppEntitiesCount = Board.GetOppEntityCount();
 
             if (Turn < 100)
             {
-                if (myEntities == 0 && oppEntities > 0)
-                    winner = -1;
-                else if (myEntities > 0 && oppEntities == 0)
-                    winner = 1;
-                else if (myEntities == 0 && oppEntities == 0)
-                    winner = 0;
+                if (myEntitiesCount == 0)
+                    return CheckGameEnd(myEntitiesCount, oppEntitiesCount);
+                else if (oppEntitiesCount == 0)
+                    return CheckGameEnd(myEntitiesCount, oppEntitiesCount);
 
                 bool hasNoMyProteinsToBuild = MyProtein[0] == 0 && ((MyProtein[1] == 0 && MyProtein[2] == 0) || (MyProtein[1] == 0 && MyProtein[3] == 0) || (MyProtein[2] == 0 && MyProtein[3] == 0));
                 bool hasNoOppProteinsToBuild = OppProtein[0] == 0 && ((OppProtein[1] == 0 && OppProtein[2] == 0) || (OppProtein[1] == 0 && OppProtein[3] == 0) || (OppProtein[2] == 0 && OppProtein[3] == 0));
 
-                if (hasNoMyProteinsToBuild && myEntities < oppEntities)
-                    winner = -1;
-                if (hasNoOppProteinsToBuild && oppEntities < myEntities)
-                    winner = 1;
-                if (hasNoMyProteinsToBuild && hasNoOppProteinsToBuild && myEntities == oppEntities)
-                    winner = 0;
+                if (hasNoMyProteinsToBuild && myEntitiesCount < oppEntitiesCount)
+                    return -1;
+                if (hasNoOppProteinsToBuild && oppEntitiesCount < myEntitiesCount)
+                    return 1;
+                if (hasNoMyProteinsToBuild && hasNoOppProteinsToBuild)
+                    return CheckGameEnd(myEntitiesCount, oppEntitiesCount);
+
+                double currentWinner = CheckGameEnd(myEntitiesCount, oppEntitiesCount);
+
+                bool hasOppMoves = HasMoves(GetPossibleMoves(false));
+                if (!hasOppMoves && currentWinner == 1)
+                    return 1;
+
+                bool hasMyMoves = HasMoves(GetPossibleMoves(true));
+                if (!hasMyMoves && currentWinner == -1)
+                    return -1;
+
             }
 
             if (Turn >= 100 || Board.IsFull())
             {
-                if (myEntities > oppEntities)
-                {
-                    winner = 1;
-                }
-                else if (myEntities < oppEntities)
-                {
-                    winner = -1;
-                }
-                else
-                {
-                    if (MyProtein.Sum() > OppProtein.Sum())
-                    {
-                        winner = 1;
-                    }
-                    else if (MyProtein.Sum() < OppProtein.Sum())
-                    {
-                        winner = -1;
-                    }
-                    else winner = 0;
-                }
+                return CheckGameEnd(myEntitiesCount, oppEntitiesCount);
             }
 
-            return winner;
+            return null;
+        }
+
+        private bool HasMoves(IList moves)
+        {
+            if (moves.Count == 1)
+            {
+                Move? theMove = moves[0] as Move;
+                bool isAllWait = true;
+                foreach (MoveAction action in theMove.Actions)
+                {
+                    if (action.Type != MoveType.WAIT)
+                    {
+                        isAllWait = false;
+                        break;
+                    }
+                }
+                return !isAllWait;
+            }
+            return true;
+        }
+
+        private double CheckGameEnd(int myEntitiesCount, int oppEntitiesCount)
+        {
+
+            if (myEntitiesCount > oppEntitiesCount)
+            {
+                return 1;
+            }
+            else if (myEntitiesCount < oppEntitiesCount)
+            {
+                return -1;
+            }
+            else
+            {
+                int myProteinTotal = MyProtein.Sum();
+                int oppProteinTotal = OppProtein.Sum();
+                if (myProteinTotal > oppProteinTotal)
+                {
+                    return 1;
+                }
+                else if (myProteinTotal < oppProteinTotal)
+                {
+                    return -1;
+                }
+                else return 0;
+            }
         }
 
         public void Print()

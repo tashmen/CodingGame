@@ -70,7 +70,7 @@ namespace Algorithms.Graph
                 Paths = paths;
             }
         }
-        private Dictionary<int, INode> Nodes;
+        private readonly Dictionary<int, INode> Nodes;
         //Will hold shortest paths from a start node id to an end node id
         private Dictionary<int, Dictionary<int, DistancePath>> Paths;
         public Graph()
@@ -105,8 +105,8 @@ namespace Algorithms.Graph
             {
                 node.IsExplored = false;
             }
-            var minimumSpanningTree = new HashSet<ILink>();
-            var priorityQueue = new SortedSet<(double Distance, int StepCount, ILink Link)>(Comparer<(double Distance, int StepCount, ILink Link)>.Create((a, b) =>
+            HashSet<ILink> minimumSpanningTree = new HashSet<ILink>();
+            SortedSet<(double Distance, int StepCount, ILink Link)> priorityQueue = new SortedSet<(double Distance, int StepCount, ILink Link)>(Comparer<(double Distance, int StepCount, ILink Link)>.Create((a, b) =>
             {
                 // Compare first by distance, then by step count (in case of tie)
                 int result = a.Distance.CompareTo(b.Distance);
@@ -119,17 +119,17 @@ namespace Algorithms.Graph
             Paths[startNode.Id][startNode.Id] = new DistancePath(0.0, new List<ILink>());
             startNode.IsExplored = true;
             // Add initial links of the startNode to the priority queue
-            foreach (var link in startNode.GetLinks())
+            foreach (ILink link in startNode.GetLinks())
             {
                 priorityQueue.Add((link.Distance, 1, link));  // Distance, StepCount (1), Link
             }
             while (minimumSpanningTree.Count < Nodes.Count && priorityQueue.Count > 0)
             {
                 // Get the link with the minimum distance and fewest steps
-                var (currentDist, stepCount, bestLink) = priorityQueue.Min;
+                (double currentDist, int stepCount, ILink bestLink) = priorityQueue.Min;
                 priorityQueue.Remove(priorityQueue.Min);
-                var currentNode = Nodes[bestLink.StartNodeId];
-                var adjacentNode = Nodes[bestLink.EndNodeId];
+                INode currentNode = Nodes[bestLink.StartNodeId];
+                INode adjacentNode = Nodes[bestLink.EndNodeId];
                 if (adjacentNode.IsExplored)
                 {
                     continue; // Skip already explored nodes
@@ -137,7 +137,7 @@ namespace Algorithms.Graph
                 adjacentNode.IsExplored = true;
                 minimumSpanningTree.Add(bestLink);
                 // Update paths
-                if (!Paths[startNode.Id].TryGetValue(currentNode.Id, out var currentPath))
+                if (!Paths[startNode.Id].TryGetValue(currentNode.Id, out DistancePath? currentPath))
                 {
                     currentPath = new DistancePath(0.0, new List<ILink>());
                 }
@@ -155,7 +155,7 @@ namespace Algorithms.Graph
                 // Add adjacent links of the newly explored node to the queue
                 foreach (ILink adjacentLink in adjacentNode.GetLinks())
                 {
-                    var nextNode = Nodes[adjacentLink.EndNodeId];
+                    INode nextNode = Nodes[adjacentLink.EndNodeId];
                     if (!nextNode.IsExplored)
                     {
                         // Calculate the new distance and step count for the adjacent link
@@ -231,17 +231,17 @@ namespace Algorithms.Graph
         /// <returns>The distance along the shortest path</returns>
         public double GetShortestPathDistance(int startId, int endId)
         {
-            Paths.TryGetValue(startId, out Dictionary<int, DistancePath> endPoints);
-            if (endPoints == null)
+            // Try to get the dictionary of endpoints for the startId
+            if (!Paths.TryGetValue(startId, out Dictionary<int, DistancePath>? endPoints) || endPoints == null)
             {
                 return double.MaxValue;
             }
-            endPoints.TryGetValue(endId, out DistancePath paths);
-            if (paths == null)
+            // Try to get the DistancePath for the endId
+            if (!endPoints.TryGetValue(endId, out DistancePath? path) || path == null)
             {
                 return double.MaxValue;
             }
-            return paths.Distance;
+            return path.Distance;
         }
         /// <summary>
         /// Retrieves the straight line distance from start to end
@@ -280,9 +280,9 @@ namespace Algorithms.Graph
                 return new Node(Id, currentDist + Distance);
             }
         }
-        private Dictionary<int, List<Node>> Links;
+        private readonly Dictionary<int, List<Node>> Links;
         private Dictionary<int, Dictionary<int, List<Node>>> Paths;
-        private bool IsByDirectional;
+        private readonly bool IsByDirectional;
         public GraphLinks(bool isByDirectional = true)
         {
             Links = new Dictionary<int, List<Node>>();
@@ -536,7 +536,7 @@ namespace Algorithms.Graph
     {
         public int Id { get; private set; }
         public bool IsExplored { get; set; }
-        private List<ILink> Links;
+        private readonly List<ILink> Links;
         public Node(int id)
         {
             Id = id;
@@ -614,7 +614,6 @@ namespace Algorithms.Trees
         }
         public double GetScore(bool isMax)
         {
-            double totalPlays = TotalPlays();
             if (totalPlays == 0)
                 return 0;
             if (isMax)
@@ -625,10 +624,6 @@ namespace Algorithms.Trees
             {
                 return (loses - wins) / totalPlays;
             }
-        }
-        public int TotalPlays()
-        {
-            return totalPlays;
         }
         public double? GetWinner()
         {
@@ -735,9 +730,10 @@ namespace Algorithms.Trees
 {
     public class MonteCarloTreeSearch : TreeAlgorithm
     {
-        private Random rand;
-        private bool printErrors;
-        private SearchStrategy strategy;
+        private readonly Random rand;
+        private readonly bool printErrors;
+        private readonly SearchStrategy strategy;
+        private readonly Dictionary<int, double> _mathLogCache = new Dictionary<int, double>();
         public enum SearchStrategy
         {
             Random = 0,
@@ -779,6 +775,8 @@ namespace Algorithms.Trees
                 }
                 object move = SelectMove(selectedNode);
                 GameTreeNode childNode = Expand(selectedNode, move);
+                if (watch.ElapsedMilliseconds >= timeLimit)
+                    break;
                 double? winner = childNode.GetWinner();
                 if (winner.HasValue)
                 {
@@ -789,10 +787,13 @@ namespace Algorithms.Trees
                 {
                     for (int i = 0; i < numRollouts; i++)
                     {
-                        var clonedState = childNode.state.Clone();
+                        IGameState clonedState = childNode.state.Clone();
                         winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
                         if (!winner.HasValue)
+                        {
+                            Console.Error.WriteLine("Did not find a winner in the simulation.");
                             break;//We simulated a game, but it didn't end so we are out of time...
+                        }
                         BackPropagate(childNode, winner);
                         count++;
                     }
@@ -805,7 +806,7 @@ namespace Algorithms.Trees
             double bestScore = double.MinValue;
             for (int i = 0; i < RootNode.children.Count; i++)
             {
-                var child = RootNode.children[i];
+                GameTreeNode child = RootNode.children[i];
                 double score = child.GetScore(RootNode.isMax);
                 if (bestScore < score)
                 {
@@ -839,17 +840,13 @@ namespace Algorithms.Trees
                     return null;
                 }
                 object move = SelectMoveAtRandom(state, isMax);
-                if (watch.ElapsedMilliseconds >= timeLimit)
-                {
-                    return null;
-                }
                 state.ApplyMove(move, isMax);
-                if (watch.ElapsedMilliseconds >= timeLimit)
-                {
-                    return null;
-                }
                 depth--;
                 isMax = !isMax;
+                if (watch.ElapsedMilliseconds >= timeLimit)
+                {
+                    return null;
+                }
                 winner = state.GetWinner();
             }
             while (!winner.HasValue && depth != 0);
@@ -868,39 +865,46 @@ namespace Algorithms.Trees
                     return -1;
                 else return eval;
             }
+            Console.Error.WriteLine("Could not find a winner for simulation!");
             throw new InvalidOperationException("Could not find a winner for simulation!");
         }
         private GameTreeNode SelectNodeWithUnplayedMoves(GameTreeNode node, double exploration)
         {
-            Queue<GameTreeNode> queue = new Queue<GameTreeNode>();
-            queue.Enqueue(node);
-            GameTreeNode tempNode;
+            Stack<GameTreeNode> stack = new Stack<GameTreeNode>();
+            stack.Push(node);
             GameTreeNode bestNode = null;
             double maxValue = -1;
-            while (queue.Count > 0)
+            while (stack.Count > 0)
             {
-                tempNode = queue.Dequeue();
-                if (tempNode.moves.Count == 0)
+                GameTreeNode tempNode = stack.Pop();
+                // If the node has unplayed moves, return it immediately
+                if (tempNode.moves.Count > 0)
                 {
-                    for (int i = 0; i < tempNode.children.Count; i++)
-                    {
-                        var child = tempNode.children[i];
-                        queue.Enqueue(child);
-                    }
-                }
-                else if (tempNode.parent != null)
-                {
+                    if (tempNode.parent == null)
+                        return tempNode;
                     double wins = RootNode.isMax ? tempNode.wins : tempNode.loses;
-                    double nodeTotal = tempNode.TotalPlays();
-                    double parentTotal = tempNode.parent.TotalPlays();
-                    double value = wins / nodeTotal + exploration * Math.Sqrt(Math.Log(parentTotal) / nodeTotal);
+                    double nodeTotal = tempNode.totalPlays;
+                    int parentTotal = tempNode.parent.totalPlays;
+                    if (!_mathLogCache.TryGetValue(parentTotal, out double parentLog))
+                    {
+                        parentLog = Math.Log(parentTotal);
+                        _mathLogCache[parentTotal] = parentLog;
+                    }
+                    double value = wins / nodeTotal + exploration * Math.Sqrt(parentLog / nodeTotal);
                     if (value > maxValue)
                     {
                         maxValue = value;
                         bestNode = tempNode;
                     }
                 }
-                else return tempNode;
+                else
+                {
+                    // Enqueue all children for further processing
+                    foreach (GameTreeNode child in tempNode.children)
+                    {
+                        stack.Push(child);
+                    }
+                }
             }
             return bestNode;
         }
@@ -909,6 +913,7 @@ namespace Algorithms.Trees
             IList moves = state.GetPossibleMoves(isMax);
             if (moves.Count == 0)
             {
+                Console.Error.WriteLine("No moves available!");
                 throw new Exception("No moves available!");
             }
             int index = rand.Next(0, moves.Count);
@@ -923,6 +928,7 @@ namespace Algorithms.Trees
                 case SearchStrategy.Sequential:
                     return SelectMoveSequentially(node);
             }
+            Console.Error.WriteLine("strategy not supported");
             throw new InvalidOperationException("strategy not supported");
         }
         private object SelectMoveSequentially(GameTreeNode node)
@@ -930,6 +936,7 @@ namespace Algorithms.Trees
             object move;
             if (node.moves.Count == 0)//If there are no more moves then that is a problem...
             {
+                Console.Error.WriteLine("No moves found!");
                 throw new Exception("No moves found!");
             }
             else
@@ -944,6 +951,7 @@ namespace Algorithms.Trees
             object move;
             if (node.moves.Count == 0)//If there are no more moves then that is a problem...
             {
+                Console.Error.WriteLine("No moves found!");
                 throw new Exception("No moves found!");
             }
             else
@@ -972,13 +980,13 @@ namespace Algorithms.Trees
                 //Expand any moves left in the root node (if any)
                 for (int i = 0; i < RootNode.moves.Count; i++)
                 {
-                    var move = RootNode.moves[i];
+                    object? move = RootNode.moves[i];
                     Expand(RootNode, move);
                 }
                 //Begin scanning the children
                 for (int i = 0; i < RootNode.children.Count; i++)
                 {
-                    var child = RootNode.children[i];
+                    GameTreeNode child = RootNode.children[i];
                     if (child.state.Equals(rootState))
                     {
                         RootNode = child;
@@ -987,12 +995,12 @@ namespace Algorithms.Trees
                     }
                     for (int j = 0; j < child.moves.Count; j++)
                     {
-                        var move = child.moves[j];
+                        object? move = child.moves[j];
                         Expand(child, move);
                     }
                     for (int j = 0; j < child.children.Count; j++)
                     {
-                        var descendent = child.children[j];
+                        GameTreeNode descendent = child.children[j];
                         if (descendent.state.Equals(rootState))
                         {
                             RootNode = descendent;

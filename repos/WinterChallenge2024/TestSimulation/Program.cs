@@ -17,7 +17,7 @@ namespace TestSimulation
 
             do
             {
-                int simulationTime = game.Turn > 1 ? 45 : 970;
+                int simulationTime = game.Turn > 1 ? 35 : 970;
                 //simulationTime = 5000;
                 watch.Reset();
                 watch.Start();
@@ -25,7 +25,7 @@ namespace TestSimulation
                 search.SetState(game, true, false);
                 Move move = (Move)search.GetNextMove(watch, simulationTime, 14, 1);
                 watch.Stop();
-                if (game.Turn > 1 && watch.ElapsedMilliseconds > 60)
+                if (game.Turn > 1 && watch.ElapsedMilliseconds > 50)
                     throw new Exception();
 
                 game.ApplyMove(move, true);
@@ -38,7 +38,7 @@ namespace TestSimulation
                 oppSearch.SetState(game, false, false);
                 move = (Move)oppSearch.GetNextMove(watch, simulationTime, 14, 1);
                 watch.Stop();
-                if (game.Turn > 2 && watch.ElapsedMilliseconds > 60)
+                if (game.Turn > 2 && watch.ElapsedMilliseconds > 50)
                     throw new Exception();
 
                 game.ApplyMove(move, false);

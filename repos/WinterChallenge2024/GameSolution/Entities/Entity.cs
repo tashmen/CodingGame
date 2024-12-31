@@ -29,13 +29,13 @@ namespace GameSolution.Entities
 
     public class Entity
     {
-        public bool? IsMine { get; set; }
-        public Point2d Location { get; set; }
-        public EntityType Type { get; set; }
-        public int OrganId { get; set; }
-        public OrganDirection OrganDirection { get; set; }
-        public int OrganParentId { get; set; }
-        public int OrganRootId { get; set; }
+        public bool? IsMine { get; }
+        public Point2d Location { get; }
+        public EntityType Type { get; }
+        public int OrganId { get; }
+        public OrganDirection OrganDirection { get; }
+        public int OrganParentId { get; }
+        public int OrganRootId { get; }
 
         private bool _IsOpenSpace { get; set; }
         public Entity(int x, int y, int index, string type, int owner, int organId, string organDir, int organParentId, int organRootId)

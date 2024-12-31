@@ -239,5 +239,23 @@ namespace GameSolution.Game
 
             return game;
         }
+
+        public static GameState BuildNoMovesGame()
+        {
+            GameState game = new GameState();
+
+            Board board = new Board(2, 1);
+            List<Entity> entities = new List<Entity>()
+          {
+             new Entity(0, 0, board.GetNodeIndex(0,0), "ROOT", 1, 1, "N", 1, 1),
+             new Entity(1, 0, board.GetNodeIndex(1,0), "ROOT", 0, 2, "N", 2, 2),
+          };
+            board.SetEntities(entities, true);
+            board.Print();
+
+            game.SetNextTurn(board, new int[] { 6, 2, 2, 3 }, new int[] { 6, 2, 2, 3 });
+
+            return game;
+        }
     }
 }

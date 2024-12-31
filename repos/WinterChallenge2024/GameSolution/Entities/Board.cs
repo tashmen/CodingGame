@@ -31,17 +31,19 @@ namespace GameSolution.Entities
         {
             Width = board.Width;
             Height = board.Height;
-            Entities = board.Entities.Select(e => e == null ? null : e.Clone()).ToArray();
+            Entities = board.Entities.ToArray();
             GlobalOrganId = board.GlobalOrganId;
             Graph = board.Graph;
             _entityCache = board._entityCache;
             _moveActionCache = board._moveActionCache;
+            _locationCheckCache = board._locationCheckCache;
             _myEntityCount = board._myEntityCount;
             _oppEntityCount = board._oppEntityCount;
             _locationCache = board._locationCache;
             _locationIndexCache = board._locationIndexCache;
             _locationNeighbors = board._locationNeighbors;
-            UpdateBoard();
+            _intToStringCache = board._intToStringCache;
+            _isOpenSpaceInitial = board._isOpenSpaceInitial;
         }
 
         public bool Equals(Board board)
@@ -71,7 +73,7 @@ namespace GameSolution.Entities
 
         public void Attack()
         {
-            var tentacles = GetTentacleEntities();
+            List<Entity> tentacles = GetTentacleEntities();
 
             List<Entity> deadEntities = new List<Entity>();
             foreach (Entity tentacle in tentacles)
@@ -85,7 +87,7 @@ namespace GameSolution.Entities
             {
                 if (deadEntity.Type == EntityType.ROOT)
                 {
-                    var deathToRoot = GetEntitiesList().Where(e => e.OrganRootId == deadEntity.OrganId);
+                    IEnumerable<Entity> deathToRoot = GetEntitiesList().Where(e => e.OrganRootId == deadEntity.OrganId);
                     foreach (Entity kill in deathToRoot)
                     {
                         Entities[kill.Location.index] = null;
@@ -93,7 +95,7 @@ namespace GameSolution.Entities
                 }
                 else
                 {
-                    var deathToChildren = GetEntitiesList().Where(e => e.OrganParentId == deadEntity.OrganId);
+                    IEnumerable<Entity> deathToChildren = GetEntitiesList().Where(e => e.OrganParentId == deadEntity.OrganId);
                     foreach (Entity kill in deathToChildren)
                     {
                         Entities[kill.Location.index] = null;
@@ -110,7 +112,7 @@ namespace GameSolution.Entities
             {
                 if (action.Type != MoveType.WAIT)
                 {
-                    var collisionActions = oppMove.Actions.Where(a => (a.Type == MoveType.GROW || a.Type == MoveType.SPORE) && a.Location.Equals(action.Location));
+                    IEnumerable<MoveAction> collisionActions = oppMove.Actions.Where(a => (a.Type == MoveType.GROW || a.Type == MoveType.SPORE) && a.Location.Equals(action.Location));
                     if (collisionActions.Count() > 0)
                     {
                         Entities[GetNodeIndex(action.Location)] = new Entity(action.Location, EntityType.WALL, null, 0, 0, 0, OrganDirection.None);
@@ -142,65 +144,101 @@ namespace GameSolution.Entities
                     Entity sporeEntity = Entities[GetNodeIndex(action.Location)];
                     if (sporeEntity == null || sporeEntity.IsOpenSpace())
                     {
-                        var organId = GlobalOrganId++;
+                        int organId = GlobalOrganId++;
                         Entities[GetNodeIndex(action.Location)] = new Entity(action.Location, action.EntityType, isMine, organId, organId, organId, action.OrganDirection);
                     }
                     break;
             }
         }
 
+        public class ProteinInfo
+        {
+            public int[] Proteins;
+            public bool[] HasProteins;
+            public bool HasHarvestProteins;
+            public bool HasBasicProteins;
+            public bool HasTentacleProteins;
+            public bool HasSporerProteins;
+            public bool HasRootProteins;
+
+            public bool[] HasManyProteins;
+            public bool HasManyRootProteins;
+            public bool HasManyTentacleProteins;
+            public bool HasManySporerProteins;
+            public bool HasAtLeastTwoMany;
+            public ProteinInfo(int[] proteins)
+            {
+                Proteins = proteins;
+                HasProteins = proteins.Select(p => p > 0).ToArray();
+                HasHarvestProteins = HasProteins[2] && HasProteins[3];
+                HasBasicProteins = HasProteins[0];
+                HasTentacleProteins = HasProteins[1] && HasProteins[2];
+                HasSporerProteins = HasProteins[1] && HasProteins[3];
+
+                HasRootProteins = HasProteins.All(m => m);
+                HasManyProteins = proteins.Select(p => p > 10).ToArray();
+                HasManyRootProteins = HasManyProteins.All(m => m);
+                HasManyTentacleProteins = HasManyProteins[1] && HasManyProteins[2];
+                HasManySporerProteins = HasManyProteins[1] && HasManyProteins[3];
+                HasAtLeastTwoMany = HasManyProteins.Count(value => value) > 1;
+            }
+        }
+
         //15, 16, 27 actions max
-        int[] _maxActionsPerOrganism = new int[5] { 10, 3, 2, 1, 1 };
+        readonly int[] _maxActionsPerOrganism = new int[5] { 10, 3, 2, 1, 1 };
         public List<Move> GetMoves(int[] proteins, bool isMine, bool debug = false)
         {
-            var moves = new List<Move>();
+            List<Move> moves = new List<Move>();
 
-            var rootEntities = GetRootEntities(isMine);
-            var organismCount = rootEntities.Count();
-            MoveAction[][] organismToMoveActions = new MoveAction[organismCount][];
+            List<Entity> rootEntities = GetRootEntities(isMine);
+            int organismCount = rootEntities.Count();
             bool[] organismHasMoves = new bool[organismCount];
-            List<bool> hasProteins = proteins.Select(p => p > 0).ToList();
+            MoveAction[][] organismToMoveActions = new MoveAction[organismCount][];
 
-            bool hasRootProteins = hasProteins.All(m => m);
-            List<bool> hasManyProteins = proteins.Select(p => p > 10).ToList();
-            bool hasManyRootProteins = hasManyProteins.All(m => m);
+            ProteinInfo proteinInfo = new ProteinInfo(proteins);
 
             int i = 0;
             int maxOrgans = 5;//Put a limit on the number of organs we calculate moves for as this is exploding the action space
 
-
-
-            var limitedRootEntities = rootEntities;
+            List<Entity> limitedRootEntities = rootEntities;
             if (organismCount > maxOrgans)
             {
-                rootEntities.Sort((e1, e2) => e2.OrganId.CompareTo(e1.OrganId));
                 limitedRootEntities = rootEntities.Take(maxOrgans).ToList();
             }
             int selectedOrgans = limitedRootEntities.Count;
+
             bool hasSufficientProteins = (proteins[0] >= selectedOrgans || proteins[0] == 0) && (proteins[1] >= selectedOrgans || proteins[1] == 0) && (proteins[2] >= selectedOrgans || proteins[2] == 0) && (proteins[3] >= selectedOrgans || proteins[3] == 0);//Checks for 0 because if we don't have any of that protein then we won't have actions of that type.
 
             HashSet<int> locationsTaken = new HashSet<int>();
 
             foreach (Entity root in limitedRootEntities)
             {
-                var moveActions = new List<MoveAction>();
+                List<MoveAction> moveActions = new List<MoveAction>();
 
-                if (hasRootProteins && (organismCount < 2 || hasManyRootProteins))
+                bool sporeHasPriority = organismCount < 2 || proteinInfo.HasManyRootProteins;
+                if (proteinInfo.HasRootProteins && sporeHasPriority)
                 {
                     AddSporeMoveActions(moveActions, root.OrganRootId, isMine, locationsTaken);
                     if (debug)
                         Console.Error.WriteLine($"Spore: {root.OrganRootId}: " + string.Join('\n', moveActions));
-                    organismHasMoves[i] = true;
+                    if (moveActions.Count > 0)
+                    {
+                        moveActions = moveActions.OrderBy(m => m.Score).ToList();
+                        if (moveActions[0].Score < 0)
+                        {
+                            moveActions = moveActions.Where(m => m.Score < 0).ToList();
+                            organismHasMoves[i] = true;
+                        }
+                    }
                 }
 
-                if (moveActions.Count <= 0)
+                if (moveActions.Count <= 0 || !sporeHasPriority)
                 {
-                    AddGrowMoveActions(moveActions, root.OrganRootId, isMine, hasProteins, hasManyProteins, locationsTaken, debug);
+                    AddGrowMoveActions(moveActions, root.OrganRootId, isMine, proteinInfo, locationsTaken, debug);
 
                     if (moveActions.Count > 0)
                     {
-                        moveActions.Sort((m1, m2) => m1.Score.CompareTo(m2.Score));
-                        moveActions = moveActions.Take(_maxActionsPerOrganism[limitedRootEntities.Count - 1]).ToList();
+                        moveActions = moveActions.OrderBy(m => m.Score).Take(_maxActionsPerOrganism[limitedRootEntities.Count - 1]).ToList();
                         if (moveActions[0].Score < 0)
                         {
                             moveActions = moveActions.Where(m => m.Score < 0).ToList();
@@ -242,6 +280,7 @@ namespace GameSolution.Entities
 
             if (organismCount > 1)
             {
+                //When some organism has good moves to play then prune the left over moves that aren't as good.
                 bool hasAtLeastOneMove = organismHasMoves.Any(m => m);
                 if (hasAtLeastOneMove)
                 {
@@ -267,7 +306,7 @@ namespace GameSolution.Entities
                     }
                     Console.Error.WriteLine($"Proteins: " + string.Join(",", proteins));
                 }
-                var theMoves = PrunedCartesianProduct(organismToMoveActions, hasSufficientProteins, proteins);
+                IEnumerable<Move> theMoves = PrunedCartesianProduct(organismToMoveActions, hasSufficientProteins, proteins);
                 moves = theMoves.ToList();
                 if (debug)
                     Console.Error.WriteLine($"Final set: {moves.Count}");
@@ -276,7 +315,7 @@ namespace GameSolution.Entities
             {
                 foreach (MoveAction action in organismToMoveActions[0])
                 {
-                    var move = new Move();
+                    Move move = new Move();
                     move.SetActions(new MoveAction[] { action });
                     moves.Add(move);
                 }
@@ -284,7 +323,7 @@ namespace GameSolution.Entities
             else
             {
                 //Since we don't check game end conditions until after a move occurs, when there is an attack that kills the last root entity then we can end up in this situation so just give a wait action and do nothing.  The game is over.
-                var move = new Move();
+                Move move = new Move();
                 move.SetActions(new MoveAction[]
                 {
                     MoveAction.CreateWait()
@@ -319,24 +358,24 @@ namespace GameSolution.Entities
             if (sequences == null || sequences.Length == 0)
                 yield break;
 
-            var sequenceArrays = sequences;
-            var dimensions = sequenceArrays.Length;
+            MoveAction[][] sequenceArrays = sequences;
+            int dimensions = sequenceArrays.Length;
 
             // Indexes to keep track of positions in each sequence
-            var indices = new int[dimensions];
+            int[] indices = new int[dimensions];
 
             // Pre-allocate arrays for partial costs and collisions
-            var partialCosts = new int[dimensions][];
-            var partialCollision = new HashSet<int>[dimensions];
+            int[][] partialCosts = new int[dimensions][];
+            HashSet<int>[] partialCollision = new HashSet<int>[dimensions];
             for (int i = 0; i < dimensions; i++)
             {
                 partialCosts[i] = new int[4]; // Assuming a constant size for protein cost array
                 partialCollision[i] = new HashSet<int>();
             }
-            var initialCost = new int[4] { 0, 0, 0, 0 };
-            var initialCollision = new HashSet<int>();
+            int[] initialCost = new int[4] { 0, 0, 0, 0 };
+            HashSet<int> initialCollision = new HashSet<int>();
 
-            var currentCombination = new MoveAction[dimensions];
+            MoveAction[] currentCombination = new MoveAction[dimensions];
             int position = 0;
 
             while (true)
@@ -364,7 +403,7 @@ namespace GameSolution.Entities
                     // Update partial costs for each protein based on current combination
                     if (!hasSufficientProteins)
                     {
-                        var cost = currentCombination[i].GetCost();
+                        int[] cost = currentCombination[i].GetCost();
                         for (int j = 0; j < proteins.Length; j++)
                         {
                             partialCosts[i][j] += cost[j];
@@ -395,7 +434,7 @@ namespace GameSolution.Entities
                 // Validate the combination
                 if (!hasCollision && (hasSufficientProteins || hasProteins))
                 {
-                    var move = new Move();
+                    Move move = new Move();
                     move.SetActions(currentCombination.ToArray());
                     yield return move;
                     position = dimensions - 1;
@@ -431,7 +470,7 @@ namespace GameSolution.Entities
 
             foreach (Entity sporer in sporers)
             {
-                var location = sporer.Location;
+                Point2d location = sporer.Location;
                 int distance = 0;
                 while (true)
                 {
@@ -444,9 +483,15 @@ namespace GameSolution.Entities
                             continue;
                         }
                         bool? isHarvesting = IsHarvesting(location, isMine);
-                        if (!(isHarvesting.HasValue && isHarvesting.Value) && IsHarvestExactly2paces(location))
+                        MoveAction sporeMove = MoveAction.CreateSpore(sporer.OrganId, location);
+                        moveActions.Add(sporeMove);
+                        if (!(isHarvesting.HasValue && isHarvesting.Value) && IsHarvestExactly2spaces(location))
                         {
-                            moveActions.Add(MoveAction.CreateSpore(sporer.OrganId, location));
+                            sporeMove.Score = -1000;
+                        }
+                        else
+                        {
+                            sporeMove.Score = 1000;
                         }
                     }
                     else
@@ -464,17 +509,11 @@ namespace GameSolution.Entities
             return moveActions;
         }
 
-        public List<MoveAction> AddGrowMoveActions(List<MoveAction> moveActions, int organRootId, bool isMine, List<bool> hasProteins, List<bool> hasManyProteins, HashSet<int> locationsTaken, bool debug = false)
+        public List<MoveAction> AddGrowMoveActions(List<MoveAction> moveActions, int organRootId, bool isMine, ProteinInfo proteinInfo, HashSet<int> locationsTaken, bool debug = false)
         {
-            bool hasHarvestProteins = hasProteins[2] && hasProteins[3];
-            bool hasBasicProteins = hasProteins[0];
-            bool hasTentacleProteins = hasProteins[1] && hasProteins[2];
-            bool hasSporerProteins = hasProteins[1] && hasProteins[3];
-            bool hasManyTentacleProteins = hasManyProteins[1] && hasManyProteins[2];
-            bool hasManySporerProteins = hasManyProteins[1] && hasManyProteins[3];
-            bool hasAtLeastTwoMany = hasManyProteins.Count(value => value) > 1;
 
-            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine, locationsTaken);
+
+            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
 
             if (debug)
             {
@@ -484,9 +523,9 @@ namespace GameSolution.Entities
 
             bool canHarvest = false;
             List<MoveAction> harvestActions = new List<MoveAction>();
-            if (hasHarvestProteins)
+            if (proteinInfo.HasHarvestProteins)
             {
-                harvestActions = GetHarvestMoveActions(organRootId, isMine, locationsTaken);
+                harvestActions = GetHarvestMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
                 moveActions.AddRange(harvestActions);
                 canHarvest = harvestActions.Count > 0;
                 if (debug)
@@ -494,17 +533,17 @@ namespace GameSolution.Entities
             }
 
             List<MoveAction> tentacleActions = new List<MoveAction>();
-            if (hasTentacleProteins)
+            if (proteinInfo.HasTentacleProteins)
             {
-                tentacleActions = GetTentacleMoveActions(organRootId, isMine, locationsTaken);
+                tentacleActions = GetTentacleMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
                 moveActions.AddRange(tentacleActions);
                 if (debug)
                     Console.Error.WriteLine($"Tentacle: {organRootId}: " + string.Join('\n', tentacleActions));
             }
 
-            if (hasBasicProteins)
+            if (proteinInfo.HasBasicProteins)
             {
-                var basicActions = GetGrowBasicMoveActions(organRootId, isMine, locationsTaken);
+                List<MoveAction> basicActions = GetGrowBasicMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
 
                 if (harvestActions.Any(m => m.Score < 0))
                     basicActions.ForEach(m => m.Score += 100);//Prefer harvest actions over basics
@@ -512,20 +551,23 @@ namespace GameSolution.Entities
                 if (tentacleActions.Any(m => m.Score < 0))
                     basicActions.ForEach(m => m.Score += 100);//Prefer tentacle actions over basics
 
-                if (hasManyTentacleProteins)
+                if (proteinInfo.HasManyTentacleProteins)
                     basicActions.Join(tentacleActions, m1 => m1.Location, m2 => m2.Location, (m1, m2) => m1).ToList().ForEach(a => a.Score += 100);//Prefer tentacle actions over basics.
                 moveActions.AddRange(basicActions);
                 if (debug)
                     Console.Error.WriteLine($"Basic: {organRootId}: " + string.Join('\n', basicActions));
             }
 
-            if (hasSporerProteins)
+            if (proteinInfo.HasSporerProteins)
             {
-                var sporerActions = GetSporerMoveActions(organRootId, isMine, locationsTaken);
+                List<MoveAction> sporerActions = GetSporerMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
                 if (harvestActions.Any(m => m.Score < 0))
                     sporerActions.ForEach(m => m.Score += 100);//Prefer harvest actions over sporers
                 if (tentacleActions.Any(m => m.Score < 0))
                     sporerActions.ForEach(m => m.Score += 100);//Prefer tentacle actions over sporers
+                if (!proteinInfo.HasRootProteins)
+                    sporerActions.ForEach(m => m.Score += 100);
+
 
                 moveActions.AddRange(sporerActions);
                 if (debug)
@@ -535,21 +577,21 @@ namespace GameSolution.Entities
             return moveActions;
         }
 
-        public List<MoveAction> GetSporerMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken)
+        public List<MoveAction> GetSporerMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken, ProteinInfo proteinInfo)
         {
             List<MoveAction> moveActions = new List<MoveAction>();
 
-            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine, locationsTaken);
+            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
 
             foreach (MoveAction growAction in growMoveActions)
             {
                 List<MoveAction> sporerMoves = new List<MoveAction>();
                 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(growAction.Location))
                 {
-                    var sporerAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.SPORER, growAction.OrganRootId, locationNeighbor.direction);
+                    MoveAction sporerAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.SPORER, growAction.OrganRootId, locationNeighbor.direction);
                     sporerAction.Score = growAction.Score;
 
-                    var location = growAction.Location;
+                    Point2d location = growAction.Location;
                     bool isOpen = true;
                     for (int i = 0; i < 4; i++)
                     {
@@ -583,10 +625,10 @@ namespace GameSolution.Entities
             return moveActions;
         }
 
-        public List<MoveAction> GetTentacleMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken)
+        public List<MoveAction> GetTentacleMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken, ProteinInfo proteinInfo)
         {
             List<MoveAction> moveActions = new List<MoveAction>();
-            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine, locationsTaken);
+            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
 
             foreach (MoveAction growAction in growMoveActions)
             {
@@ -620,12 +662,12 @@ namespace GameSolution.Entities
 
                 if (tentacleMoveActions.Count > 0)
                 {
-                    var best = tentacleMoveActions.Min(m => m.Score);
+                    double best = tentacleMoveActions.Min(m => m.Score);
                     moveActions.AddRange(tentacleMoveActions.Where(m => m.Score == best));
                 }
                 else
                 {
-                    var moveAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, OrganDirection.North);
+                    MoveAction moveAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, OrganDirection.North);
                     moveAction.Score = growAction.Score;
                     moveAction.Score += 10000;
                     moveActions.Add(moveAction);
@@ -638,41 +680,26 @@ namespace GameSolution.Entities
 
 
         private Dictionary<string, List<MoveAction>> _moveActionCache = new Dictionary<string, List<MoveAction>>();
+        private const int _maxMoves = 5;
 
-        public List<MoveAction> GetGrowMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken)
+        public List<MoveAction> GetGrowMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken, ProteinInfo proteinInfo)
         {
-            var key = (isMine ? "grow1_" : "grow0_") + organRootId.ToString();
+            string key = (isMine ? "grow1_" : "grow0_") + organRootId.ToString();
             if (!_moveActionCache.TryGetValue(key, out List<MoveAction> moveActions))
             {
-                var oppRootEntities = GetRootEntities(!isMine);
-                var harvestableEntities = GetHarvestableEntities();
-                var harvestingEntities = GetHarvestedEntities(isMine);
-                HashSet<EntityType> hasHarvestType = new HashSet<EntityType>(harvestingEntities.Select(harvestEntity => harvestEntity.Type));
-                List<Entity> toHarvestEntities = new List<Entity>();
-                if (hasHarvestType.Count != 4)
-                {
-                    toHarvestEntities = harvestableEntities.Where(e => !hasHarvestType.Contains(e.Type)).ToList();
-                }
-                /*
-                else
-                {
-                    toHarvestEntities = harvestableEntities.Except(harvestingEntities).ToList();
-                }
-                */
+                List<Entity> oppRootEntities = GetRootEntities(!isMine);
+                List<Entity> harvestableEntities = GetHarvestableEntities();
+                List<Entity> harvestingEntities = GetHarvestedEntities(isMine);
+                HashSet<EntityType> harvestedTypes = harvestingEntities.Select(e => e.Type).ToHashSet();
 
-                bool hasOppRoot = false;
-                bool hasHarvestable = false;
+                List<Entity> toHarvestEntities = harvestedTypes.Count < 4 ? harvestableEntities.Where(e => !harvestedTypes.Contains(e.Type)).ToList() : new List<Entity>();
 
-                if (oppRootEntities.Count > 0)
-                    hasOppRoot = true;
-                if (toHarvestEntities.Count > 0)
-                    hasHarvestable = true;
-
-                int maxMoves = 5;
+                bool hasOppRoot = oppRootEntities.Any();
+                bool hasHarvestable = toHarvestEntities.Any();
 
 
                 moveActions = new List<MoveAction>();
-                var entities = GetEntitiesByRoot(organRootId, isMine);
+                List<Entity> entities = GetEntitiesByRoot(organRootId, isMine);
                 HashSet<int> locationsChecked = new HashSet<int>(locationsTaken);
                 foreach (Entity entity in entities)
                 {
@@ -680,7 +707,7 @@ namespace GameSolution.Entities
                     {
                         if (locationsChecked.Add(locationNeighbor.point.index) && IsOpenSpace(locationNeighbor.point.index, isMine))
                         {
-                            var moveAction = MoveAction.CreateGrow(entity.OrganId, locationNeighbor.point, EntityType.NONE, entity.OrganRootId);
+                            MoveAction moveAction = MoveAction.CreateGrow(entity.OrganId, locationNeighbor.point, EntityType.NONE, entity.OrganRootId);
                             moveAction.Score = 0;
                             if (hasHarvestable)
                             {
@@ -692,9 +719,22 @@ namespace GameSolution.Entities
                             }
 
                             bool? isHarvesting = IsHarvesting(locationNeighbor.point.index, isMine);
-                            if (isHarvesting.HasValue && isHarvesting.Value && !IsOpponentWithin3Spaces(moveAction.Location, isMine))
+                            if (isHarvesting.HasValue)
                             {
-                                moveAction.Score += 1000;
+                                if (GetEntity(locationNeighbor.point.index, out Entity harvestEntity) && !proteinInfo.HasHarvestProteins && (harvestEntity.Type == EntityType.C || harvestEntity.Type == EntityType.D))
+                                {
+                                    moveAction.Score -= 1000;//if we have no C/D then eat it.  We need C/D to build harvesters
+                                }
+                                bool isOppIn3Spaces = IsOpponentWithin3Spaces(moveAction.Location, isMine);
+                                if (isHarvesting.Value && !isOppIn3Spaces)
+                                {
+                                    moveAction.Score += 1000;
+                                }
+
+                                if (isOppIn3Spaces)
+                                {
+                                    moveAction.Score -= 20;//Give higher priority to spaces where the opponent is near
+                                }
                             }
 
                             moveActions.Add(moveAction);
@@ -703,36 +743,42 @@ namespace GameSolution.Entities
                 }
 
 
-                if (moveActions.Count > maxMoves)
+                if (moveActions.Count > _maxMoves)
                 {
-                    moveActions.Sort((m1, m2) => m1.Score.CompareTo(m2.Score));
-                    moveActions = moveActions.Take(maxMoves).ToList();
+                    moveActions = moveActions.OrderBy(m => m.Score).Take(_maxMoves).ToList();
                 }
                 _moveActionCache[key] = moveActions;
             }
             return moveActions;
         }
 
-        public List<MoveAction> GetGrowBasicMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken)
+        public List<MoveAction> GetGrowBasicMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken, ProteinInfo proteinInfo)
         {
             List<MoveAction> moveActions = new List<MoveAction>();
-            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine, locationsTaken);
+            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
 
+            List<MoveAction> growBasicActions = new List<MoveAction>();
             foreach (MoveAction growAction in growMoveActions)
             {
                 MoveAction moveAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.BASIC, growAction.OrganRootId);
                 moveAction.Score = growAction.Score;
                 moveAction.Score -= 30;
-                moveActions.Add(moveAction);
+                growBasicActions.Add(moveAction);
+            }
+
+            if (growBasicActions.Count > 0)
+            {
+                double best = growBasicActions.Min(m => m.Score);
+                moveActions.AddRange(growBasicActions.Where(m => m.Score == best));
             }
 
             return moveActions;
         }
 
-        public List<MoveAction> GetHarvestMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken)
+        public List<MoveAction> GetHarvestMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken, ProteinInfo proteinInfo)
         {
             List<MoveAction> moveActions = new List<MoveAction>();
-            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine, locationsTaken);
+            List<MoveAction> growMoveActions = GetGrowMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
 
             foreach (MoveAction growAction in growMoveActions)
             {
@@ -742,7 +788,7 @@ namespace GameSolution.Entities
                 {
                     bool? isHarvesting = IsHarvesting(locationNeighbor.point.index, isMine);
 
-                    var harvestAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.HARVESTER, growAction.OrganRootId, locationNeighbor.direction);
+                    MoveAction harvestAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.HARVESTER, growAction.OrganRootId, locationNeighbor.direction);
                     harvestAction.Score = growAction.Score;
 
                     if (isOppIn3Spaces)
@@ -768,7 +814,7 @@ namespace GameSolution.Entities
                 }
                 else
                 {
-                    var moveAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.HARVESTER, growAction.OrganRootId);
+                    MoveAction moveAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.HARVESTER, growAction.OrganRootId);
                     moveAction.Score = growAction.Score;
                     moveAction.Score += 1000;
                     moveActions.Add(moveAction);
@@ -817,7 +863,7 @@ namespace GameSolution.Entities
 
         public int[] GetHarvestProteins(bool isMine)
         {
-            var harvesters = GetHarvesterEntities(isMine);
+            List<Entity> harvesters = GetHarvesterEntities(isMine);
             int[] harvestedProteins = new int[4] { 0, 0, 0, 0 };
             foreach (Entity harvester in harvesters)
             {
@@ -845,10 +891,10 @@ namespace GameSolution.Entities
             throw new Exception("No direction given");
         }
 
-        public bool IsHarvestExactly2paces(Point2d location)
+        public bool IsHarvestExactly2spaces(Point2d location)
         {
-            var harvestEntities = GetHarvestableEntities();
-            foreach (var entity in harvestEntities)
+            List<Entity> harvestEntities = GetHarvestableEntities();
+            foreach (Entity entity in harvestEntities)
             {
                 if (location.Equals(entity.Location))
                     continue;
@@ -865,11 +911,11 @@ namespace GameSolution.Entities
         Dictionary<string, bool> _locationCheckCache;
         public bool IsOpponentWithin3Spaces(Point2d location, bool isMine)
         {
-            var key = (isMine ? "opponentclose_1" : "opponentclose_2") + location.index.ToString();
+            string key = (isMine ? "opponentclose_1" : "opponentclose_2") + location.index.ToString();
             if (!_locationCheckCache.TryGetValue(key, out bool result))
             {
-                var oppEntities = GetEntities(!isMine);
-                foreach (var oppEntity in oppEntities)
+                List<Entity> oppEntities = GetEntities(!isMine);
+                foreach (Entity oppEntity in oppEntities)
                 {
                     double distance = Graph.GetShortestPathDistance(location.index, oppEntity.Location.index);
                     if (distance <= 3)
@@ -905,38 +951,50 @@ namespace GameSolution.Entities
             return GetEntityWithDirection(location, nextDirection, out Entity entity) && entity.IsOpenSpace();
         }
 
+
         private bool IsOpenSpace(int location)
         {
             return !GetEntity(location, out Entity entity) || entity.IsOpenSpace();
         }
 
+        private string[] _intToStringCache;
+        private bool[] _isOpenSpaceInitial;
         public bool IsOpenSpace(int location, bool isMine)
         {
-            string key = (isMine ? "openspace_1" : "openspace_2") + location.ToString();
-            if (!_locationCheckCache.TryGetValue(key, out bool result))
+            if (!_isOpenSpaceInitial[location] || !IsOpenSpace(location))
             {
-                if (IsOpenSpace(location))
-                {
-                    foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(location))
-                    {
-                        if (GetEntity(locationNeighbor.point.index, out Entity checkForTentacleEntity))
-                        {
-                            if (checkForTentacleEntity.Type == EntityType.TENTACLE && GetOpposingDirection(checkForTentacleEntity.OrganDirection) == locationNeighbor.direction && checkForTentacleEntity.IsMine != isMine)
-                            {
-                                result = false;
-                                _locationCheckCache[key] = result;
-                                return result;
-                            }
-                        }
-                    }
-                    result = true;
-                    _locationCheckCache[key] = result;
-                    return result;
-                }
-                result = false;
-                _locationCheckCache[key] = result;
+                return false;
             }
+
+            string key = $"{(isMine ? "openspace_1" : "openspace_2")}{_intToStringCache[location]}";
+
+            // Check cache
+            if (_locationCheckCache.TryGetValue(key, out bool result))
+            {
+                return result;
+            }
+
+            result = !HasOpposingTentacle(location, isMine);
+
+            // Cache and return the result
+            _locationCheckCache[key] = result;
             return result;
+        }
+
+        // Helper method to check for opposing tentacles
+        private bool HasOpposingTentacle(int location, bool isMine)
+        {
+            foreach (LocationNeighbor neighbor in GetLocationNeighbors(location))
+            {
+                if (GetEntity(neighbor.point.index, out Entity entity) &&
+                    entity.Type == EntityType.TENTACLE &&
+                    entity.IsMine != isMine &&
+                    GetOpposingDirection(entity.OrganDirection) == neighbor.direction)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public bool ValidateLocation(Point2d location, OrganDirection nextDirection)
@@ -951,7 +1009,7 @@ namespace GameSolution.Entities
 
         public bool GetEntityWithDirection(Point2d currentLocation, OrganDirection nextDirection, out Entity entity)
         {
-            var location = GetNextLocation(currentLocation, nextDirection);
+            Point2d location = GetNextLocation(currentLocation, nextDirection);
             entity = null;
             return ValidateLocation(location) && GetEntity(location, out entity);
         }
@@ -988,11 +1046,11 @@ namespace GameSolution.Entities
 
         public List<Entity> GetHarvestedEntities(bool isMine)
         {
-            var key = isMine ? "harvested_1" : "harvested_0";
-            if (!_entityCache.TryGetValue(key, out var entities))
+            string key = isMine ? "harvested_1" : "harvested_0";
+            if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
             {
                 entities = new List<Entity>();
-                var harvesters = GetHarvesterEntities(isMine);
+                List<Entity> harvesters = GetHarvesterEntities(isMine);
                 HashSet<int> harvestedLocations = new HashSet<int>();
                 foreach (Entity harvester in harvesters)
                 {
@@ -1010,9 +1068,7 @@ namespace GameSolution.Entities
         public bool GetEntity(int entityIndex, out Entity entity)
         {
             entity = Entities[entityIndex];
-            if (entity == null)
-                return false;
-            return true;
+            return entity != null;
         }
 
         public bool GetEntity(Point2d location, out Entity entity)
@@ -1022,8 +1078,8 @@ namespace GameSolution.Entities
 
         public List<Entity> GetHarvestableEntities()
         {
-            var key = "harvestable";
-            if (!_entityCache.TryGetValue(key, out var entities))
+            string key = "harvestable";
+            if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
             {
                 entities = GetEntitiesList().Where(e => e.IsOpenSpace()).ToList();
                 _entityCache[key] = entities;
@@ -1045,8 +1101,8 @@ namespace GameSolution.Entities
 
         public List<Entity> GetHarvesterEntities(bool isMine)
         {
-            var key = isMine ? "harvest1" : "harvest0";
-            if (!_entityCache.TryGetValue(key, out var entities))
+            string key = isMine ? "harvest1" : "harvest0";
+            if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
             {
                 entities = GetEntities(isMine).Where(e => e.Type == EntityType.HARVESTER).ToList();
                 _entityCache[key] = entities;
@@ -1056,10 +1112,10 @@ namespace GameSolution.Entities
 
         public List<Entity> GetRootEntities(bool isMine)
         {
-            var key = isMine ? "root1" : "root0";
-            if (!_entityCache.TryGetValue(key, out var entities))
+            string key = isMine ? "root1" : "root0";
+            if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
             {
-                entities = GetEntities(isMine).Where(e => e.Type == EntityType.ROOT).ToList();
+                entities = GetEntities(isMine).Where(e => e.Type == EntityType.ROOT).OrderBy(e => e.OrganId).ToList();
                 _entityCache[key] = entities;
             }
             return entities;
@@ -1067,8 +1123,8 @@ namespace GameSolution.Entities
 
         public List<Entity> GetSporerEntities(int organRootId, bool isMine)
         {
-            var key = (isMine ? "sporer1" : "sporer0") + organRootId.ToString();
-            if (!_entityCache.TryGetValue(key, out var entities))
+            string key = (isMine ? "sporer1" : "sporer0") + organRootId.ToString();
+            if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
             {
                 entities = GetEntitiesByRoot(organRootId, isMine).Where(e => e.Type == EntityType.SPORER).ToList();
                 _entityCache[key] = entities;
@@ -1078,8 +1134,8 @@ namespace GameSolution.Entities
 
         public List<Entity> GetTentacleEntities(bool isMine)
         {
-            var key = isMine ? "tentacles1" : "tentacles0";
-            if (!_entityCache.TryGetValue(key, out var entities))
+            string key = isMine ? "tentacles1" : "tentacles0";
+            if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
             {
                 entities = GetTentacleEntities().Where(e => e.IsMine == isMine).ToList();
                 _entityCache[key] = entities;
@@ -1089,8 +1145,8 @@ namespace GameSolution.Entities
 
         public List<Entity> GetTentacleEntities()
         {
-            var key = "tentacles";
-            if (!_entityCache.TryGetValue(key, out var entities))
+            string key = "tentacles";
+            if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
             {
                 entities = GetEntitiesList().Where(e => e.Type == EntityType.TENTACLE).ToList();
                 _entityCache[key] = entities;
@@ -1100,7 +1156,7 @@ namespace GameSolution.Entities
 
         public List<Entity> GetEntitiesList()
         {
-            var key = "all";
+            string key = "all";
             if (!_entityCache.TryGetValue(key, out List<Entity> entities))
             {
                 entities = Entities.Where(e => e != null).ToList();
@@ -1113,7 +1169,7 @@ namespace GameSolution.Entities
         private Dictionary<string, List<Entity>> _entityCache = new Dictionary<string, List<Entity>>();
         public List<Entity> GetEntities(bool isMine)
         {
-            var key = isMine ? "e1" : "e0";
+            string key = isMine ? "e1" : "e0";
             if (!_entityCache.TryGetValue(key, out List<Entity> entities))
             {
                 entities = GetEntitiesList().Where(e => e.IsMine.HasValue && e.IsMine == isMine).ToList();
@@ -1124,7 +1180,7 @@ namespace GameSolution.Entities
 
         public List<Entity> GetEntitiesByRoot(int organRootId, bool isMine)
         {
-            var key = $"{organRootId}_{isMine}";
+            string key = $"{organRootId}_{isMine}";
             if (!_entityCache.TryGetValue(key, out List<Entity> entities))
             {
                 entities = GetEntities(isMine).Where(e => e.OrganRootId == organRootId).ToList();
@@ -1161,7 +1217,6 @@ namespace GameSolution.Entities
 
         public void SetEntities(IList<Entity> entities, bool isFirstTurn = false)
         {
-            UpdateBoard();
             Array.Clear(Entities);
             foreach (Entity entity in entities)
             {
@@ -1171,6 +1226,8 @@ namespace GameSolution.Entities
                     GlobalOrganId = entity.OrganId + 1;
                 }
             }
+
+            UpdateBoard();
 
             if (isFirstTurn)
             {
@@ -1190,7 +1247,6 @@ namespace GameSolution.Entities
 
         public void Print()
         {
-
             for (int y = 0; y < Height; y++)
             {
                 StringBuilder stringBuilder = new StringBuilder();
@@ -1198,7 +1254,7 @@ namespace GameSolution.Entities
                 {
                     if (!GetEntity(GetNodeIndex(x, y), out Entity entity))
                     {
-                        stringBuilder.Append(" ");
+                        stringBuilder.Append(' ');
                     }
                     else
                     {
@@ -1248,8 +1304,8 @@ namespace GameSolution.Entities
 
         public readonly struct LocationNeighbor
         {
-            public Point2d point { get; }
-            public OrganDirection direction { get; }
+            public readonly Point2d point;
+            public readonly OrganDirection direction;
 
             public LocationNeighbor(int x, int y, int index, OrganDirection direction)
             {
@@ -1263,13 +1319,16 @@ namespace GameSolution.Entities
         private List<LocationNeighbor>[] _locationNeighbors = null;
         public void InitializeBoard()
         {
+            _intToStringCache = new string[Width * Height];
             _locationIndexCache = new int[Width][];
             for (int x = 0; x < Width; x++)
             {
                 _locationIndexCache[x] = new int[Height];
                 for (int y = 0; y < Height; y++)
                 {
-                    _locationIndexCache[x][y] = GetNodeIndexInternal(x, y);
+                    int index = GetNodeIndexInternal(x, y);
+                    _locationIndexCache[x][y] = index;
+                    _intToStringCache[index] = index.ToString();
                 }
             }
 
@@ -1284,7 +1343,7 @@ namespace GameSolution.Entities
                     _locationCache[x][y] = new Point2d[4];
                     for (int z = 0; z < 4; z++)
                     {
-                        var nextLocation = GetNextLocationInternl(x - 1, y - 1, PossibleDirections[z]);
+                        Point2d nextLocation = GetNextLocationInternl(x - 1, y - 1, PossibleDirections[z]);
                         if (nextLocation.x > -1 && nextLocation.y > -1 && nextLocation.x < Width && nextLocation.y < Height)
                         {
                             _locationCache[x][y][z] = nextLocation;
@@ -1300,23 +1359,29 @@ namespace GameSolution.Entities
 
         private void CalculatePathsAndNeighbors()
         {
+            _isOpenSpaceInitial = new bool[Width * Height];
+            Array.Fill(_isOpenSpaceInitial, true);
             _locationNeighbors = new List<LocationNeighbor>[Width * Height];
             for (int x = 0; x < Width; x++)
             {
                 for (int y = 0; y < Height; y++)
                 {
-                    var index = GetNodeIndex(x, y);
-                    var node = new Node(index);
+                    int index = GetNodeIndex(x, y);
+                    Node node = new Node(index);
                     Graph.AddNode(node);
                     _locationNeighbors[index] = new List<LocationNeighbor>();
                     for (int z = 0; z < 4; z++)
                     {
-                        var location = GetNextLocation(new Point2d(x, y, GetNodeIndex(x, y)), PossibleDirections[z]);
-                        if (ValidateLocation(location) && (IsOpenSpace(location.index) || (GetEntity(location.index, out Entity entity) && entity.Type != EntityType.WALL)))//The start of the map always includes 2 root entities, but we only want to handle walls
+                        Point2d location = GetNextLocation(new Point2d(x, y, GetNodeIndex(x, y)), PossibleDirections[z]);
+                        if (ValidateLocation(location))
                         {
-                            var nextIndex = GetNodeIndex(location);
-                            node.AddLink(new Link(node, new Node(nextIndex), 1));
-                            _locationNeighbors[index].Add(new LocationNeighbor(location.x, location.y, nextIndex, PossibleDirections[z]));
+                            if (IsOpenSpace(location.index) || (GetEntity(location.index, out Entity entity) && entity.Type != EntityType.WALL))//The start of the map always includes 2 root entities, but we only want to handle walls
+                            {
+                                int nextIndex = GetNodeIndex(location);
+                                node.AddLink(new Link(node, new Node(nextIndex), 1));
+                                _locationNeighbors[index].Add(new LocationNeighbor(location.x, location.y, nextIndex, PossibleDirections[z]));
+                            }
+                            else _isOpenSpaceInitial[location.index] = false;
                         }
                     }
                 }

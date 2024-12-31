@@ -10,10 +10,10 @@ namespace UnitTest
 
     public class BoardTests
     {
-        private Board board;
+        private readonly Board board;
         public BoardTests(ITestOutputHelper output)
         {
-            var converter = new Converter(output);
+            Converter converter = new Converter(output);
             Console.SetError(converter);
 
             board = new Board(22, 11);
@@ -49,7 +49,7 @@ namespace UnitTest
                 }
             }
 
-            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
+            List<Move> moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
 
             Assert.Equal(64, moves.Distinct().Count());
         }
@@ -69,7 +69,7 @@ namespace UnitTest
                 }
             }
 
-            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
+            List<Move> moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
 
             Assert.Equal(2, moves.Distinct().Count());
         }
@@ -89,7 +89,7 @@ namespace UnitTest
                 }
             }
 
-            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
+            List<Move> moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 6, 0, 0, 0 }).ToList();
 
             Assert.Equal(32, moves.Distinct().Count());
         }
@@ -98,7 +98,7 @@ namespace UnitTest
         [Fact]
         public void Test_PrunedCartesianProduct_ProteinLimited()
         {
-            var moveActions = new MoveAction[3][];
+            MoveAction[][] moveActions = new MoveAction[3][];
             for (int i = 0; i < 3; i++)
             {
                 moveActions[i] = new MoveAction[4];
@@ -112,7 +112,7 @@ namespace UnitTest
                 }
             }
 
-            var moves = board.PrunedCartesianProduct(moveActions, false, new int[4] { 2, 0, 0, 0 }).ToList();
+            List<Move> moves = board.PrunedCartesianProduct(moveActions, false, new int[4] { 2, 0, 0, 0 }).ToList();
 
             Assert.Equal(37, moves.Count);
         }
@@ -120,7 +120,7 @@ namespace UnitTest
         [Fact]
         public void Test_PrunedCartesianProduct_ProteinExtraLimited()
         {
-            var moveActions = new MoveAction[3][];
+            MoveAction[][] moveActions = new MoveAction[3][];
             for (int i = 0; i < 3; i++)
             {
                 moveActions[i] = new MoveAction[4];
@@ -134,7 +134,7 @@ namespace UnitTest
                 }
             }
 
-            var moves = board.PrunedCartesianProduct(moveActions, false, new int[4] { 1, 0, 0, 0 }).ToList();
+            List<Move> moves = board.PrunedCartesianProduct(moveActions, false, new int[4] { 1, 0, 0, 0 }).ToList();
 
             Assert.Equal(10, moves.Count);
         }
@@ -142,7 +142,7 @@ namespace UnitTest
         [Fact]
         public void Test_PrunedCartesianProduct_LocationLimited()
         {
-            var moveActions = new MoveAction[3][];
+            MoveAction[][] moveActions = new MoveAction[3][];
             for (int i = 0; i < 3; i++)
             {
                 moveActions[i] = new MoveAction[4];
@@ -156,7 +156,7 @@ namespace UnitTest
                 }
             }
 
-            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 4, 0, 0, 0 }).ToList();
+            List<Move> moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 4, 0, 0, 0 }).ToList();
 
             Assert.Equal(34, moves.Count);
         }
@@ -164,7 +164,7 @@ namespace UnitTest
         [Fact]
         public void Test_PrunedCartesianProduct_LocationExtraLimited()
         {
-            var moveActions = new MoveAction[3][];
+            MoveAction[][] moveActions = new MoveAction[3][];
             for (int i = 0; i < 3; i++)
             {
                 moveActions[i] = new MoveAction[4];
@@ -178,7 +178,7 @@ namespace UnitTest
                 }
             }
 
-            var moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 4, 0, 0, 0 }).ToList();
+            List<Move> moves = board.PrunedCartesianProduct(moveActions, true, new int[4] { 4, 0, 0, 0 }).ToList();
 
             Assert.Equal(10, moves.Count);
         }
@@ -215,7 +215,7 @@ Proteins: 1,2,4,1
                 MoveAction.CreateGrow(8, new Point2d(16, 10, board.GetNodeIndex(16, 10)), EntityType.BASIC, 1),
                 MoveAction.CreateWait()
             };
-            var finalMoves = board.PrunedCartesianProduct(moves, false, new int[] { 1, 2, 4, 1 });
+            IEnumerable<Move> finalMoves = board.PrunedCartesianProduct(moves, false, new int[] { 1, 2, 4, 1 });
 
             Assert.Equal(7, finalMoves.Count());
         }
@@ -233,7 +233,7 @@ Proteins: 1,2,4,1
 
             Assert.True(board.IsOpenSpace(board.GetNodeIndex(0, 1), true));
 
-            Assert.Single(board.GetGrowMoveActions(1, true, new HashSet<int>()));
+            Assert.Single(board.GetGrowMoveActions(1, true, new HashSet<int>(), new Board.ProteinInfo(new int[] { 1, 1, 1, 1 })));
 
             board.Print();
 
@@ -257,7 +257,7 @@ Proteins: 1,2,4,1
 
             board.Print();
 
-            Assert.Single(board.GetGrowMoveActions(2, true, new HashSet<int>()));
+            Assert.Single(board.GetGrowMoveActions(2, true, new HashSet<int>(), new Board.ProteinInfo(new int[] { 1, 1, 1, 1 })));
 
             board = new Board(2, 2);
             board.SetEntities(new List<Entity>()
@@ -285,9 +285,31 @@ Proteins: 1,2,4,1
                 new Entity(0, 0, board.GetNodeIndex(0, 0), "A", -1, 0, "X", 0, 0)
             });
 
-            var moves = board.GetGrowMoveActions(3, true, new HashSet<int>());
+            List<MoveAction> moves = board.GetGrowMoveActions(3, true, new HashSet<int>(), new Board.ProteinInfo(new int[] { 1, 1, 1, 1 }));
             Assert.Single(moves);
             Assert.Equal(1000, moves[0].Score);
+
+
+            board = new Board(2, 3);
+            board.SetEntities(new List<Entity>() {
+                new Entity(0, 0, board.GetNodeIndex(0, 0), "WALL", -1, 0, "X", 0, 0),
+                new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.D, null, 0, 0, 0, OrganDirection.None),
+                new Entity(new Point2d(0, 2, board.GetNodeIndex(0, 2)), EntityType.BASIC, false, 4, 4, 4, OrganDirection.West),
+
+
+                new Entity(new Point2d(1, 1, board.GetNodeIndex(1, 1)), EntityType.BASIC, true, 3, 3, 3, OrganDirection.West),
+                new Entity(1, 2, board.GetNodeIndex(1, 2), "WALL", -1, 0, "X", 0, 0),
+            }, true);
+
+            board.Print();
+
+            moves = board.GetGrowMoveActions(3, true, new HashSet<int>(), new Board.ProteinInfo(new int[] { 0, 0, 0, 0 }));
+            Assert.Equal(2, moves.Count);
+            Assert.Equal(-1020, moves[1].Score);
+
+            moves = board.GetGrowBasicMoveActions(3, true, new HashSet<int>(), new Board.ProteinInfo(new int[] { 0, 0, 0, 0 }));
+            Assert.Single(moves);
+            Assert.Equal(-1050, moves[0].Score);
         }
     }
 }

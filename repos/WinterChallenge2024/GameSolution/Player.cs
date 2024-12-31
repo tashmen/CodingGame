@@ -13,7 +13,8 @@ class Player
 {
     static void Main(string[] args)
     {
-        bool submit = false;
+        bool submit = true;
+        bool showMove = false;
         MonteCarloTreeSearch search = new MonteCarloTreeSearch(!submit);
         GameState gameState = new GameState();
 
@@ -67,11 +68,14 @@ class Player
             gameState.SetNextTurn(board, myProtein, oppProtein);
             search.SetState(gameState, true, false);
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
-            //if (!submit)
-            //    board.GetMoves(gameState.MyProtein, true, true);
+            if (showMove)
+            {
+                board.GetMoves(gameState.MyProtein, true, true);
+                Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+            }
 
             GC.Collect();
-            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 14, 1);
+            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 30 : 970, 4, 1);
             Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
             if (!submit)
             {
