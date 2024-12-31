@@ -77,11 +77,11 @@ namespace GameSolution.Entities
             switch (this.Type)
             {
                 case MoveType.GROW:
-                    return $"GROW {move.OrganId} {move.Location.x} {move.Location.y} {move.EntityType} {GetGrowDirection(move.OrganDirection)} {move.Score};";
+                    return $"GROW {move.OrganId} {move.Location.x} {move.Location.y} {move.EntityType} {GetGrowDirection(move.OrganDirection)} {move.Score}";
                 case MoveType.SPORE:
-                    return $"SPORE {move.OrganId} {move.Location.x} {move.Location.y} {move.Score};";
+                    return $"SPORE {move.OrganId} {move.Location.x} {move.Location.y} {move.Score}";
                 case MoveType.WAIT:
-                    return $"WAIT {move.Score};";
+                    return $"WAIT {move.Score}";
             }
             return "";
         }
@@ -201,18 +201,21 @@ namespace GameSolution.Entities
             foreach (MoveAction move in Actions)
             {
                 string actionStr = move.ToString();
-                moveStr.Append(actionStr);
+                moveStr.Append(actionStr).Append(';');
             }
-            return moveStr.ToString().Substring(0, moveStr.Length - 1);
+            return moveStr.ToString();
         }
-
-
 
         public void Print()
         {
-            foreach (string action in ToString().Split(';'))
+            Console.Error.WriteLine(ToString());
+        }
+
+        public void Output()
+        {
+            foreach (MoveAction action in Actions)
             {
-                Console.WriteLine(action);
+                Console.WriteLine(action.ToString());
             }
         }
     }

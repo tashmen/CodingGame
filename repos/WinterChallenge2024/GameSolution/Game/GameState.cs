@@ -225,7 +225,7 @@ namespace GameSolution.Game
                     moves = Board.GetMoves(proteins, isMax);
                     SetMoves(moves, isMax);
                     watch.Stop();
-                    if (watch.ElapsedMilliseconds > 5)
+                    if (watch.ElapsedMilliseconds > 20)
                     {
                         Console.Error.WriteLine($"Move generation: {watch.ElapsedMilliseconds}ms");
                         foreach (Move move in moves)

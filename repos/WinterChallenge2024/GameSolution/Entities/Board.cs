@@ -191,7 +191,7 @@ namespace GameSolution.Entities
             List<Move> moves = new List<Move>();
 
             List<Entity> rootEntities = GetRootEntities(isMine);
-            int organismCount = rootEntities.Count();
+            int organismCount = rootEntities.Count;
             bool[] organismHasMoves = new bool[organismCount];
             MoveAction[][] organismToMoveActions = new MoveAction[organismCount][];
 

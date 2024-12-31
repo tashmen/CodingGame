@@ -733,17 +733,23 @@ namespace Algorithms.Trees
         private readonly Random rand;
         private readonly bool printErrors;
         private readonly SearchStrategy strategy;
-        private readonly Dictionary<int, double> _mathLogCache = new Dictionary<int, double>();
+        private readonly double[] _mathLogCache;
+        private static readonly double DefaultExploration = Math.Sqrt(2);
         public enum SearchStrategy
         {
             Random = 0,
             Sequential = 1
         }
-        public MonteCarloTreeSearch(bool showErrors = true, SearchStrategy searchStrategy = SearchStrategy.Random)
+        public MonteCarloTreeSearch(bool showErrors = true, SearchStrategy searchStrategy = SearchStrategy.Random, int mathLogCacheSize = 1000)
         {
             rand = new Random();
             printErrors = showErrors;
             strategy = searchStrategy;
+            _mathLogCache = new double[mathLogCacheSize];
+            for (int i = 0; i < mathLogCacheSize; i++)
+            {
+                _mathLogCache[i] = Math.Log(i);
+            }
         }
         public IGameState GetRootState()
         {
@@ -761,7 +767,7 @@ namespace Algorithms.Trees
         {
             if (exploration == null)
             {
-                exploration = Math.Sqrt(2);
+                exploration = DefaultExploration;
             }
             int count = 0;
             do
@@ -791,7 +797,8 @@ namespace Algorithms.Trees
                         winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
                         if (!winner.HasValue)
                         {
-                            Console.Error.WriteLine("Did not find a winner in the simulation.");
+                            if (printErrors)
+                                Console.Error.WriteLine("Did not find a winner in the simulation.");
                             break;//We simulated a game, but it didn't end so we are out of time...
                         }
                         BackPropagate(childNode, winner);
@@ -870,26 +877,22 @@ namespace Algorithms.Trees
         }
         private GameTreeNode SelectNodeWithUnplayedMoves(GameTreeNode node, double exploration)
         {
-            Stack<GameTreeNode> stack = new Stack<GameTreeNode>();
-            stack.Push(node);
+            if (node.moves.Count > 0 && node.parent == null)
+                return node;
+
+            Queue<GameTreeNode> queue = new Queue<GameTreeNode>(100);
+            queue.Enqueue(node);
             GameTreeNode bestNode = null;
             double maxValue = -1;
-            while (stack.Count > 0)
+            while (queue.Count > 0)
             {
-                GameTreeNode tempNode = stack.Pop();
-                // If the node has unplayed moves, return it immediately
+                GameTreeNode tempNode = queue.Dequeue();
                 if (tempNode.moves.Count > 0)
                 {
-                    if (tempNode.parent == null)
-                        return tempNode;
                     double wins = RootNode.isMax ? tempNode.wins : tempNode.loses;
                     double nodeTotal = tempNode.totalPlays;
                     int parentTotal = tempNode.parent.totalPlays;
-                    if (!_mathLogCache.TryGetValue(parentTotal, out double parentLog))
-                    {
-                        parentLog = Math.Log(parentTotal);
-                        _mathLogCache[parentTotal] = parentLog;
-                    }
+                    double parentLog = _mathLogCache[parentTotal];
                     double value = wins / nodeTotal + exploration * Math.Sqrt(parentLog / nodeTotal);
                     if (value > maxValue)
                     {
@@ -900,9 +903,9 @@ namespace Algorithms.Trees
                 else
                 {
                     // Enqueue all children for further processing
-                    foreach (GameTreeNode child in tempNode.children)
+                    for (int i = 0; i < tempNode.children.Count; i++)
                     {
-                        stack.Push(child);
+                        queue.Enqueue(tempNode.children[i]);
                     }
                 }
             }
