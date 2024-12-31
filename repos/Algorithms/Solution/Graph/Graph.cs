@@ -8,24 +8,23 @@ namespace Algorithms.Graph
     {
         public class DistancePath
         {
-            public double Distance { get; set; }
-            public List<ILink> Paths { get; set; }
+            public double Distance;
+            public List<ILink> Paths;
 
-            public DistancePath(double distanc, List<ILink> paths)
+            public DistancePath(double distance, List<ILink> paths)
             {
-                Distance = distanc;
+                Distance = distance;
                 Paths = paths;
             }
         }
 
-        private Dictionary<int, INode> Nodes;
+        private readonly Dictionary<int, INode> Nodes;
         //Will hold shortest paths from a start node id to an end node id
         private Dictionary<int, Dictionary<int, DistancePath>> Paths;
 
         public Graph()
         {
             Nodes = new Dictionary<int, INode>();
-
         }
 
         public void AddNode(INode node)
@@ -61,8 +60,8 @@ namespace Algorithms.Graph
                 node.IsExplored = false;
             }
 
-            var minimumSpanningTree = new HashSet<ILink>();
-            var priorityQueue = new SortedSet<(double Distance, int StepCount, ILink Link)>(Comparer<(double Distance, int StepCount, ILink Link)>.Create((a, b) =>
+            HashSet<ILink> minimumSpanningTree = new HashSet<ILink>();
+            SortedSet<(double Distance, int StepCount, ILink Link)> priorityQueue = new SortedSet<(double Distance, int StepCount, ILink Link)>(Comparer<(double Distance, int StepCount, ILink Link)>.Create((a, b) =>
             {
                 // Compare first by distance, then by step count (in case of tie)
                 int result = a.Distance.CompareTo(b.Distance);
@@ -77,7 +76,7 @@ namespace Algorithms.Graph
             startNode.IsExplored = true;
 
             // Add initial links of the startNode to the priority queue
-            foreach (var link in startNode.GetLinks())
+            foreach (ILink link in startNode.GetLinks())
             {
                 priorityQueue.Add((link.Distance, 1, link));  // Distance, StepCount (1), Link
             }
@@ -85,11 +84,11 @@ namespace Algorithms.Graph
             while (minimumSpanningTree.Count < Nodes.Count && priorityQueue.Count > 0)
             {
                 // Get the link with the minimum distance and fewest steps
-                var (currentDist, stepCount, bestLink) = priorityQueue.Min;
+                (double currentDist, int stepCount, ILink bestLink) = priorityQueue.Min;
                 priorityQueue.Remove(priorityQueue.Min);
 
-                var currentNode = Nodes[bestLink.StartNodeId];
-                var adjacentNode = Nodes[bestLink.EndNodeId];
+                INode currentNode = Nodes[bestLink.StartNodeId];
+                INode adjacentNode = Nodes[bestLink.EndNodeId];
 
                 if (adjacentNode.IsExplored)
                 {
@@ -100,7 +99,7 @@ namespace Algorithms.Graph
                 minimumSpanningTree.Add(bestLink);
 
                 // Update paths
-                if (!Paths[startNode.Id].TryGetValue(currentNode.Id, out var currentPath))
+                if (!Paths[startNode.Id].TryGetValue(currentNode.Id, out DistancePath currentPath))
                 {
                     currentPath = new DistancePath(0.0, new List<ILink>());
                 }
@@ -122,7 +121,7 @@ namespace Algorithms.Graph
                 // Add adjacent links of the newly explored node to the queue
                 foreach (ILink adjacentLink in adjacentNode.GetLinks())
                 {
-                    var nextNode = Nodes[adjacentLink.EndNodeId];
+                    INode nextNode = Nodes[adjacentLink.EndNodeId];
                     if (!nextNode.IsExplored)
                     {
                         // Calculate the new distance and step count for the adjacent link
@@ -206,13 +205,13 @@ namespace Algorithms.Graph
         public double GetShortestPathDistance(int startId, int endId)
         {
             // Try to get the dictionary of endpoints for the startId
-            if (!Paths.TryGetValue(startId, out var endPoints) || endPoints == null)
+            if (!Paths.TryGetValue(startId, out Dictionary<int, DistancePath> endPoints) || endPoints == null)
             {
                 return double.MaxValue;
             }
 
             // Try to get the DistancePath for the endId
-            if (!endPoints.TryGetValue(endId, out var path) || path == null)
+            if (!endPoints.TryGetValue(endId, out DistancePath path) || path == null)
             {
                 return double.MaxValue;
             }

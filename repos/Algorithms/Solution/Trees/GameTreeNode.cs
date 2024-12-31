@@ -27,7 +27,6 @@ namespace Algorithms.Trees
 
         public double GetScore(bool isMax)
         {
-            double totalPlays = TotalPlays();
             if (totalPlays == 0)
                 return 0;
 
@@ -39,11 +38,6 @@ namespace Algorithms.Trees
             {
                 return (loses - wins) / totalPlays;
             }
-        }
-
-        public int TotalPlays()
-        {
-            return totalPlays;
         }
 
         public double? GetWinner()
