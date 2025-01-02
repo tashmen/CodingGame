@@ -2,6 +2,7 @@
 using Algorithms.Utility;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -228,8 +229,11 @@ namespace GameSolution.Entities
 
         //15, 16, 27 actions max
         readonly int[] _maxActionsPerOrganism = new int[5] { 10, 3, 2, 1, 1 };
+        Stopwatch _watch = new Stopwatch();
         public List<Move> GetMoves(int[] proteins, bool isMine, bool debug = false)
         {
+            _watch.Reset();
+            _watch.Start();
             List<Move> moves = new List<Move>();
 
             List<Entity> rootEntities = GetRootEntities(isMine);
@@ -310,7 +314,14 @@ namespace GameSolution.Entities
                 if (debug)
                     Console.Error.WriteLine($"{root.OrganId}: " + string.Join('\n', moveActions));
                 i++;
+
+                if (_watch.ElapsedMilliseconds > 5)
+                {
+                    Console.Error.WriteLine("Move generation took too long");
+                    break;
+                }
             }
+            _watch.Stop();
             for (; i < organismCount; i++)
             {
                 organismToMoveActions[i] = new MoveAction[]
@@ -541,7 +552,7 @@ namespace GameSolution.Entities
                         break;
                     }
 
-                    if (moveActions.Count > 2)
+                    if (moveActions.Count > 4)
                     {
                         break;
                     }
@@ -605,7 +616,7 @@ namespace GameSolution.Entities
                 List<MoveAction> sporerActions = GetSporerMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
                 if (harvestActions.Any(m => m.Score < 0))
                     sporerActions.ForEach(m => m.Score += 100);//Prefer harvest actions over sporers
-                if (tentacleActions.Any(m => m.Score < 0))
+                if (!proteinInfo.HasManyTentacleProteins && tentacleActions.Any(m => m.Score < 0))
                     sporerActions.ForEach(m => m.Score += 100);//Prefer tentacle actions over sporers
                 if (!proteinInfo.HasRootProteins)
                     sporerActions.ForEach(m => m.Score += 100);
@@ -685,6 +696,8 @@ namespace GameSolution.Entities
                     if (IsOpponentOrEmptySpace(locationNeighbor.point.index, isMine))
                     {
                         tentacleMoveActions.Add(tentacleAction);
+                        if (proteinInfo.HasManyTentacleProteins)
+                            tentacleAction.Score -= 50;
                         if (isOppIn3Spaces)
                         {
                             tentacleAction.Score -= 50;
@@ -722,7 +735,7 @@ namespace GameSolution.Entities
 
 
         private Dictionary<string, List<MoveAction>> _moveActionCache = new Dictionary<string, List<MoveAction>>();
-        private const int _maxMoves = 5;
+        private const int _maxMoves = 10;
 
         public List<MoveAction> GetGrowMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken, ProteinInfo proteinInfo)
         {

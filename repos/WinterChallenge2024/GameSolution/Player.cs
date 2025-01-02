@@ -79,8 +79,11 @@ class Player
             Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 25 : 970, 4, 1);
             Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
 
-            search.SetState(gameState, true, false);
-            Console.Error.WriteLine($"after state ms: {watch.ElapsedMilliseconds}");
+            if (gameState.Turn <= 1)
+            {
+                search.SetState(gameState, true, false);
+                Console.Error.WriteLine($"after state ms: {watch.ElapsedMilliseconds}");
+            }
 
             if (!submit)
             {
@@ -90,10 +93,10 @@ class Player
                     Console.Error.WriteLine($"after print ms: {watch.ElapsedMilliseconds}");
                 }
             }
+            move.Print();
+            Console.Error.WriteLine($"after print move ms: {watch.ElapsedMilliseconds}");
             watch.Stop();
             watch.Reset();
-
-            move.Print();
             move.Output();
         }
     }

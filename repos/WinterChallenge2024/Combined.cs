@@ -75,8 +75,11 @@ Console.Error.WriteLine($"after moves ms: {watch.ElapsedMilliseconds}");
 }
 Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 25 : 970, 4, 1);
 Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
+if (gameState.Turn <= 1)
+{
 search.SetState(gameState, true, false);
 Console.Error.WriteLine($"after state ms: {watch.ElapsedMilliseconds}");
+}
 if (!submit)
 {
 if (watch.ElapsedMilliseconds < 48)
@@ -85,9 +88,10 @@ gameState.Print();
 Console.Error.WriteLine($"after print ms: {watch.ElapsedMilliseconds}");
 }
 }
+move.Print();
+Console.Error.WriteLine($"after print move ms: {watch.ElapsedMilliseconds}");
 watch.Stop();
 watch.Reset();
-move.Print();
 move.Output();
 }
 }
@@ -1456,8 +1460,11 @@ HasAtLeastTwoMany = HasManyProteins.Count(value => value) > 1;
 }
 
 readonly int[] _maxActionsPerOrganism = new int[5] { 10, 3, 2, 1, 1 };
+Stopwatch _watch = new Stopwatch();
 public List<Move> GetMoves(int[] proteins, bool isMine, bool debug = false)
 {
+_watch.Reset();
+_watch.Start();
 List<Move> moves = new List<Move>();
 List<Entity> rootEntities = GetRootEntities(isMine);
 int organismCount = rootEntities.Count;
@@ -1522,7 +1529,13 @@ organismToMoveActions[i] = moveActions.ToArray();
 if (debug)
 Console.Error.WriteLine($"{root.OrganId}: " + string.Join('\n', moveActions));
 i++;
+if (_watch.ElapsedMilliseconds > 5)
+{
+Console.Error.WriteLine("Move generation took too long");
+break;
 }
+}
+_watch.Stop();
 for (; i < organismCount; i++)
 {
 organismToMoveActions[i] = new MoveAction[]
@@ -1728,7 +1741,7 @@ else
 {
 break;
 }
-if (moveActions.Count > 2)
+if (moveActions.Count > 4)
 {
 break;
 }
@@ -1779,7 +1792,7 @@ if (proteinInfo.HasSporerProteins)
 List<MoveAction> sporerActions = GetSporerMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
 if (harvestActions.Any(m => m.Score < 0))
 sporerActions.ForEach(m => m.Score += 100);
-if (tentacleActions.Any(m => m.Score < 0))
+if (!proteinInfo.HasManyTentacleProteins && tentacleActions.Any(m => m.Score < 0))
 sporerActions.ForEach(m => m.Score += 100);
 if (!proteinInfo.HasRootProteins)
 sporerActions.ForEach(m => m.Score += 100);
@@ -1847,6 +1860,8 @@ tentacleAction.Score = growAction.Score;
 if (IsOpponentOrEmptySpace(locationNeighbor.point.index, isMine))
 {
 tentacleMoveActions.Add(tentacleAction);
+if (proteinInfo.HasManyTentacleProteins)
+tentacleAction.Score -= 50;
 if (isOppIn3Spaces)
 {
 tentacleAction.Score -= 50;
@@ -1879,7 +1894,7 @@ moveActions.Add(moveAction);
 return moveActions;
 }
 private Dictionary<string, List<MoveAction>> _moveActionCache = new Dictionary<string, List<MoveAction>>();
-private const int _maxMoves = 5;
+private const int _maxMoves = 10;
 public List<MoveAction> GetGrowMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken, ProteinInfo proteinInfo)
 {
 string key = (isMine ? "grow1_" : "grow0_") + organRootId.ToString();
