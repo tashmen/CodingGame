@@ -80,6 +80,7 @@ namespace GameSolution.Entities
             _locationNeighbors = board._locationNeighbors;
             _intToStringCache = board._intToStringCache;
             _isOpenSpaceInitial = board._isOpenSpaceInitial;
+            _initialOpenSpacesCount = board._initialOpenSpacesCount;
 
             return this;
         }
@@ -693,7 +694,7 @@ namespace GameSolution.Entities
                     MoveAction tentacleAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, locationNeighbor.direction);
                     tentacleAction.Score = growAction.Score;
 
-                    if (IsOpponentOrEmptySpace(locationNeighbor.point.index, isMine))
+                    if (IsOpponentOrOpenSpace(locationNeighbor.point.index, isMine))
                     {
                         tentacleMoveActions.Add(tentacleAction);
                         if (proteinInfo.HasManyTentacleProteins)
@@ -760,40 +761,44 @@ namespace GameSolution.Entities
                 {
                     foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(entity.Location))
                     {
-                        if (locationsChecked.Add(locationNeighbor.point.index) && IsOpenSpace(locationNeighbor.point.index, isMine))
+                        if (locationsChecked.Add(locationNeighbor.point.index))
                         {
-                            MoveAction moveAction = MoveAction.CreateGrow(entity.OrganId, locationNeighbor.point, EntityType.NONE, entity.OrganRootId);
-                            moveAction.Score = 0;
-                            if (hasHarvestable)
+                            if (IsOpenSpace(locationNeighbor.point.index, isMine))
                             {
-                                moveAction.Score += toHarvestEntities.Min(r => Graph.GetShortestPathDistance(r.Location.index, moveAction.Location.index));
-                            }
-                            else if (hasOppRoot)
-                            {
-                                moveAction.Score += oppRootEntities.Min(r => Graph.GetShortestPathDistance(r.Location.index, moveAction.Location.index));
-                            }
-
-                            bool? isHarvesting = IsHarvesting(locationNeighbor.point.index, isMine);
-                            if (isHarvesting.HasValue)
-                            {
-                                if (GetEntity(locationNeighbor.point.index, out Entity harvestEntity) && !proteinInfo.HasHarvestProteins && (harvestEntity.Type == EntityType.C || harvestEntity.Type == EntityType.D))
+                                MoveAction moveAction = MoveAction.CreateGrow(entity.OrganId, locationNeighbor.point, EntityType.NONE, entity.OrganRootId);
+                                moveAction.Score = 0;
+                                if (hasHarvestable)
                                 {
-                                    moveAction.Score -= 1000;//if we have no C/D then eat it.  We need C/D to build harvesters
+                                    moveAction.Score += toHarvestEntities.Min(r => Graph.GetShortestPathDistance(r.Location.index, moveAction.Location.index));
                                 }
-                                bool isOppIn3Spaces = IsOpponentWithin3Spaces(moveAction.Location, isMine);
-                                if (isHarvesting.Value && !isOppIn3Spaces)
+                                else if (hasOppRoot)
                                 {
-                                    moveAction.Score += 1000;
+                                    moveAction.Score += oppRootEntities.Min(r => Graph.GetShortestPathDistance(r.Location.index, moveAction.Location.index));
                                 }
 
-                                if (isOppIn3Spaces)
+                                bool? isHarvesting = IsHarvesting(locationNeighbor.point.index, isMine);
+                                if (isHarvesting.HasValue)
                                 {
-                                    moveAction.Score -= 20;//Give higher priority to spaces where the opponent is near
-                                }
-                            }
+                                    if (GetEntity(locationNeighbor.point.index, out Entity harvestEntity) && !proteinInfo.HasHarvestProteins && (harvestEntity.Type == EntityType.C || harvestEntity.Type == EntityType.D))
+                                    {
+                                        moveAction.Score -= 1000;//if we have no C/D then eat it.  We need C/D to build harvesters
+                                    }
+                                    bool isOppIn3Spaces = IsOpponentWithin3Spaces(moveAction.Location, isMine);
+                                    if (isHarvesting.Value && !isOppIn3Spaces)
+                                    {
+                                        moveAction.Score += 1000;
+                                    }
 
-                            moveActions.Add(moveAction);
+                                    if (isOppIn3Spaces)
+                                    {
+                                        moveAction.Score -= 20;//Give higher priority to spaces where the opponent is near
+                                    }
+                                }
+
+                                moveActions.Add(moveAction);
+                            }
                         }
+
                     }
                 }
 
@@ -987,7 +992,7 @@ namespace GameSolution.Entities
             return result;
         }
 
-        public bool IsOpponentOrEmptySpace(int index, bool isMine)
+        public bool IsOpponentOrOpenSpace(int index, bool isMine)
         {
             return !GetEntity(index, out Entity entity) || entity.IsOpenSpace() || (entity.IsMine.HasValue && entity.IsMine != isMine);
         }
@@ -1021,35 +1026,31 @@ namespace GameSolution.Entities
                 return false;
             }
 
-            string key = $"{(isMine ? "openspace_1" : "openspace_2")}{_intToStringCache[location]}";
-
-            // Check cache
-            if (_locationCheckCache.TryGetValue(key, out bool result))
-            {
-                return result;
-            }
-
-            result = !HasOpposingTentacle(location, isMine);
-
-            // Cache and return the result
-            _locationCheckCache[key] = result;
-            return result;
+            return !HasOpposingTentacle(location, isMine);
         }
 
         // Helper method to check for opposing tentacles
         private bool HasOpposingTentacle(int location, bool isMine)
         {
-            foreach (LocationNeighbor neighbor in GetLocationNeighbors(location))
+            string key = $"{(isMine ? "opposingtentacle_1" : "opposingtentacle_2")}{_intToStringCache[location]}";
+            if (!_locationCheckCache.TryGetValue(key, out bool result))
             {
-                if (GetEntity(neighbor.point.index, out Entity entity) &&
-                    entity.Type == EntityType.TENTACLE &&
-                    entity.IsMine != isMine &&
-                    GetOpposingDirection(entity.OrganDirection) == neighbor.direction)
+                result = false;
+                foreach (LocationNeighbor neighbor in GetLocationNeighbors(location))
                 {
-                    return true;
+                    if (GetEntity(neighbor.point.index, out Entity entity) &&
+                        entity.Type == EntityType.TENTACLE &&
+                        entity.IsMine != isMine &&
+                        GetOpposingDirection(entity.OrganDirection) == neighbor.direction)
+                    {
+                        result = true;
+                        break;
+                    }
                 }
+                _locationCheckCache[key] = result;
             }
-            return false;
+
+            return result;
         }
 
         public bool ValidateLocation(Point2d location, OrganDirection nextDirection)
@@ -1270,6 +1271,49 @@ namespace GameSolution.Entities
             return _oppEntityCount;
         }
 
+        private int _initialOpenSpacesCount = 0;
+        public int GetInitialOpenSpacesCount()
+        {
+            return _initialOpenSpacesCount;
+        }
+
+        public int GetEntityLifeCount(bool isMine)
+        {
+            HashSet<int> locationsChecked = new HashSet<int>();
+            Queue<int> locationsToCheckForInfiniteGrowth = new Queue<int>();
+
+            foreach (Entity entity in GetEntities(!isMine))
+            {
+                if (locationsChecked.Add(entity.Location.index))
+                {
+                    //Find all locations where there is an open space.  Once it's open we can add it to the list that needs to be checked for infinite growth.
+                    foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(entity.Location.index))
+                    {
+                        if (IsOpenSpace(locationNeighbor.point.index))
+                            locationsToCheckForInfiniteGrowth.Enqueue(entity.Location.index);//Space is open so begin the infinite growth check
+                    }
+                }
+            }
+
+            //Infinite growth check as long as there is some space available.
+            while (locationsToCheckForInfiniteGrowth.Count > 0)
+            {
+                foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(locationsToCheckForInfiniteGrowth.Dequeue()))
+                {
+                    if (locationsChecked.Add(locationNeighbor.point.index))
+                    {
+                        //Here we check if it's an opponent space or open since we can build a tentacle into their space, but not if there is an oppossing tentacle that would block us from expanding.
+                        if (IsOpponentOrOpenSpace(locationNeighbor.point.index, !isMine) && !HasOpposingTentacle(locationNeighbor.point.index, !isMine))
+                        {
+                            locationsToCheckForInfiniteGrowth.Enqueue(locationNeighbor.point.index);
+                        }
+                    }
+                }
+            }
+
+            return GetInitialOpenSpacesCount() - locationsChecked.Count;
+        }
+
         public void SetEntities(IList<Entity> entities, bool isFirstTurn = false)
         {
             Array.Clear(Entities);
@@ -1421,6 +1465,7 @@ namespace GameSolution.Entities
         {
             _isOpenSpaceInitial = new bool[Width * Height];
             Array.Fill(_isOpenSpaceInitial, true);
+            _initialOpenSpacesCount = Width * Height;
             _locationNeighbors = new List<LocationNeighbor>[Width * Height];
             for (int x = 0; x < Width; x++)
             {
@@ -1441,7 +1486,13 @@ namespace GameSolution.Entities
                                 node.AddLink(new Link(node, new Node(nextIndex), 1));
                                 _locationNeighbors[index].Add(new LocationNeighbor(location.x, location.y, nextIndex, PossibleDirections[z]));
                             }
-                            else _isOpenSpaceInitial[location.index] = false;
+                            else
+                            {
+                                if (_isOpenSpaceInitial[location.index])
+                                    _initialOpenSpacesCount--;
+                                _isOpenSpaceInitial[location.index] = false;
+
+                            }
                         }
                     }
                 }
@@ -1463,6 +1514,18 @@ namespace GameSolution.Entities
         public List<LocationNeighbor> GetLocationNeighbors(Point2d location)
         {
             return _locationNeighbors[location.index];
+        }
+
+        public IEnumerable<LocationNeighbor> GetOpenSpaceLocationNeighbor(Point2d location, bool isMine)
+        {
+            for (int i = 0; i < _locationNeighbors[location.index].Count; i++)
+            {
+                LocationNeighbor locationNeighbor = _locationNeighbors[location.index][i];
+                if (IsOpenSpace(locationNeighbor.point.index, isMine))
+                {
+                    yield return locationNeighbor;
+                }
+            }
         }
 
         public int GetNodeIndex(int x, int y)

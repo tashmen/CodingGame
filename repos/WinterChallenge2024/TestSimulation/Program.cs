@@ -18,14 +18,14 @@ namespace TestSimulation
             do
             {
                 //GC.Collect();
-                int simulationTime = game.Turn > 1 ? 45 : 970;
-                int maxTime = game.Turn > 1 ? 60 : 1000;
+                int simulationTime = game.Turn > 1 ? 25 : 970;
+                int maxTime = game.Turn > 1 ? 50 : 1000;
                 //simulationTime = 5000;
                 //maxTime = 6000;
                 watch.Reset();
                 watch.Start();
                 search.SetState(game, true, false);
-                Move move = (Move)search.GetNextMove(watch, simulationTime, 4, 1);
+                Move move = (Move)search.GetNextMove(watch, simulationTime, 8, 1);
                 watch.Stop();
                 Console.Error.WriteLine($"Elapsed: {watch.ElapsedMilliseconds}");
                 if (watch.ElapsedMilliseconds > maxTime)
@@ -50,6 +50,8 @@ namespace TestSimulation
             while (!game.GetWinner().HasValue);
 
             Console.Error.WriteLine(game.GetWinner().Value);
+            Console.ReadLine();
         }
+
     }
 }

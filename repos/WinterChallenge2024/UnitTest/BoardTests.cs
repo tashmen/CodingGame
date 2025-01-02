@@ -311,5 +311,74 @@ Proteins: 1,2,4,1
             Assert.Single(moves);
             Assert.Equal(-1050, moves[0].Score);
         }
+
+        [Fact]
+        public void Test_GetEntityLifeCount()
+        {
+            Board board = new Board(2, 1);
+            board.SetEntities(new List<Entity>(), true);
+            board.SetEntities(new List<Entity>()
+            {
+                new Entity(new Point2d(1, 0, board.GetNodeIndex(1, 0)), EntityType.HARVESTER, true, 3, 3, 3, OrganDirection.West),
+            });
+
+            int myLifeCount = board.GetEntityLifeCount(true);
+            int oppLifeCount = board.GetEntityLifeCount(false);
+            Assert.Equal(2, myLifeCount);
+            Assert.Equal(0, oppLifeCount);
+
+
+            board = new Board(2, 3);
+            board.SetEntities(new List<Entity>() {
+                new Entity(0, 0, board.GetNodeIndex(0, 0), "WALL", -1, 0, "X", 0, 0),
+                new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.D, null, 0, 0, 0, OrganDirection.None),
+                new Entity(new Point2d(0, 2, board.GetNodeIndex(0, 2)), EntityType.BASIC, false, 4, 4, 4, OrganDirection.West),
+
+
+                new Entity(new Point2d(1, 1, board.GetNodeIndex(1, 1)), EntityType.BASIC, true, 3, 3, 3, OrganDirection.West),
+                new Entity(1, 2, board.GetNodeIndex(1, 2), "WALL", -1, 0, "X", 0, 0),
+            }, true);
+
+            board.Print();
+
+            myLifeCount = board.GetEntityLifeCount(true);
+            oppLifeCount = board.GetEntityLifeCount(false);
+            Assert.Equal(0, myLifeCount);
+            Assert.Equal(0, oppLifeCount);
+
+
+            board = new Board(3, 1);
+            board.SetEntities(new List<Entity>() {
+                new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.TENTACLE, true, 1, 1, 1, OrganDirection.East),
+                new Entity(new Point2d(2, 0, board.GetNodeIndex(2, 0)), EntityType.TENTACLE, false, 4, 4, 4, OrganDirection.West),
+            }, true);
+
+            board.Print();
+
+            myLifeCount = board.GetEntityLifeCount(true);
+            oppLifeCount = board.GetEntityLifeCount(false);
+            Assert.Equal(1, myLifeCount);
+            Assert.Equal(1, oppLifeCount);
+
+            board = new Board(3, 3);
+            board.SetEntities(new List<Entity>() {
+                new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
+                new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
+                new Entity(new Point2d(0, 2, board.GetNodeIndex(0, 2)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
+                new Entity(new Point2d(1, 0, board.GetNodeIndex(1, 0)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
+                new Entity(new Point2d(1, 1, board.GetNodeIndex(1, 1)), EntityType.ROOT, false, 4, 4, 4, OrganDirection.West),
+                new Entity(new Point2d(1, 2, board.GetNodeIndex(1, 2)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
+                new Entity(new Point2d(2, 0, board.GetNodeIndex(2, 0)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
+                new Entity(new Point2d(2, 1, board.GetNodeIndex(2, 1)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
+                new Entity(new Point2d(2, 2, board.GetNodeIndex(2, 2)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
+            }, true);
+
+            board.Print();
+
+            myLifeCount = board.GetEntityLifeCount(true);
+            oppLifeCount = board.GetEntityLifeCount(false);
+            Assert.Equal(8, myLifeCount);
+            Assert.Equal(1, oppLifeCount);
+        }
     }
 }

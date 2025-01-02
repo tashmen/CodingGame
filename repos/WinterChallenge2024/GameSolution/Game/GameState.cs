@@ -193,12 +193,20 @@ namespace GameSolution.Game
             int myProteinBoost = myNumUniqueProteins * 5;
             int oppProteinBoost = myNumUniqueProteins * 5;
 
-            double proteinValue = (myHarvestProteinsSum + myProteinBoost - oppProteinBoost - oppHarvestProteinsSum) / (myHarvestProteinsSum + oppHarvestProteinsSum + 1 + myProteinBoost + oppProteinBoost) * 0.2;
+            double proteinValue = (myHarvestProteinsSum + myProteinBoost - oppProteinBoost - oppHarvestProteinsSum) / (myHarvestProteinsSum + oppHarvestProteinsSum + 1 + myProteinBoost + oppProteinBoost);
 
+            int myEntityLife = Board.GetEntityLifeCount(true);
+            int oppEntityLife = Board.GetEntityLifeCount(false);
+            int totalLife = Board.GetInitialOpenSpacesCount();
+            double lifeScore = (myEntityLife - oppEntityLife) / (double)totalLife;
 
             int myProtein = MyProtein.Sum();
             int oppProtein = OppProtein.Sum();
-            value = (((double)myEntities - oppEntities) / (myEntities + oppEntities + 1) * 0.2) + (((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001) + proteinValue;
+            value = ((double)myEntities - oppEntities) / (myEntities + oppEntities + 1) * 0.2;
+            value += ((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001;
+            value += proteinValue * 0.2;
+            value += lifeScore * 0.5;
+
 
             if (value >= 1 || value <= -1)
                 Console.Error.WriteLine("Evaluation too high");
@@ -255,6 +263,7 @@ namespace GameSolution.Game
                         {
                             Console.Error.WriteLine($"{move}");
                         }
+                        Print();
                     }
                 }
 
@@ -264,6 +273,21 @@ namespace GameSolution.Game
         }
 
         public double? GetWinner()
+        {
+            double? winner = GetWinnerInternal();
+
+            /*
+            if (winner != null)
+            {
+                Print();
+                Console.Error.WriteLine(winner);
+            }
+            */
+
+            return winner;
+        }
+
+        private double? GetWinnerInternal()
         {
             int myEntitiesCount = Board.GetMyEntityCount();
             int oppEntitiesCount = Board.GetOppEntityCount();

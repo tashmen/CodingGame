@@ -909,7 +909,7 @@ GameTreeNode bestChild = null;
 double bestScore = double.MinValue;
 for (int i = 0; i < RootNode.children.Count; i++)
 {
-GameTreeNode child = RootNode.GetChild(i);
+GameTreeNode child = RootNode.children[i];
 double score = child.GetScore(RootNode.isMax);
 if (bestScore < score)
 {
@@ -978,7 +978,7 @@ if (node.moves.Count > 0 && node.parent == null)
 return node;
 for (int i = 0; i < node.children.Count; i++)
 {
-_queue.Enqueue(node.GetChild(i));
+_queue.Enqueue(node.children[i]);
 }
 GameTreeNode bestNode = null;
 double maxValue = -1;
@@ -1003,7 +1003,7 @@ else
 {
 for (int i = 0; i < tempNode.children.Count; i++)
 {
-_queue.Enqueue(tempNode.GetChild(i));
+_queue.Enqueue(tempNode.children[i]);
 }
 }
 }
@@ -1325,6 +1325,7 @@ _locationIndexCache = board._locationIndexCache;
 _locationNeighbors = board._locationNeighbors;
 _intToStringCache = board._intToStringCache;
 _isOpenSpaceInitial = board._isOpenSpaceInitial;
+_initialOpenSpacesCount = board._initialOpenSpacesCount;
 return this;
 }
 public bool Equals(Board board)
@@ -1857,7 +1858,7 @@ foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(growAction.Lo
 {
 MoveAction tentacleAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, locationNeighbor.direction);
 tentacleAction.Score = growAction.Score;
-if (IsOpponentOrEmptySpace(locationNeighbor.point.index, isMine))
+if (IsOpponentOrOpenSpace(locationNeighbor.point.index, isMine))
 {
 tentacleMoveActions.Add(tentacleAction);
 if (proteinInfo.HasManyTentacleProteins)
@@ -1914,7 +1915,9 @@ foreach (Entity entity in entities)
 {
 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(entity.Location))
 {
-if (locationsChecked.Add(locationNeighbor.point.index) && IsOpenSpace(locationNeighbor.point.index, isMine))
+if (locationsChecked.Add(locationNeighbor.point.index))
+{
+if (IsOpenSpace(locationNeighbor.point.index, isMine))
 {
 MoveAction moveAction = MoveAction.CreateGrow(entity.OrganId, locationNeighbor.point, EntityType.NONE, entity.OrganRootId);
 moveAction.Score = 0;
@@ -1944,6 +1947,7 @@ moveAction.Score -= 20;
 }
 }
 moveActions.Add(moveAction);
+}
 }
 }
 }
@@ -2113,7 +2117,7 @@ _locationCheckCache[key] = result;
 }
 return result;
 }
-public bool IsOpponentOrEmptySpace(int index, bool isMine)
+public bool IsOpponentOrOpenSpace(int index, bool isMine)
 {
 return !GetEntity(index, out Entity entity) || entity.IsOpenSpace() || (entity.IsMine.HasValue && entity.IsMine != isMine);
 }
@@ -2141,20 +2145,15 @@ if (!_isOpenSpaceInitial[location] || !IsOpenSpace(location))
 {
 return false;
 }
-string key = $"{(isMine ? "openspace_1" : "openspace_2")}{_intToStringCache[location]}";
-
-if (_locationCheckCache.TryGetValue(key, out bool result))
-{
-return result;
-}
-result = !HasOpposingTentacle(location, isMine);
-
-_locationCheckCache[key] = result;
-return result;
+return !HasOpposingTentacle(location, isMine);
 }
 
 private bool HasOpposingTentacle(int location, bool isMine)
 {
+string key = $"{(isMine ? "opposingtentacle_1" : "opposingtentacle_2")}{_intToStringCache[location]}";
+if (!_locationCheckCache.TryGetValue(key, out bool result))
+{
+result = false;
 foreach (LocationNeighbor neighbor in GetLocationNeighbors(location))
 {
 if (GetEntity(neighbor.point.index, out Entity entity) &&
@@ -2162,10 +2161,13 @@ entity.Type == EntityType.TENTACLE &&
 entity.IsMine != isMine &&
 GetOpposingDirection(entity.OrganDirection) == neighbor.direction)
 {
-return true;
+result = true;
+break;
 }
 }
-return false;
+_locationCheckCache[key] = result;
+}
+return result;
 }
 public bool ValidateLocation(Point2d location, OrganDirection nextDirection)
 {
@@ -2359,6 +2361,44 @@ _oppEntityCount = GetEntities(false).Count;
 }
 return _oppEntityCount;
 }
+private int _initialOpenSpacesCount = 0;
+public int GetInitialOpenSpacesCount()
+{
+return _initialOpenSpacesCount;
+}
+public int GetEntityLifeCount(bool isMine)
+{
+HashSet<int> locationsChecked = new HashSet<int>();
+Queue<int> locationsToCheckForInfiniteGrowth = new Queue<int>();
+foreach (Entity entity in GetEntities(!isMine))
+{
+if (locationsChecked.Add(entity.Location.index))
+{
+
+foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(entity.Location.index))
+{
+if (IsOpenSpace(locationNeighbor.point.index))
+locationsToCheckForInfiniteGrowth.Enqueue(entity.Location.index);
+}
+}
+}
+
+while (locationsToCheckForInfiniteGrowth.Count > 0)
+{
+foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(locationsToCheckForInfiniteGrowth.Dequeue()))
+{
+if (locationsChecked.Add(locationNeighbor.point.index))
+{
+
+if (IsOpponentOrOpenSpace(locationNeighbor.point.index, !isMine) && !HasOpposingTentacle(locationNeighbor.point.index, !isMine))
+{
+locationsToCheckForInfiniteGrowth.Enqueue(locationNeighbor.point.index);
+}
+}
+}
+}
+return GetInitialOpenSpacesCount() - locationsChecked.Count;
+}
 public void SetEntities(IList<Entity> entities, bool isFirstTurn = false)
 {
 Array.Clear(Entities);
@@ -2495,6 +2535,7 @@ private void CalculatePathsAndNeighbors()
 {
 _isOpenSpaceInitial = new bool[Width * Height];
 Array.Fill(_isOpenSpaceInitial, true);
+_initialOpenSpacesCount = Width * Height;
 _locationNeighbors = new List<LocationNeighbor>[Width * Height];
 for (int x = 0; x < Width; x++)
 {
@@ -2515,7 +2556,12 @@ int nextIndex = GetNodeIndex(location);
 node.AddLink(new Link(node, new Node(nextIndex), 1));
 _locationNeighbors[index].Add(new LocationNeighbor(location.x, location.y, nextIndex, PossibleDirections[z]));
 }
-else _isOpenSpaceInitial[location.index] = false;
+else
+{
+if (_isOpenSpaceInitial[location.index])
+_initialOpenSpacesCount--;
+_isOpenSpaceInitial[location.index] = false;
+}
 }
 }
 }
@@ -2533,6 +2579,17 @@ return _locationNeighbors[nodeIndex];
 public List<LocationNeighbor> GetLocationNeighbors(Point2d location)
 {
 return _locationNeighbors[location.index];
+}
+public IEnumerable<LocationNeighbor> GetOpenSpaceLocationNeighbor(Point2d location, bool isMine)
+{
+for (int i = 0; i < _locationNeighbors[location.index].Count; i++)
+{
+LocationNeighbor locationNeighbor = _locationNeighbors[location.index][i];
+if (IsOpenSpace(locationNeighbor.point.index, isMine))
+{
+yield return locationNeighbor;
+}
+}
 }
 public int GetNodeIndex(int x, int y)
 {
@@ -3102,10 +3159,17 @@ int myNumUniqueProteins = myHarvestProteins.Where(p => p > 1).Count();
 int oppNumUniqueProteins = oppHarvestProteins.Where(p => p > 1).Count();
 int myProteinBoost = myNumUniqueProteins * 5;
 int oppProteinBoost = myNumUniqueProteins * 5;
-double proteinValue = (myHarvestProteinsSum + myProteinBoost - oppProteinBoost - oppHarvestProteinsSum) / (myHarvestProteinsSum + oppHarvestProteinsSum + 1 + myProteinBoost + oppProteinBoost) * 0.2;
+double proteinValue = (myHarvestProteinsSum + myProteinBoost - oppProteinBoost - oppHarvestProteinsSum) / (myHarvestProteinsSum + oppHarvestProteinsSum + 1 + myProteinBoost + oppProteinBoost);
+int myEntityLife = Board.GetEntityLifeCount(true);
+int oppEntityLife = Board.GetEntityLifeCount(false);
+int totalLife = Board.GetInitialOpenSpacesCount();
+double lifeScore = (myEntityLife - oppEntityLife) / (double)totalLife;
 int myProtein = MyProtein.Sum();
 int oppProtein = OppProtein.Sum();
-value = (((double)myEntities - oppEntities) / (myEntities + oppEntities + 1) * 0.2) + (((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001) + proteinValue;
+value = ((double)myEntities - oppEntities) / (myEntities + oppEntities + 1) * 0.2;
+value += ((double)myProtein - oppProtein) / (myProtein + oppProtein + 1) * 0.0001;
+value += proteinValue * 0.2;
+value += lifeScore * 0.5;
 if (value >= 1 || value <= -1)
 Console.Error.WriteLine("Evaluation too high");
 return value;
@@ -3155,6 +3219,7 @@ foreach (Move move in moves)
 {
 Console.Error.WriteLine($"{move}");
 }
+Print();
 }
 }
 return moves;
@@ -3162,6 +3227,12 @@ return moves;
 else return new List<Move>();
 }
 public double? GetWinner()
+{
+double? winner = GetWinnerInternal();
+
+return winner;
+}
+private double? GetWinnerInternal()
 {
 int myEntitiesCount = Board.GetMyEntityCount();
 int oppEntitiesCount = Board.GetOppEntityCount();
