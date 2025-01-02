@@ -12,7 +12,7 @@ namespace Algorithms.Trees
         private readonly bool printErrors;
         private readonly SearchStrategy strategy;
         private readonly double[] _mathLogCache;
-        private static readonly double DefaultExploration = Math.Sqrt(2);
+        private static readonly double _DefaultExploration = Math.Sqrt(2);
 
         public enum SearchStrategy
         {
@@ -48,12 +48,12 @@ namespace Algorithms.Trees
         {
             if (exploration == null)
             {
-                exploration = DefaultExploration;
+                exploration = _DefaultExploration;
             }
             int count = 0;
             do
             {
-                GameTreeNode selectedNode = SelectNodeWithUnplayedMoves(RootNode, exploration.Value);
+                GameTreeNode selectedNode = SelectNodeWithUnplayedMoves(RootNode, exploration.Value, watch, timeLimit);
                 if (selectedNode == null)
                 {
                     if (printErrors)
@@ -74,12 +74,10 @@ namespace Algorithms.Trees
                 {
                     for (int i = 0; i < numRollouts; i++)
                     {
-                        IGameState clonedState = childNode.state.Clone();
-                        winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
+                        using (IGameState clonedState = childNode.state.Clone())
+                            winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
                         if (!winner.HasValue)
                         {
-                            if (printErrors)
-                                Console.Error.WriteLine("Did not find a winner in the simulation.");
                             break;//We simulated a game, but it didn't end so we are out of time...
                         }
                         BackPropagate(childNode, winner);
@@ -96,7 +94,7 @@ namespace Algorithms.Trees
             double bestScore = double.MinValue;
             for (int i = 0; i < RootNode.children.Count; i++)
             {
-                GameTreeNode child = RootNode.children[i];
+                GameTreeNode child = RootNode.GetChild(i);
                 double score = child.GetScore(RootNode.isMax);
                 if (bestScore < score)
                 {
@@ -170,39 +168,38 @@ namespace Algorithms.Trees
         }
 
 
-        private GameTreeNode SelectNodeWithUnplayedMoves(GameTreeNode node, double exploration)
+        Queue<GameTreeNode> _queue = new Queue<GameTreeNode>(100);
+        private GameTreeNode SelectNodeWithUnplayedMoves(GameTreeNode node, double exploration, Stopwatch watch, int timeLimit)
         {
             // If the node has unplayed moves, return it immediately
             if (node.moves.Count > 0 && node.parent == null)
                 return node;
 
-            Queue<GameTreeNode> queue = new Queue<GameTreeNode>(100);
             // Enqueue all children for further processing
             for (int i = 0; i < node.children.Count; i++)
             {
-                queue.Enqueue(node.children[i]);
+                _queue.Enqueue(node.GetChild(i));
             }
 
             GameTreeNode bestNode = null;
             double maxValue = -1;
 
-            while (queue.Count > 0)
+            while (_queue.Count > 0)
             {
-                GameTreeNode tempNode = queue.Dequeue();
+                GameTreeNode tempNode = _queue.Dequeue();
 
                 if (tempNode.moves.Count > 0)
                 {
-                    double wins = RootNode.isMax ? tempNode.wins : tempNode.loses;
-                    double nodeTotal = tempNode.totalPlays;
-                    int parentTotal = tempNode.parent.totalPlays;
-
-                    double parentLog = _mathLogCache[parentTotal];
-
-                    double value = wins / nodeTotal + exploration * Math.Sqrt(parentLog / nodeTotal);
+                    double value = CalculateExplorationValue(tempNode, exploration);
                     if (value > maxValue)
                     {
                         maxValue = value;
                         bestNode = tempNode;
+                        if (watch.ElapsedMilliseconds >= timeLimit)
+                        {
+                            _queue.Clear();
+                            break;
+                        }
                     }
                 }
                 else
@@ -210,12 +207,24 @@ namespace Algorithms.Trees
                     // Enqueue all children for further processing
                     for (int i = 0; i < tempNode.children.Count; i++)
                     {
-                        queue.Enqueue(tempNode.children[i]);
+                        _queue.Enqueue(tempNode.GetChild(i));
                     }
                 }
             }
 
             return bestNode;
+        }
+
+        private double CalculateExplorationValue(GameTreeNode node, double exploration)
+        {
+            double wins = RootNode.isMax ? node.wins : node.loses;
+            double nodeTotal = node.totalPlays;
+            int parentTotal = node.parent.totalPlays;
+
+            double parentLog = _mathLogCache[parentTotal];
+
+            double value = wins / nodeTotal + exploration * Math.Sqrt(parentLog / nodeTotal);
+            return value;
         }
 
         private object SelectMoveAtRandom(IGameState state, bool isMax)

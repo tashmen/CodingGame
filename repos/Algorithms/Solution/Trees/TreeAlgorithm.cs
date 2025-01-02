@@ -5,6 +5,11 @@ namespace Algorithms.Trees
 {
     public class TreeAlgorithm
     {
+        public TreeAlgorithm()
+        {
+            _ = new GameTreeNode();
+        }
+
         protected GameTreeNode RootNode;
         public void SetState(IGameState rootState, bool isMax = true, bool findState = true)
         {
@@ -15,15 +20,15 @@ namespace Algorithms.Trees
                 //find the child that matches the new node
                 bool isFound = false;
                 //Expand any moves left in the root node (if any)
-                for(int i = 0; i<RootNode.moves.Count; i++) 
+                for (int i = 0; i < RootNode.moves.Count; i++)
                 {
-                    var move = RootNode.moves[i];
+                    object move = RootNode.moves[i];
                     Expand(RootNode, move);
                 }
                 //Begin scanning the children
-                for(int i = 0; i<RootNode.children.Count; i++)
+                for (int i = 0; i < RootNode.children.Count; i++)
                 {
-                    var child = RootNode.children[i];
+                    GameTreeNode child = RootNode.GetChild(i);
                     if (child.state.Equals(rootState))
                     {
                         RootNode = child;
@@ -31,15 +36,15 @@ namespace Algorithms.Trees
                         break;
                     }
 
-                    
-                    for (int j = 0; j< child.moves.Count; j++)
+
+                    for (int j = 0; j < child.moves.Count; j++)
                     {
-                        var move = child.moves[j];
+                        object move = child.moves[j];
                         Expand(child, move);
                     }
-                    for(int j = 0; j< child.children.Count; j++) 
+                    for (int j = 0; j < child.children.Count; j++)
                     {
-                        var descendent = child.children[j];
+                        GameTreeNode descendent = child.GetChild(j);
                         if (descendent.state.Equals(rootState))
                         {
                             RootNode = descendent;
@@ -51,16 +56,20 @@ namespace Algorithms.Trees
                 if (!isFound)
                 {
                     Console.Error.WriteLine("Could not find the next state in tree!  Starting over...");
-                    RootNode = new GameTreeNode(rootState.Clone(), isMax);
+                    RootNode.Dispose();
+                    RootNode = GameTreeNode.GetGameTreeNode(rootState.Clone(), isMax);
                 }
                 else
                 {
+                    //Potential loss of non returned game tree node
                     RootNode.parent = null;
                 }
             }
             else
             {
-                RootNode = new GameTreeNode(rootState.Clone(), isMax);
+                if (RootNode != null)
+                    RootNode.Dispose();
+                RootNode = GameTreeNode.GetGameTreeNode(rootState.Clone(), isMax);
             }
         }
 
@@ -74,7 +83,7 @@ namespace Algorithms.Trees
         {
             IGameState nextState = node.state.Clone();
             nextState.ApplyMove(move, node.isMax);
-            GameTreeNode childNode = new GameTreeNode(nextState, !node.isMax, node);
+            GameTreeNode childNode = GameTreeNode.GetGameTreeNode(nextState, !node.isMax, node);
             node.children.Add(childNode);
 
             return childNode;

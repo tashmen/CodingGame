@@ -1,5 +1,5 @@
-﻿using Algorithms;
-using Algorithms.GameComponent;
+﻿using Algorithms.GameComponent;
+using Algorithms.Utility;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,11 +9,17 @@ namespace UnitTest.TwentyOneGame
     /// <summary>
     /// In this game players are trying to reach the value 21 the count starts at 0 and each turn a player can pick a number between 1-3 to add to the total.
     /// </summary>
-    public class GameState : IGameState
+    public class GameState : PooledObject<GameState>, IGameState
     {
         public int Total;
         Move LastMove;
         bool? LastMoveBy;
+
+        static GameState()
+        {
+            SetInitialCapacity(10000, false);
+        }
+
 
         public GameState()
         {
@@ -31,6 +37,13 @@ namespace UnitTest.TwentyOneGame
 
         public IGameState Clone()
         {
+            GameState state = Get();
+            state.Total = Total;
+            return state;
+        }
+
+        public IGameState Clone2()
+        {
             GameState state = new GameState();
             state.Total = Total;
             return state;
@@ -44,7 +57,7 @@ namespace UnitTest.TwentyOneGame
 
         public double Evaluate(bool isMax)
         {
-            if(Total % 4 == 1)
+            if (Total % 4 == 1)
             {
                 if (isMax)
                     return -1;
@@ -120,6 +133,13 @@ namespace UnitTest.TwentyOneGame
         public override string ToString()
         {
             return "Total: " + Total;
+        }
+
+        protected override void Reset()
+        {
+            Total = 0;
+            LastMoveBy = null;
+            LastMove = null;
         }
     }
 

@@ -1,4 +1,5 @@
-﻿using Algorithms.Trees;
+﻿using Algorithms.GameComponent;
+using Algorithms.Trees;
 using System;
 using System.Diagnostics;
 using UnitTest.Fixtures;
@@ -10,19 +11,20 @@ namespace UnitTest.Algorithms
 {
     public class MonteCarloTreeSearchTests
     {
-        MonteCarloTreeSearch search = new MonteCarloTreeSearch(true, MonteCarloTreeSearch.SearchStrategy.Sequential);
-        GameState state = new GameState();
+        readonly MonteCarloTreeSearch search = new MonteCarloTreeSearch(true, MonteCarloTreeSearch.SearchStrategy.Sequential, 500000);
+        readonly GameState state = new GameState();
         public MonteCarloTreeSearchTests(ITestOutputHelper output)
         {
-            var converter = new TestOutputFixture(output);
+            search = new MonteCarloTreeSearch(true, MonteCarloTreeSearch.SearchStrategy.Sequential, 500000);
+            TestOutputFixture converter = new TestOutputFixture(output);
             Console.SetError(converter);
         }
-        
+
         [Fact]
         public void Test_Play_21_Game()
         {
             Random rand = new Random();
-            var playRandom = false;
+            bool playRandom = false;
             bool isMax = true;
             do
             {
@@ -30,7 +32,7 @@ namespace UnitTest.Algorithms
                 watch.Start();
                 search.SetState(state, isMax);
 
-                object move = search.GetNextMove(watch, 100,  1, 500);
+                object move = search.GetNextMove(watch, 100, 1, 5000);
                 state.ApplyMove(move, isMax);
                 //isMax = !isMax;
                 watch.Stop();
@@ -46,7 +48,7 @@ namespace UnitTest.Algorithms
 
                 if (state.Total < 21)
                 {
-                    var sticks = state.GetBestMove();
+                    int sticks = state.GetBestMove();
 
                     if (playRandom)
                         sticks = rand.Next(1, 3);
@@ -68,7 +70,7 @@ namespace UnitTest.Algorithms
             Console.Error.WriteLine("Winner: " + state.GetWinner().Value);
 
             Assert.Equal(1, state.GetWinner().Value);
-            
+
         }
 
         [Fact]
@@ -76,14 +78,28 @@ namespace UnitTest.Algorithms
         {
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            double numberOfClones = 1000000.0;
+            int numberOfClones = 1000000;
             for (int i = 0; i < numberOfClones; i++)
             {
-                var clone = state.Clone();
+                using (IGameState obj = state.Clone()) ;
+            }
+            watch.Stop();
+            Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds / (double)numberOfClones}");
+        }
+
+        [Fact]
+        public void RunManyClones2()
+        {
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+            int numberOfClones = 1000000;
+            for (int i = 0; i < numberOfClones; i++)
+            {
+                state.Clone2();
             }
             watch.Stop();
 
-            Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds / numberOfClones}");
+            Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds / (double)numberOfClones}");
         }
 
     }
