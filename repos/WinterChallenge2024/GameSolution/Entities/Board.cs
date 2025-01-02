@@ -1,4 +1,5 @@
 ﻿using Algorithms.Graph;
+using Algorithms.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Text;
 
 namespace GameSolution.Entities
 {
-    public class Board
+    public class Board : PooledObject<Board>
     {
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -17,6 +18,16 @@ namespace GameSolution.Entities
 
         public static OrganDirection[] PossibleDirections = new OrganDirection[] { OrganDirection.North, OrganDirection.South, OrganDirection.East, OrganDirection.West };
 
+        static Board()
+        {
+            SetInitialCapacity(20000);
+        }
+
+        public Board()
+        {
+
+        }
+
         public Board(int width, int height)
         {
             Width = width;
@@ -24,19 +35,43 @@ namespace GameSolution.Entities
             Entities = new Entity[Width * Height];
             Graph = new Graph();
             InitializeBoard();
+        }
+
+        protected override void Reset()
+        {
+            for (int i = 0; i < Entities.Length; i++)
+            {
+                Entities[i]?.Dispose();
+            }
             UpdateBoard();
         }
 
-        public Board(Board board)
+        public Board CopyFrom(Board board)
         {
             Width = board.Width;
             Height = board.Height;
-            Entities = board.Entities.ToArray();
+            if (Entities != null)
+            {
+                Array.Copy(board.Entities, Entities, board.Entities.Length);
+            }
+            else
+            {
+                Entities = board.Entities.ToArray();
+            }
             GlobalOrganId = board.GlobalOrganId;
             Graph = board.Graph;
-            _entityCache = board._entityCache;
-            _moveActionCache = board._moveActionCache;
-            _locationCheckCache = board._locationCheckCache;
+            foreach (string key in board._entityCache.Keys)
+            {
+                _entityCache[key] = board._entityCache[key];
+            }
+            foreach (string key in board._moveActionCache.Keys)
+            {
+                _moveActionCache[key] = board._moveActionCache[key];
+            }
+            foreach (string key in board._locationCheckCache.Keys)
+            {
+                _locationCheckCache[key] = board._locationCheckCache[key];
+            }
             _myEntityCount = board._myEntityCount;
             _oppEntityCount = board._oppEntityCount;
             _locationCache = board._locationCache;
@@ -44,6 +79,8 @@ namespace GameSolution.Entities
             _locationNeighbors = board._locationNeighbors;
             _intToStringCache = board._intToStringCache;
             _isOpenSpaceInitial = board._isOpenSpaceInitial;
+
+            return this;
         }
 
         public bool Equals(Board board)
@@ -90,6 +127,7 @@ namespace GameSolution.Entities
                     IEnumerable<Entity> deathToRoot = GetEntitiesList().Where(e => e.OrganRootId == deadEntity.OrganId);
                     foreach (Entity kill in deathToRoot)
                     {
+                        Entities[kill.Location.index]?.Dispose();
                         Entities[kill.Location.index] = null;
                     }
                 }
@@ -98,6 +136,7 @@ namespace GameSolution.Entities
                     IEnumerable<Entity> deathToChildren = GetEntitiesList().Where(e => e.OrganParentId == deadEntity.OrganId);
                     foreach (Entity kill in deathToChildren)
                     {
+                        Entities[kill.Location.index]?.Dispose();
                         Entities[kill.Location.index] = null;
                     }
                 }
@@ -115,7 +154,8 @@ namespace GameSolution.Entities
                     IEnumerable<MoveAction> collisionActions = oppMove.Actions.Where(a => (a.Type == MoveType.GROW || a.Type == MoveType.SPORE) && a.Location.Equals(action.Location));
                     if (collisionActions.Count() > 0)
                     {
-                        Entities[GetNodeIndex(action.Location)] = new Entity(action.Location, EntityType.WALL, null, 0, 0, 0, OrganDirection.None);
+                        Entities[action.Location.index]?.Dispose();
+                        Entities[action.Location.index] = Entity.GetEntity(action.Location, EntityType.WALL, null, 0, 0, 0, OrganDirection.None);
                     }
                     else
                     {
@@ -134,18 +174,20 @@ namespace GameSolution.Entities
             switch (action.Type)
             {
                 case MoveType.GROW:
-                    Entity growEntity = Entities[GetNodeIndex(action.Location)];
+                    Entity growEntity = GetEntityByLocation(action.Location);
                     if (growEntity == null || growEntity.IsOpenSpace())
                     {
-                        Entities[GetNodeIndex(action.Location)] = new Entity(action.Location, action.EntityType, isMine, GlobalOrganId++, action.OrganId, action.OrganRootId, action.OrganDirection);
+                        Entities[action.Location.index]?.Dispose();
+                        Entities[action.Location.index] = Entity.GetEntity(action.Location, action.EntityType, isMine, GlobalOrganId++, action.OrganId, action.OrganRootId, action.OrganDirection);
                     }
                     break;
                 case MoveType.SPORE:
-                    Entity sporeEntity = Entities[GetNodeIndex(action.Location)];
+                    Entity sporeEntity = GetEntityByLocation(action.Location);
                     if (sporeEntity == null || sporeEntity.IsOpenSpace())
                     {
                         int organId = GlobalOrganId++;
-                        Entities[GetNodeIndex(action.Location)] = new Entity(action.Location, action.EntityType, isMine, organId, organId, organId, action.OrganDirection);
+                        Entities[action.Location.index]?.Dispose();
+                        Entities[action.Location.index] = Entity.GetEntity(action.Location, action.EntityType, isMine, organId, organId, organId, action.OrganDirection);
                     }
                     break;
             }
@@ -908,7 +950,7 @@ namespace GameSolution.Entities
         }
 
 
-        Dictionary<string, bool> _locationCheckCache;
+        Dictionary<string, bool> _locationCheckCache = new Dictionary<string, bool>();
         public bool IsOpponentWithin3Spaces(Point2d location, bool isMine)
         {
             string key = (isMine ? "opponentclose_1" : "opponentclose_2") + location.index.ToString();
@@ -1159,7 +1201,7 @@ namespace GameSolution.Entities
             string key = "all";
             if (!_entityCache.TryGetValue(key, out List<Entity> entities))
             {
-                entities = Entities.Where(e => e != null).ToList();
+                entities = Entities.Where(e => e != null).Select(e => e).ToList();
                 _entityCache[key] = entities;
             }
             return entities;
@@ -1220,6 +1262,7 @@ namespace GameSolution.Entities
             Array.Clear(Entities);
             foreach (Entity entity in entities)
             {
+                Entities[entity.Location.index]?.Dispose();
                 Entities[entity.Location.index] = entity;
                 if (entity.OrganId > 0 && GlobalOrganId <= entity.OrganId)
                 {
@@ -1237,7 +1280,9 @@ namespace GameSolution.Entities
 
         public Board Clone()
         {
-            return new Board(this);
+            Board cleanState = Get();
+            cleanState.CopyFrom(this);
+            return cleanState;
         }
 
         public double? GetWinner()
@@ -1297,9 +1342,9 @@ namespace GameSolution.Entities
         {
             _myEntityCount = -1;
             _oppEntityCount = -1;
-            _moveActionCache = new Dictionary<string, List<MoveAction>>();
-            _entityCache = new Dictionary<string, List<Entity>>();
-            _locationCheckCache = new Dictionary<string, bool>();
+            _moveActionCache.Clear();
+            _entityCache.Clear();
+            _locationCheckCache.Clear();
         }
 
         public readonly struct LocationNeighbor
@@ -1314,9 +1359,11 @@ namespace GameSolution.Entities
             }
         }
 
+
         private Point2d[][][] _locationCache;
         private int[][] _locationIndexCache = null;
         private List<LocationNeighbor>[] _locationNeighbors = null;
+
         public void InitializeBoard()
         {
             _intToStringCache = new string[Width * Height];

@@ -1,4 +1,5 @@
 ﻿using Algorithms.GameComponent;
+using Algorithms.Utility;
 using GameSolution.Entities;
 using System;
 using System.Collections;
@@ -8,45 +9,63 @@ using System.Linq;
 
 namespace GameSolution.Game
 {
-    public class GameState : IGameState
+    public class GameState : PooledObject<GameState>, IGameState
     {
         public static int MaxTurns = 100;
-        public Board Board { get; private set; }
-        public int Turn { get; set; }
 
-        public int[] MyProtein { get; set; }
-        public int[] OppProtein { get; set; }
+        public Board Board;
+        public int Turn;
 
-        public Move? maxMove { get; set; }
-        public Move? minMove { get; set; }
+        public int[] MyProtein;
+        public int[] OppProtein;
+
+        public Move? maxMove;
+        public Move? minMove;
+
+        static GameState()
+        {
+            SetInitialCapacity(20000);
+        }
 
         public GameState()
         {
             Turn = 0;
+            MyProtein = new int[4];
+            OppProtein = new int[4];
             maxMove = null;
             minMove = null;
+            _myMoves = new List<Move>();
+            _oppMoves = new List<Move>();
         }
 
-        public GameState(GameState state)
+        protected override void Reset()
+        {
+            Board.Dispose();
+            _myMoves.Clear();
+            _oppMoves.Clear();
+        }
+
+        private GameState CopyFrom(GameState state)
         {
             Board = state.Board.Clone();
             Turn = state.Turn;
-            MyProtein = state.MyProtein.ToArray();
-            OppProtein = state.OppProtein.ToArray();
+            Array.Copy(state.MyProtein, MyProtein, state.MyProtein.Length);
+            Array.Copy(state.OppProtein, OppProtein, state.OppProtein.Length);
             maxMove = state.maxMove;
             minMove = state.minMove;
-            _myMoves = state._myMoves?.ToList();
-            _oppMoves = state._oppMoves?.ToList();
+            _myMoves.AddRange(state._myMoves);
+            _oppMoves.AddRange(state._oppMoves);
+            return this;
         }
 
         public void SetNextTurn(Board board, int[] myProtein, int[] oppProtein)
         {
             Turn++;
-            this.Board = board;
+            Board = board;
             MyProtein = myProtein;
             OppProtein = oppProtein;
-            _myMoves = null;
-            _oppMoves = null;
+            _myMoves.Clear();
+            _oppMoves.Clear();
             UpdateGameState();
         }
 
@@ -76,7 +95,8 @@ namespace GameSolution.Game
                 ApplyMove(minMove, OppProtein);
 
                 Board.ApplyMove(maxMove, minMove);
-
+                //after applymove but before SetNextTurn there is a possibility that we pull an object from the Entity pool that was previously used in a cache.
+                //To avoid this, set the cache higher so it doesn't run out.
                 Board.Harvest(true, MyProtein);
                 Board.Harvest(false, OppProtein);
 
@@ -119,7 +139,9 @@ namespace GameSolution.Game
 
         public IGameState Clone()
         {
-            return new GameState(this);
+            GameState cleanState = Get();
+            cleanState.CopyFrom(this);
+            return cleanState;
         }
 
         public bool Equals(IGameState state)
@@ -196,6 +218,7 @@ namespace GameSolution.Game
 
         private List<Move> _myMoves;
         private List<Move> _oppMoves;
+
         private List<Move> GetMoves(bool isMax)
         {
             return isMax ? _myMoves : _oppMoves;
@@ -218,7 +241,7 @@ namespace GameSolution.Game
                 int[] proteins = GetProteins(isMax);
 
                 List<Move> moves = GetMoves(isMax);
-                if (moves == null)
+                if (moves.Count == 0)
                 {
                     Stopwatch watch = new Stopwatch();
                     watch.Start();

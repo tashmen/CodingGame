@@ -15,7 +15,7 @@ class Player
     {
         bool submit = false;
         bool showMove = false;
-        MonteCarloTreeSearch search = new MonteCarloTreeSearch(!submit);
+        MonteCarloTreeSearch search = new MonteCarloTreeSearch(!submit, mathLogCacheSize: 5000);
         GameState gameState = new GameState();
 
         string[] inputs;
@@ -26,7 +26,7 @@ class Player
         Stopwatch watch = new Stopwatch();
         watch.Start();
         Board board = new Board(width, height);
-        Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+        Console.Error.WriteLine($"after board ms: {watch.ElapsedMilliseconds}");
 
 
         // game loop
@@ -45,7 +45,7 @@ class Player
                 string organDir = inputs[5];
                 int organParentId = int.Parse(inputs[6]);
                 int organRootId = int.Parse(inputs[7]);
-                Entity entity = new Entity(x, y, board.GetNodeIndex(x, y), type, owner, organId, organDir, organParentId, organRootId);
+                Entity entity = Entity.GetEntity(new Point2d(x, y, board.GetNodeIndex(x, y)), Entity.GetType(type), Entity.GetOwner(owner), organId, organParentId, organRootId, Entity.GetOrganDirection(organDir));
                 entities.Add(entity);
             }
             inputs = Console.ReadLine().Split(' ');
@@ -64,25 +64,30 @@ class Player
             int[] oppProtein = new int[] { oppA, oppB, oppC, oppD };
 
             watch.Start();
-            GC.Collect();
             board.SetEntities(entities, gameState.Turn == 0);
+            Console.Error.WriteLine($"after entities ms: {watch.ElapsedMilliseconds}");
             gameState.SetNextTurn(board, myProtein, oppProtein);
+            Console.Error.WriteLine($"after turn ms: {watch.ElapsedMilliseconds}");
             search.SetState(gameState, true, false);
-            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+            Console.Error.WriteLine($"after state ms: {watch.ElapsedMilliseconds}");
             if (showMove)
             {
                 board.GetMoves(gameState.MyProtein, true, true);
-                Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+                Console.Error.WriteLine($"after moves ms: {watch.ElapsedMilliseconds}");
             }
 
             Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 25 : 970, 4, 1);
-            Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+            Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
+
+            search.SetState(gameState, true, false);
+            Console.Error.WriteLine($"after state ms: {watch.ElapsedMilliseconds}");
+
             if (!submit)
             {
                 if (watch.ElapsedMilliseconds < 48)
                 {
                     gameState.Print();
-                    Console.Error.WriteLine($"ms: {watch.ElapsedMilliseconds}");
+                    Console.Error.WriteLine($"after print ms: {watch.ElapsedMilliseconds}");
                 }
             }
             watch.Stop();

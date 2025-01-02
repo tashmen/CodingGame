@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Algorithms.Utility;
+using System;
 
 namespace GameSolution.Entities
 {
@@ -27,21 +28,31 @@ namespace GameSolution.Entities
         None
     }
 
-    public class Entity
+    public class Entity : PooledObject<Entity>
     {
-        public bool? IsMine { get; }
-        public Point2d Location { get; }
-        public EntityType Type { get; }
-        public int OrganId { get; }
-        public OrganDirection OrganDirection { get; }
-        public int OrganParentId { get; }
-        public int OrganRootId { get; }
+        public bool? IsMine { get; private set; }
+        public Point2d Location { get; private set; }
+        public EntityType Type { get; private set; }
+        public int OrganId { get; private set; }
+        public OrganDirection OrganDirection { get; private set; }
+        public int OrganParentId { get; private set; }
+        public int OrganRootId { get; private set; }
 
         private bool _IsOpenSpace { get; set; }
+
+        static Entity()
+        {
+            SetInitialCapacity(100000);
+        }
+
+        public Entity()
+        {
+
+        }
         public Entity(int x, int y, int index, string type, int owner, int organId, string organDir, int organParentId, int organRootId)
         {
             Location = new Point2d(x, y, index);
-            IsMine = owner == 1 ? true : owner == -1 ? (bool?)null : false;
+            IsMine = GetOwner(owner);
             Type = GetType(type);
             OrganDirection = GetOrganDirection(organDir);
             OrganId = organId;
@@ -49,6 +60,11 @@ namespace GameSolution.Entities
             OrganRootId = organRootId;
             _IsOpenSpace = IsOpenSpaceInternal();
 
+        }
+
+        public static bool? GetOwner(int owner)
+        {
+            return owner == 1 ? true : owner == -1 ? (bool?)null : false;
         }
 
         public Entity(Point2d location, EntityType type, bool? isMine, int organId, int organParentId, int organRootId, OrganDirection organDirection)
@@ -63,6 +79,25 @@ namespace GameSolution.Entities
             _IsOpenSpace = IsOpenSpaceInternal();
         }
 
+        protected override void Reset()
+        {
+
+        }
+
+        public static Entity GetEntity(Point2d location, EntityType type, bool? isMine, int organId, int organParentId, int organRootId, OrganDirection organDirection)
+        {
+            Entity entity = Get();
+            entity.Location = location;
+            entity.IsMine = isMine;
+            entity.Type = type;
+            entity.OrganId = organId;
+            entity.OrganParentId = organParentId;
+            entity.OrganRootId = organRootId;
+            entity.OrganDirection = organDirection;
+            entity._IsOpenSpace = entity.IsOpenSpaceInternal();
+            return entity;
+        }
+
         public Entity(Entity entity)
         {
             this.IsMine = entity.IsMine;
@@ -75,7 +110,7 @@ namespace GameSolution.Entities
             _IsOpenSpace = entity._IsOpenSpace;
         }
 
-        public OrganDirection GetOrganDirection(string organDir)
+        public static OrganDirection GetOrganDirection(string organDir)
         {
             switch (organDir)
             {
@@ -92,7 +127,7 @@ namespace GameSolution.Entities
             }
             throw new ArgumentException($"Invalid direction: {organDir}", nameof(organDir));
         }
-        public EntityType GetType(string type)
+        public static EntityType GetType(string type)
         {
             switch (type)
             {

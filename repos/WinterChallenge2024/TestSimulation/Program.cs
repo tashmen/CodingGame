@@ -17,14 +17,19 @@ namespace TestSimulation
 
             do
             {
-                GC.Collect();
+                //GC.Collect();
                 int simulationTime = game.Turn > 1 ? 45 : 970;
+                int maxTime = game.Turn > 1 ? 60 : 1000;
                 //simulationTime = 5000;
+                //maxTime = 6000;
                 watch.Reset();
                 watch.Start();
                 search.SetState(game, true, false);
                 Move move = (Move)search.GetNextMove(watch, simulationTime, 4, 1);
                 watch.Stop();
+                Console.Error.WriteLine($"Elapsed: {watch.ElapsedMilliseconds}");
+                if (watch.ElapsedMilliseconds > maxTime)
+                    throw new Exception();
 
                 game.ApplyMove(move, true);
 
@@ -35,6 +40,9 @@ namespace TestSimulation
                 oppSearch.SetState(game, false, false);
                 move = (Move)oppSearch.GetNextMove(watch, simulationTime, 4, 1);
                 watch.Stop();
+                Console.Error.WriteLine($"Elapsed: {watch.ElapsedMilliseconds}");
+                if (watch.ElapsedMilliseconds > maxTime)
+                    throw new Exception();
 
                 game.ApplyMove(move, false);
                 game.Print();
