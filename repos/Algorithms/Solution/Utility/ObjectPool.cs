@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace Algorithms.Utility
 {
     public class ObjectPool<T> where T : PooledObject<T>, new()
     {
-        private readonly Queue<T> _pool;
+        private readonly ConcurrentQueue<T> _pool;
         private readonly Func<T> _objectGenerator;
         private readonly bool _captureLeaks;
         private readonly HashSet<T> _loanedReferences;
@@ -16,7 +17,7 @@ namespace Algorithms.Utility
             if (captureLeaks)
                 _loanedReferences = new HashSet<T>(initialSize);
             _objectGenerator = objectGenerator;
-            _pool = new Queue<T>(initialSize);
+            _pool = new ConcurrentQueue<T>();
 
             // Optionally populate the pool with initial objects
             for (int i = 0; i < initialSize; i++)

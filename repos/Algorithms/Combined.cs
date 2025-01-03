@@ -2,9 +2,9 @@
 using Algorithms.GameComponent;
 using Algorithms.Genetic;
 using Algorithms.Trees;
-using Algorithms.Utility;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -498,6 +498,29 @@ if (!endPoints.TryGetValue(endId, out DistancePath path) || path == null)
 return double.MaxValue;
 }
 return path.Distance;
+}
+
+
+
+
+
+
+
+public bool GetShortest(int startId, int endId, out DistancePath distancePath)
+{
+distancePath = null;
+
+if (!Paths.TryGetValue(startId, out Dictionary<int, DistancePath> endPoints) || endPoints == null)
+{
+return false;
+}
+
+if (!endPoints.TryGetValue(endId, out DistancePath path) || path == null)
+{
+return false;
+}
+distancePath = path;
+return true;
 }
 
 
@@ -1498,7 +1521,7 @@ return new Tuple<int, double>(res, maxAngle);
 
 namespace Algorithms.Trees
 {
-public class GameTreeNode : PooledObject<GameTreeNode>
+public class GameTreeNode 
 {
 public IGameState state;
 public IList moves;
@@ -1508,16 +1531,10 @@ public double loses = 0;
 public int totalPlays = 0;
 public GameTreeNode parent;
 public bool isMax;
-static GameTreeNode()
-{
-SetInitialCapacity(100000);
-}
-public GameTreeNode()
-{
-}
+
 public static GameTreeNode GetGameTreeNode(IGameState state, bool isMax, GameTreeNode parent = null)
 {
-GameTreeNode node = Get();
+GameTreeNode node = new GameTreeNode();
 node.state = state;
 node.moves = node.state.GetPossibleMoves(isMax);
 
@@ -1526,18 +1543,10 @@ node.isMax = isMax;
 node.parent = parent;
 return node;
 }
-protected override void Reset()
+
+~GameTreeNode()
 {
 state.Dispose();
-moves.Clear();
-wins = 0;
-loses = 0;
-totalPlays = 0;
-foreach (GameTreeNode childNode in children)
-{
-childNode.Dispose();
-}
-children.Clear();
 }
 public GameTreeNode GetChild(int index)
 {
@@ -1742,7 +1751,7 @@ GameTreeNode bestChild = null;
 double bestScore = double.MinValue;
 for (int i = 0; i < RootNode.children.Count; i++)
 {
-GameTreeNode child = RootNode.GetChild(i);
+GameTreeNode child = RootNode.children[i];
 double score = child.GetScore(RootNode.isMax);
 if (bestScore < score)
 {
@@ -1813,7 +1822,7 @@ return node;
 
 for (int i = 0; i < node.children.Count; i++)
 {
-_queue.Enqueue(node.GetChild(i));
+_queue.Enqueue(node.children[i]);
 }
 GameTreeNode bestNode = null;
 double maxValue = -1;
@@ -1839,7 +1848,7 @@ else
 
 for (int i = 0; i < tempNode.children.Count; i++)
 {
-_queue.Enqueue(tempNode.GetChild(i));
+_queue.Enqueue(tempNode.children[i]);
 }
 }
 }
@@ -1917,7 +1926,7 @@ public class TreeAlgorithm
 {
 public TreeAlgorithm()
 {
-_ = new GameTreeNode();
+
 }
 protected GameTreeNode RootNode;
 public void SetState(IGameState rootState, bool isMax = true, bool findState = true)
@@ -1962,7 +1971,7 @@ break;
 if (!isFound)
 {
 Console.Error.WriteLine("Could not find the next state in tree!  Starting over...");
-RootNode.Dispose();
+
 RootNode = GameTreeNode.GetGameTreeNode(rootState.Clone(), isMax);
 }
 else
@@ -1973,8 +1982,8 @@ RootNode.parent = null;
 }
 else
 {
-if (RootNode != null)
-RootNode.Dispose();
+
+
 RootNode = GameTreeNode.GetGameTreeNode(rootState.Clone(), isMax);
 }
 }
@@ -2035,7 +2044,7 @@ namespace Algorithms.Utility
 {
 public class ObjectPool<T> where T : PooledObject<T>, new()
 {
-private readonly Queue<T> _pool;
+private readonly ConcurrentQueue<T> _pool;
 private readonly Func<T> _objectGenerator;
 private readonly bool _captureLeaks;
 private readonly HashSet<T> _loanedReferences;
@@ -2045,7 +2054,7 @@ _captureLeaks = captureLeaks;
 if (captureLeaks)
 _loanedReferences = new HashSet<T>(initialSize);
 _objectGenerator = objectGenerator;
-_pool = new Queue<T>(initialSize);
+_pool = new ConcurrentQueue<T>();
 
 for (int i = 0; i < initialSize; i++)
 {

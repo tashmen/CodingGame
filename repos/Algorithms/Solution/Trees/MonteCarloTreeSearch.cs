@@ -94,7 +94,7 @@ namespace Algorithms.Trees
             double bestScore = double.MinValue;
             for (int i = 0; i < RootNode.children.Count; i++)
             {
-                GameTreeNode child = RootNode.GetChild(i);
+                GameTreeNode child = RootNode.children[i];
                 double score = child.GetScore(RootNode.isMax);
                 if (bestScore < score)
                 {
@@ -178,7 +178,7 @@ namespace Algorithms.Trees
             // Enqueue all children for further processing
             for (int i = 0; i < node.children.Count; i++)
             {
-                _queue.Enqueue(node.GetChild(i));
+                _queue.Enqueue(node.children[i]);
             }
 
             GameTreeNode bestNode = null;
@@ -207,7 +207,7 @@ namespace Algorithms.Trees
                     // Enqueue all children for further processing
                     for (int i = 0; i < tempNode.children.Count; i++)
                     {
-                        _queue.Enqueue(tempNode.GetChild(i));
+                        _queue.Enqueue(tempNode.children[i]);
                     }
                 }
             }

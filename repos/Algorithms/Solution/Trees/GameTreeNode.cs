@@ -1,12 +1,11 @@
 ﻿using Algorithms.GameComponent;
-using Algorithms.Utility;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Algorithms.Trees
 {
-    public class GameTreeNode : PooledObject<GameTreeNode>
+    public class GameTreeNode //: PooledObject<GameTreeNode>
     {
         public IGameState state;
         public IList moves;
@@ -17,19 +16,21 @@ namespace Algorithms.Trees
         public GameTreeNode parent;
         public bool isMax;
 
+        /*
         static GameTreeNode()
         {
             SetInitialCapacity(100000);
         }
+        
 
         public GameTreeNode()
         {
 
-        }
+        }*/
 
         public static GameTreeNode GetGameTreeNode(IGameState state, bool isMax, GameTreeNode parent = null)
         {
-            GameTreeNode node = Get();
+            GameTreeNode node = new GameTreeNode();//Get();
             node.state = state;
             node.moves = node.state.GetPossibleMoves(isMax);
             //Possible inconsistent state modification if GetPossibleMoves is cached
@@ -46,6 +47,7 @@ namespace Algorithms.Trees
             return node;
         }
 
+        /*
         protected override void Reset()
         {
             state.Dispose();
@@ -58,6 +60,10 @@ namespace Algorithms.Trees
                 childNode.Dispose();
             }
             children.Clear();
+        }*/
+        ~GameTreeNode()
+        {
+            state.Dispose();
         }
 
         public GameTreeNode GetChild(int index)

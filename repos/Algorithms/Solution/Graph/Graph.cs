@@ -219,6 +219,33 @@ namespace Algorithms.Graph
             return path.Distance;
         }
 
+
+        /// <summary>
+        /// Gets the shortest distance path if one exists
+        /// </summary>
+        /// <param name="startId">The starting point</param>
+        /// <param name="endId">The ending point</param>
+        /// <param name="distancePath">The distance and the path</param>
+        /// <returns>the shortest path and it's distance or null if no path exists</returns>
+        public bool GetShortest(int startId, int endId, out DistancePath distancePath)
+        {
+            distancePath = null;
+            // Try to get the dictionary of endpoints for the startId
+            if (!Paths.TryGetValue(startId, out Dictionary<int, DistancePath> endPoints) || endPoints == null)
+            {
+                return false;
+            }
+
+            // Try to get the DistancePath for the endId
+            if (!endPoints.TryGetValue(endId, out DistancePath path) || path == null)
+            {
+                return false;
+            }
+
+            distancePath = path;
+            return true;
+        }
+
         /// <summary>
         /// Retrieves the straight line distance from start to end
         /// </summary>

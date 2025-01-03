@@ -7,7 +7,7 @@ namespace Algorithms.Trees
     {
         public TreeAlgorithm()
         {
-            _ = new GameTreeNode();
+            //_ = new GameTreeNode();
         }
 
         protected GameTreeNode RootNode;
@@ -56,7 +56,7 @@ namespace Algorithms.Trees
                 if (!isFound)
                 {
                     Console.Error.WriteLine("Could not find the next state in tree!  Starting over...");
-                    RootNode.Dispose();
+                    //RootNode.Dispose();
                     RootNode = GameTreeNode.GetGameTreeNode(rootState.Clone(), isMax);
                 }
                 else
@@ -67,8 +67,8 @@ namespace Algorithms.Trees
             }
             else
             {
-                if (RootNode != null)
-                    RootNode.Dispose();
+                //if (RootNode != null)
+                //   RootNode.Dispose();
                 RootNode = GameTreeNode.GetGameTreeNode(rootState.Clone(), isMax);
             }
         }
