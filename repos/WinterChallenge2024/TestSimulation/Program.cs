@@ -18,8 +18,8 @@ namespace TestSimulation
             do
             {
                 //GC.Collect();
-                int simulationTime = game.Turn > 1 ? 25 : 970;
-                int maxTime = game.Turn > 1 ? 50 : 1000;
+                int simulationTime = game.Turn > 1 ? 45 : 970;
+                int maxTime = game.Turn > 1 ? 60 : 1000;
                 //simulationTime = 5000;
                 //maxTime = 6000;
                 watch.Reset();

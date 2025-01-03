@@ -8,19 +8,28 @@ public class LoopPerformance
     [Benchmark]
     public void ForLoop()
     {
+        List<int> array1 = new List<int>();
         for (int i = 0; i < array.Length; i++)
         {
-            int value = array[i];
+            array1.Add(array[i]);
         }
     }
 
     [Benchmark]
     public void ForeachLoop()
     {
+        List<int> array1 = new List<int>();
         foreach (int value in array)
         {
-            int temp = value;
+            array1.Add(value);
         }
+    }
+
+    [Benchmark]
+    public void ForLoopLinq()
+    {
+        List<int> array1;
+        array1 = array.Select(a => a).ToList();
     }
 }
 

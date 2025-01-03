@@ -75,7 +75,17 @@ if (showMove)
 board.GetMoves(gameState.MyProtein, true, true);
 Console.Error.WriteLine($"after moves ms: {watch.ElapsedMilliseconds}");
 }
-Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 25 : 970, 4, 4);
+Move move;
+if (gameState.GetWinner().HasValue)
+{
+MoveAction[] moveActions = new MoveAction[requiredActionsCount];
+move = new Move();
+Array.Fill(moveActions, MoveAction.CreateWait());
+move.SetActions(moveActions);
+}
+else
+{
+move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 4, 1);
 Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
 if (!submit)
 {
@@ -83,6 +93,7 @@ if (watch.ElapsedMilliseconds < 48)
 {
 gameState.Print();
 Console.Error.WriteLine($"after print ms: {watch.ElapsedMilliseconds}");
+}
 }
 }
 move.Print();
@@ -1257,6 +1268,10 @@ foreach (string key in board._locationCheckCache.Keys)
 {
 _locationCheckCache[key] = board._locationCheckCache[key];
 }
+foreach (string key in board._harvestCache.Keys)
+{
+_harvestCache[key] = board._harvestCache[key];
+}
 _myEntityCount = board._myEntityCount;
 _oppEntityCount = board._oppEntityCount;
 _locationCache = board._locationCache;
@@ -1439,7 +1454,7 @@ HashSet<int> locationsTaken = new HashSet<int>();
 foreach (Entity root in limitedRootEntities)
 {
 List<MoveAction> moveActions = new List<MoveAction>();
-bool sporeHasPriority = organismCount < 2 || proteinInfo.HasManyRootProteins;
+bool sporeHasPriority = organismCount < 2 || proteinInfo.HasManyRootProteins || proteinInfo.IsHarvestingRootProteins;
 if (proteinInfo.HasRootProteins && sporeHasPriority)
 {
 AddSporeMoveActions(moveActions, root.OrganRootId, isMine, locationsTaken);
@@ -1721,6 +1736,11 @@ canHarvest = harvestActions.Count > 0;
 if (debug)
 Console.Error.WriteLine($"Harvest: {organRootId}: " + string.Join('\n', harvestActions));
 }
+if (moveActions.Count > 0 && _watch.ElapsedMilliseconds > 5)
+{
+Console.Error.WriteLine($"Took too long to find Harvest Actions: {_watch.ElapsedMilliseconds}");
+return moveActions;
+}
 List<MoveAction> tentacleActions = new List<MoveAction>();
 if (proteinInfo.HasTentacleProteins)
 {
@@ -1728,6 +1748,11 @@ tentacleActions = GetTentacleMoveActions(organRootId, isMine, locationsTaken, pr
 moveActions.AddRange(tentacleActions);
 if (debug)
 Console.Error.WriteLine($"Tentacle: {organRootId}: " + string.Join('\n', tentacleActions));
+}
+if (moveActions.Count > 0 && _watch.ElapsedMilliseconds > 5)
+{
+Console.Error.WriteLine($"Took too long to find Tentacle Actions: {_watch.ElapsedMilliseconds}");
+return moveActions;
 }
 if (proteinInfo.HasBasicProteins)
 {
@@ -1741,6 +1766,11 @@ basicActions.Join(tentacleActions, m1 => m1.Location, m2 => m2.Location, (m1, m2
 moveActions.AddRange(basicActions);
 if (debug)
 Console.Error.WriteLine($"Basic: {organRootId}: " + string.Join('\n', basicActions));
+}
+if (moveActions.Count > 0 && _watch.ElapsedMilliseconds > 5)
+{
+Console.Error.WriteLine($"Took too long to find Basic Actions: {_watch.ElapsedMilliseconds}");
+return moveActions;
 }
 if (proteinInfo.HasSporerProteins)
 {
@@ -1828,7 +1858,7 @@ tentacleAction.Score -= 50;
 if (GetEntity(locationNeighbor.point.index, out Entity entity) && entity.IsMine.HasValue && entity.IsMine != isMine)
 {
 tentacleAction.Score -= 50000;
-if (entity.Type == EntityType.ROOT && GetEntitiesByRoot(entity.OrganId, !isMine).Count > 1)
+if (entity.Type == EntityType.ROOT && GetEntitiesByRoot(entity.OrganId, !isMine).Count > 0)
 {
 tentacleAction.Score -= 50000;
 return new List<MoveAction> { tentacleAction };
@@ -1978,22 +2008,21 @@ if (isOppIn3Spaces)
 {
 harvestAction.Score += 1000;
 }
+if (IsHarvestSpace(locationNeighbor.point.index, out Entity harvest) && !proteinInfo.IsHarvestingProteins[harvest.Type - EntityType.A])
+{
+harvestAction.Score -= 500;
+}
 if (isHarvesting.HasValue && !isHarvesting.Value)
 {
 harvestAction.Score -= 500;
 }
-if (proteinInfo.IsHarvestingHarvesterProteins)
-{
-harvestAction.Score -= 100;
-}
-if (harvestAction.Score < 0)
-{
+
 harvestActions.Add(harvestAction);
-}
 }
 if (harvestActions.Count > 0)
 {
-moveActions.AddRange(harvestActions);
+double best = harvestActions.Min(m => m.Score);
+moveActions.AddRange(harvestActions.Where(m => m.Score == best));
 }
 else
 {
@@ -2005,20 +2034,28 @@ moveActions.Add(moveAction);
 }
 return moveActions;
 }
+private Dictionary<string, bool?> _harvestCache = new Dictionary<string, bool?>();
 public bool? IsHarvesting(int location, bool isMine)
 {
-if (IsHarvestSpace(location))
+string key = (isMine ? "harvest1_" : "harvest0_") + location.ToString();
+if (!_harvestCache.TryGetValue(key, out bool? result))
 {
+result = null;
+if (IsHarvestSpace(location, out Entity harvestEntity))
+{
+result = false;
 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(location))
 {
 if (GetEntity(locationNeighbor.point.index, out Entity entity) && entity.Type == EntityType.HARVESTER && entity.IsMine.HasValue && entity.IsMine == isMine && entity.OrganDirection == GetOpposingDirection(locationNeighbor.direction))
 {
-return true;
+result = true;
+break;
 }
 }
-return false;
 }
-return null;
+_harvestCache[key] = result;
+}
+return result;
 }
 public bool? IsHarvesting(Point2d location, bool isMine)
 {
@@ -2122,9 +2159,9 @@ public bool IsOpponentSpace(Point2d location, OrganDirection direction, bool isM
 {
 return GetEntityWithDirection(location, direction, out Entity entity) && entity.IsMine != isMine;
 }
-public bool IsHarvestSpace(int location)
+public bool IsHarvestSpace(int location, out Entity entity)
 {
-return GetEntity(location, out Entity entity) && entity.IsOpenSpace();
+return GetEntity(location, out entity) && entity.IsOpenSpace();
 }
 public bool IsHarvestSpace(Point2d location, OrganDirection nextDirection)
 {
@@ -2270,7 +2307,7 @@ public List<Entity> GetRootEntities(bool isMine)
 string key = isMine ? "root1" : "root0";
 if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
 {
-entities = GetEntities(isMine).Where(e => e.Type == EntityType.ROOT).OrderBy(e => e.OrganId).ToList();
+entities = GetEntities(isMine).Where(e => e.Type == EntityType.ROOT).OrderByDescending(e => e.OrganId).ToList();
 _entityCache[key] = entities;
 }
 return entities;
@@ -2478,6 +2515,7 @@ _oppEntityCount = -1;
 _moveActionCache.Clear();
 _entityCache.Clear();
 _locationCheckCache.Clear();
+_harvestCache.Clear();
 }
 public readonly struct LocationNeighbor
 {

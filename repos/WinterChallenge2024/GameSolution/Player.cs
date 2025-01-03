@@ -76,15 +76,26 @@ class Player
                 Console.Error.WriteLine($"after moves ms: {watch.ElapsedMilliseconds}");
             }
 
-            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 25 : 970, 4, 4);
-            Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
-
-            if (!submit)
+            Move move;
+            if (gameState.GetWinner().HasValue)
             {
-                if (watch.ElapsedMilliseconds < 48)
+                MoveAction[] moveActions = new MoveAction[requiredActionsCount];
+                move = new Move();
+                Array.Fill(moveActions, MoveAction.CreateWait());
+                move.SetActions(moveActions);
+            }
+            else
+            {
+                move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 4, 1);
+                Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
+
+                if (!submit)
                 {
-                    gameState.Print();
-                    Console.Error.WriteLine($"after print ms: {watch.ElapsedMilliseconds}");
+                    if (watch.ElapsedMilliseconds < 48)
+                    {
+                        gameState.Print();
+                        Console.Error.WriteLine($"after print ms: {watch.ElapsedMilliseconds}");
+                    }
                 }
             }
             move.Print();
