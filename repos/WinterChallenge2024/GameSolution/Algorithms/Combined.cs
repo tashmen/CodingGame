@@ -3,9 +3,9 @@
  * Created On: 1/1/2025 3:01:25 PM
 */
 using Algorithms.GameComponent;
-using Algorithms.Utility;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -72,7 +72,7 @@ namespace Algorithms.Graph
             }
         }
         private readonly Dictionary<int, INode> Nodes;
-        //Will hold shortest paths from a start node id to an end node id
+
         private Dictionary<int, Dictionary<int, DistancePath>> Paths;
         public Graph()
         {
@@ -82,9 +82,9 @@ namespace Algorithms.Graph
         {
             Nodes[node.Id] = node;
         }
-        /// <summary>
-        /// Calculates all of the shortest paths in the node links
-        /// </summary>
+
+
+
         public void CalculateShortestPaths()
         {
             Paths = new Dictionary<int, Dictionary<int, DistancePath>>();
@@ -98,10 +98,10 @@ namespace Algorithms.Graph
             Paths = new Dictionary<int, Dictionary<int, DistancePath>>();
             InternalBuildShortestPathsFromStartNode2(startNode, maxDistance);
         }
-        //With a little help from Chat GPT improved the performance significantly.
+
         private void InternalBuildShortestPathsFromStartNode2(INode startNode, double maxDistance = double.MaxValue)
         {
-            // Initialize exploration state and paths
+
             foreach (INode node in Nodes.Values)
             {
                 node.IsExplored = false;
@@ -109,7 +109,7 @@ namespace Algorithms.Graph
             HashSet<ILink> minimumSpanningTree = new HashSet<ILink>();
             SortedSet<(double Distance, int StepCount, ILink Link)> priorityQueue = new SortedSet<(double Distance, int StepCount, ILink Link)>(Comparer<(double Distance, int StepCount, ILink Link)>.Create((a, b) =>
             {
-                // Compare first by distance, then by step count (in case of tie)
+
                 int result = a.Distance.CompareTo(b.Distance);
                 if (result != 0) return result;
                 result = a.StepCount.CompareTo(b.StepCount);
@@ -119,47 +119,47 @@ namespace Algorithms.Graph
             Paths[startNode.Id] = new Dictionary<int, DistancePath>();
             Paths[startNode.Id][startNode.Id] = new DistancePath(0.0, new List<ILink>());
             startNode.IsExplored = true;
-            // Add initial links of the startNode to the priority queue
+
             foreach (ILink link in startNode.GetLinks())
             {
-                priorityQueue.Add((link.Distance, 1, link));  // Distance, StepCount (1), Link
+                priorityQueue.Add((link.Distance, 1, link));
             }
             while (minimumSpanningTree.Count < Nodes.Count && priorityQueue.Count > 0)
             {
-                // Get the link with the minimum distance and fewest steps
+
                 (double currentDist, int stepCount, ILink bestLink) = priorityQueue.Min;
                 priorityQueue.Remove(priorityQueue.Min);
                 INode currentNode = Nodes[bestLink.StartNodeId];
                 INode adjacentNode = Nodes[bestLink.EndNodeId];
                 if (adjacentNode.IsExplored)
                 {
-                    continue; // Skip already explored nodes
+                    continue;
                 }
                 adjacentNode.IsExplored = true;
                 minimumSpanningTree.Add(bestLink);
-                // Update paths
+
                 if (!Paths[startNode.Id].TryGetValue(currentNode.Id, out DistancePath currentPath))
                 {
                     currentPath = new DistancePath(0.0, new List<ILink>());
                 }
                 else
                 {
-                    currentPath = new DistancePath(currentDist, new List<ILink>(currentPath.Paths)); // Copy the existing path
+                    currentPath = new DistancePath(currentDist, new List<ILink>(currentPath.Paths));
                 }
-                // Add the new link to the current path
+
                 currentPath.Paths.Add(bestLink);
-                // Store the complete path from the start node to the adjacent node
+
                 Paths[startNode.Id][bestLink.EndNodeId] = currentPath;
-                // Exit if the distance exceeds the maximum allowed
+
                 if (currentDist >= maxDistance)
                     return;
-                // Add adjacent links of the newly explored node to the queue
+
                 foreach (ILink adjacentLink in adjacentNode.GetLinks())
                 {
                     INode nextNode = Nodes[adjacentLink.EndNodeId];
                     if (!nextNode.IsExplored)
                     {
-                        // Calculate the new distance and step count for the adjacent link
+
                         double newDist = currentDist + adjacentLink.Distance;
                         int newStepCount = stepCount + 1;
                         priorityQueue.Add((newDist, newStepCount, adjacentLink));
@@ -167,12 +167,12 @@ namespace Algorithms.Graph
                 }
             }
         }
-        /// <summary>
-        /// Retrieves the next node along the path from start to end
-        /// </summary>
-        /// <param name="startId">The starting node id</param>
-        /// <param name="endId">The ending node id</param>
-        /// <returns>The next node in the path</returns>
+
+
+
+
+
+
         public INode GetNextNodeInShortestPath(INode startNode, INode endNode)
         {
             Paths.TryGetValue(startNode.Id, out Dictionary<int, DistancePath> endPoints);
@@ -191,13 +191,13 @@ namespace Algorithms.Graph
             Console.Error.WriteLine("|||Shortest: " + shortest + " from: " + startNode.Id + " to: " + endNode.Id);
             return shortest;
         }
-        /// <summary>
-        /// Retrieves all nodes along the shortest path between two points
-        /// </summary>
-        /// <param name="startNodeId">Start node id</param>
-        /// <param name="endNodeId">End node id</param>
-        /// <returns>The full path from start to end</returns>
-        /// <exception cref="InvalidOperationException"></exception>
+
+
+
+
+
+
+
         public IList<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
         {
             Paths.TryGetValue(startNodeId, out Dictionary<int, DistancePath> endPoints);
@@ -214,42 +214,65 @@ namespace Algorithms.Graph
             }
             return paths.Paths;
         }
-        /// <summary>
-        /// Retrieves the distance following the shortest path from start to end.
-        /// </summary>
-        /// <param name="startId">The starting node</param>
-        /// <param name="endId">The ending node</param>
-        /// <returns>The distance along the shortest path</returns>
+
+
+
+
+
+
         public double GetShortestPathDistance(INode startNode, INode endNode)
         {
             return GetShortestPathDistance(startNode.Id, endNode.Id);
         }
-        /// <summary>
-        /// Retrieves the distance following the shortest path from start to end.
-        /// </summary>
-        /// <param name="startId">The starting node id</param>
-        /// <param name="endId">The ending node id</param>
-        /// <returns>The distance along the shortest path</returns>
+
+
+
+
+
+
         public double GetShortestPathDistance(int startId, int endId)
         {
-            // Try to get the dictionary of endpoints for the startId
+
             if (!Paths.TryGetValue(startId, out Dictionary<int, DistancePath> endPoints) || endPoints == null)
             {
                 return double.MaxValue;
             }
-            // Try to get the DistancePath for the endId
+
             if (!endPoints.TryGetValue(endId, out DistancePath path) || path == null)
             {
                 return double.MaxValue;
             }
             return path.Distance;
         }
-        /// <summary>
-        /// Retrieves the straight line distance from start to end
-        /// </summary>
-        /// <param name="startId">The starting node</param>
-        /// <param name="endId">The ending node</param>
-        /// <returns>The distance from start to end</returns>
+
+
+
+
+
+
+
+        public bool GetShortest(int startId, int endId, out DistancePath distancePath)
+        {
+            distancePath = null;
+
+            if (!Paths.TryGetValue(startId, out Dictionary<int, DistancePath> endPoints) || endPoints == null)
+            {
+                return false;
+            }
+
+            if (!endPoints.TryGetValue(endId, out DistancePath path) || path == null)
+            {
+                return false;
+            }
+            distancePath = path;
+            return true;
+        }
+
+
+
+
+
+
         public double GetDistance(Node startNode, Node endNode)
         {
             return startNode.GetLinks().Where(l => l.EndNodeId.Equals(endNode.Id)).First().Distance;
@@ -594,7 +617,7 @@ namespace Algorithms.Graph
 }
 namespace Algorithms.Trees
 {
-    public class GameTreeNode : PooledObject<GameTreeNode>
+    public class GameTreeNode
     {
         public IGameState state;
         public IList moves;
@@ -604,16 +627,10 @@ namespace Algorithms.Trees
         public int totalPlays = 0;
         public GameTreeNode parent;
         public bool isMax;
-        static GameTreeNode()
-        {
-            SetInitialCapacity(100000);
-        }
-        public GameTreeNode()
-        {
-        }
+
         public static GameTreeNode GetGameTreeNode(IGameState state, bool isMax, GameTreeNode parent = null)
         {
-            GameTreeNode node = Get();
+            GameTreeNode node = new GameTreeNode();
             node.state = state;
             node.moves = node.state.GetPossibleMoves(isMax);
 
@@ -622,18 +639,10 @@ namespace Algorithms.Trees
             node.parent = parent;
             return node;
         }
-        protected override void Reset()
+
+        ~GameTreeNode()
         {
             state.Dispose();
-            moves.Clear();
-            wins = 0;
-            loses = 0;
-            totalPlays = 0;
-            foreach (GameTreeNode childNode in children)
-            {
-                childNode.Dispose();
-            }
-            children.Clear();
         }
         public GameTreeNode GetChild(int index)
         {
@@ -1013,7 +1022,7 @@ namespace Algorithms.Trees
     {
         public TreeAlgorithm()
         {
-            _ = new GameTreeNode();
+
         }
         protected GameTreeNode RootNode;
         public void SetState(IGameState rootState, bool isMax = true, bool findState = true)
@@ -1058,7 +1067,7 @@ namespace Algorithms.Trees
                 if (!isFound)
                 {
                     Console.Error.WriteLine("Could not find the next state in tree!  Starting over...");
-                    RootNode.Dispose();
+
                     RootNode = GameTreeNode.GetGameTreeNode(rootState.Clone(), isMax);
                 }
                 else
@@ -1069,8 +1078,8 @@ namespace Algorithms.Trees
             }
             else
             {
-                if (RootNode != null)
-                    RootNode.Dispose();
+
+
                 RootNode = GameTreeNode.GetGameTreeNode(rootState.Clone(), isMax);
             }
         }
@@ -1131,7 +1140,7 @@ namespace Algorithms.Utility
 {
     public class ObjectPool<T> where T : PooledObject<T>, new()
     {
-        private readonly Queue<T> _pool;
+        private readonly ConcurrentQueue<T> _pool;
         private readonly Func<T> _objectGenerator;
         private readonly bool _captureLeaks;
         private readonly HashSet<T> _loanedReferences;
@@ -1141,8 +1150,8 @@ namespace Algorithms.Utility
             if (captureLeaks)
                 _loanedReferences = new HashSet<T>(initialSize);
             _objectGenerator = objectGenerator;
-            _pool = new Queue<T>(initialSize);
-            // Optionally populate the pool with initial objects
+            _pool = new ConcurrentQueue<T>();
+
             for (int i = 0; i < initialSize; i++)
             {
                 _pool.Enqueue(Create());
@@ -1153,7 +1162,7 @@ namespace Algorithms.Utility
             T obj = _objectGenerator();
             return obj;
         }
-        // Borrow an object from the pool
+
         public T Get()
         {
             if (!_pool.TryDequeue(out T item))
@@ -1163,10 +1172,10 @@ namespace Algorithms.Utility
             }
             if (_captureLeaks)
                 _loanedReferences.Add(item);
-            // No objects available in the pool, create a new one
+
             return item;
         }
-        // Return an object to the pool
+
         public void Return(T item)
         {
             if (_captureLeaks)

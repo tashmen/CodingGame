@@ -30,15 +30,15 @@ namespace GameSolution.Entities
 
     public class Entity : PooledObject<Entity>
     {
-        public bool? IsMine { get; private set; }
-        public Point2d Location { get; private set; }
-        public EntityType Type { get; private set; }
-        public int OrganId { get; private set; }
-        public OrganDirection OrganDirection { get; private set; }
-        public int OrganParentId { get; private set; }
-        public int OrganRootId { get; private set; }
+        public bool? IsMine;
+        public Point2d Location;
+        public EntityType Type;
+        public int OrganId;
+        public OrganDirection OrganDirection;
+        public int OrganParentId;
+        public int OrganRootId;
 
-        private bool _IsOpenSpace { get; set; }
+        private bool _IsOpenSpace;
 
         static Entity()
         {

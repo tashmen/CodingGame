@@ -15,7 +15,7 @@ class Player
     {
         bool submit = false;
         bool showMove = false;
-        MonteCarloTreeSearch search = new MonteCarloTreeSearch(!submit, mathLogCacheSize: 5000);
+        MonteCarloTreeSearch search = new MonteCarloTreeSearch(!submit, MonteCarloTreeSearch.SearchStrategy.Sequential, mathLogCacheSize: 5000);
         GameState gameState = new GameState();
 
         string[] inputs;
@@ -76,14 +76,8 @@ class Player
                 Console.Error.WriteLine($"after moves ms: {watch.ElapsedMilliseconds}");
             }
 
-            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 25 : 970, 4, 1);
+            Move move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 25 : 970, 4, 4);
             Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
-
-            if (gameState.Turn <= 1)
-            {
-                search.SetState(gameState, true, false);
-                Console.Error.WriteLine($"after state ms: {watch.ElapsedMilliseconds}");
-            }
 
             if (!submit)
             {

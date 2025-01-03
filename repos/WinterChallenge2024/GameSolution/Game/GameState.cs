@@ -187,8 +187,8 @@ namespace GameSolution.Game
             int[] oppHarvestProteins = Board.GetHarvestProteins(false);
             double oppHarvestProteinsSum = oppHarvestProteins.Sum();
 
-            int myNumUniqueProteins = myHarvestProteins.Where(p => p > 1).Count();
-            int oppNumUniqueProteins = oppHarvestProteins.Where(p => p > 1).Count();
+            int myNumUniqueProteins = myHarvestProteins.Where(p => p > 0).Count();
+            int oppNumUniqueProteins = oppHarvestProteins.Where(p => p > 0).Count();
 
             int myProteinBoost = myNumUniqueProteins * 5;
             int oppProteinBoost = myNumUniqueProteins * 5;

@@ -11,8 +11,8 @@ namespace TestSimulation
         static void Main(string[] args)
         {
             GameState game = GameBuilder.BuildSilverGame();
-            MonteCarloTreeSearch search = new MonteCarloTreeSearch(mathLogCacheSize: 50000);
-            MonteCarloTreeSearch oppSearch = new MonteCarloTreeSearch(mathLogCacheSize: 50000);
+            MonteCarloTreeSearch search = new MonteCarloTreeSearch(true, MonteCarloTreeSearch.SearchStrategy.Sequential, mathLogCacheSize: 50000);
+            MonteCarloTreeSearch oppSearch = new MonteCarloTreeSearch(true, MonteCarloTreeSearch.SearchStrategy.Sequential, mathLogCacheSize: 50000);
             Stopwatch watch = new Stopwatch();
 
             do

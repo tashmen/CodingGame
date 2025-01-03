@@ -13,14 +13,14 @@ namespace GameSolution.Entities
 
     public class MoveAction
     {
-        public MoveType Type { get; set; }
-        public int OrganId { get; set; }
-        public Point2d Location { get; set; }
-        public EntityType EntityType { get; set; }
-        public int OrganRootId { get; set; }
-        public double Score { get; set; }
+        public MoveType Type;
+        public int OrganId;
+        public Point2d Location;
+        public EntityType EntityType;
+        public int OrganRootId;
+        public double Score;
 
-        public OrganDirection OrganDirection { get; set; }
+        public OrganDirection OrganDirection;
 
         public MoveAction(MoveType moveType)
         {
@@ -58,7 +58,7 @@ namespace GameSolution.Entities
         {
             MoveAction action = new MoveAction(MoveType.WAIT);
             action.EntityType = EntityType.NONE;
-            action.Score = -9999;
+            action.Score = 0;
             return action;
         }
 
@@ -105,7 +105,9 @@ namespace GameSolution.Entities
 
     public class Move
     {
-        public MoveAction[] Actions { get; set; }
+        public MoveAction[] Actions;
+
+        public double Score;
 
         public Move()
         {
@@ -138,6 +140,11 @@ namespace GameSolution.Entities
         public void SetActions(MoveAction[] actions)
         {
             Actions = actions;
+            Score = 0;
+            foreach (MoveAction action in actions)
+            {
+                Score += action.Score;
+            }
         }
 
         public Move Clone()
