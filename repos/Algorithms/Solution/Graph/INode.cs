@@ -4,6 +4,9 @@ namespace Algorithms.Graph
 {
     public interface INode
     {
+        /// <summary>
+        /// Id must be a contiguous array index
+        /// </summary>
         int Id { get; }
         bool IsExplored { get; set; }
         List<ILink> GetLinks();
@@ -71,7 +74,7 @@ namespace Algorithms.Graph
         public double GetDistance(List<ILink> currentPath)
         {
             double distance = 0;
-            foreach(ILink link in currentPath)
+            foreach (ILink link in currentPath)
             {
                 distance += link.Distance;
             }

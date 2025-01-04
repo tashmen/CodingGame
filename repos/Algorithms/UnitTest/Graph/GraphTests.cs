@@ -8,10 +8,10 @@ namespace UnitTest
     {
         Graph _graph;
 
-        Node node1 = new Node(1);
-        Node node2 = new Node(2);
-        Node node3 = new Node(3);
-        Node node4 = new Node(4);
+        Node node1 = new Node(0);
+        Node node2 = new Node(1);
+        Node node3 = new Node(2);
+        Node node4 = new Node(3);
 
         public GraphTests()
         {
