@@ -282,13 +282,20 @@ namespace GameSolution.Entities
                     if (moveActions.Count > 0)
                     {
                         moveActions = moveActions.OrderBy(m => m.Score).Take(_maxActionsPerOrganism[limitedRootEntities.Length - 1, i]).ToList();
-                        if (moveActions[0].Score < 0)
+                        if (moveActions[0].Score < -100000)
+                        {
+                            moveActions = moveActions.Where(m => m.Score < -100000).ToList();
+                            organismHasMoves[i] = true;
+                        }
+                        else if (moveActions[0].Score < 0)
                         {
                             moveActions = moveActions.Where(m => m.Score < 0).ToList();
                             organismHasMoves[i] = true;
                         }
                     }
                 }
+
+
 
                 locationsTaken.UnionWith(moveActions.Select(m => m.Location.index));
 
