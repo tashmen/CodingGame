@@ -1,5 +1,4 @@
-﻿using Algorithms.Utility;
-using System;
+﻿using System;
 
 namespace GameSolution.Entities
 {
@@ -28,7 +27,7 @@ namespace GameSolution.Entities
         None
     }
 
-    public class Entity : PooledObject<Entity>
+    public class Entity //: PooledObject<Entity>
     {
         public bool? IsMine;
         public Point2d Location;
@@ -40,10 +39,12 @@ namespace GameSolution.Entities
 
         private bool _IsOpenSpace;
 
+        /*
         static Entity()
         {
-            SetInitialCapacity(100000);
+            SetInitialCapacity(500000);
         }
+        */
 
         public Entity()
         {
@@ -79,14 +80,16 @@ namespace GameSolution.Entities
             _IsOpenSpace = IsOpenSpaceInternal();
         }
 
+        /*
         protected override void Reset()
         {
 
         }
+        */
 
         public static Entity GetEntity(Point2d location, EntityType type, bool? isMine, int organId, int organParentId, int organRootId, OrganDirection organDirection)
         {
-            Entity entity = Get();
+            Entity entity = new Entity();//Get();
             entity.Location = location;
             entity.IsMine = isMine;
             entity.Type = type;

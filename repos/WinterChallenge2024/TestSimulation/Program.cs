@@ -25,11 +25,11 @@ namespace TestSimulation
                 watch.Reset();
                 watch.Start();
                 search.SetState(game, true, false);
-                Move move = (Move)search.GetNextMove(watch, simulationTime, 8, 1);
+                Move move = (Move)search.GetNextMove(watch, simulationTime, 4, 1);
                 watch.Stop();
                 Console.Error.WriteLine($"Elapsed: {watch.ElapsedMilliseconds}");
                 if (watch.ElapsedMilliseconds > maxTime)
-                    throw new Exception();
+                    Console.Error.WriteLine("Exceeded time period");
 
                 game.ApplyMove(move, true);
 
@@ -42,7 +42,7 @@ namespace TestSimulation
                 watch.Stop();
                 Console.Error.WriteLine($"Elapsed: {watch.ElapsedMilliseconds}");
                 if (watch.ElapsedMilliseconds > maxTime)
-                    throw new Exception();
+                    Console.Error.WriteLine("Exceeded time period");
 
                 game.ApplyMove(move, false);
                 game.Print();

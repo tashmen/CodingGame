@@ -2,7 +2,6 @@
 using GameSolution.Entities;
 using GameSolution.Game;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 
 /**
@@ -33,7 +32,7 @@ class Player
         while (true)
         {
             int entityCount = int.Parse(Console.ReadLine());
-            List<Entity> entities = new List<Entity>();
+            Entity[] entities = new Entity[entityCount];
             for (int i = 0; i < entityCount; i++)
             {
                 inputs = Console.ReadLine().Split(' ');
@@ -46,7 +45,7 @@ class Player
                 int organParentId = int.Parse(inputs[6]);
                 int organRootId = int.Parse(inputs[7]);
                 Entity entity = Entity.GetEntity(new Point2d(x, y, board.GetNodeIndex(x, y)), Entity.GetType(type), Entity.GetOwner(owner), organId, organParentId, organRootId, Entity.GetOrganDirection(organDir));
-                entities.Add(entity);
+                entities[i] = entity;
             }
             inputs = Console.ReadLine().Split(' ');
             int myA = int.Parse(inputs[0]);

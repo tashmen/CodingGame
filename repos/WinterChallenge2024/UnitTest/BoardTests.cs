@@ -22,7 +22,7 @@ namespace UnitTest
         [Fact]
         public void Test_SetEntities()
         {
-            List<Entity> entities = new List<Entity>()
+            Entity[] entities = new Entity[]
           {
              new Entity(0, 0, board.GetNodeIndex(0,0), "WALL", -1, 0, "X", 0, 0),
              new Entity(1, 2, board.GetNodeIndex(1,2), "ROOT", 1, 1, "N", 1, 1),
@@ -224,7 +224,7 @@ Proteins: 1,2,4,1
         public void Test_IsOpenSpace()
         {
             Board board = new Board(2, 2);
-            board.SetEntities(new List<Entity>()
+            board.SetEntities(new Entity[]
             {
                 new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.TENTACLE, true, 1, 1, 1, OrganDirection.South),
                 new Entity(new Point2d(1, 0, board.GetNodeIndex(1, 0)), EntityType.WALL, null, 0, 0, 0, OrganDirection.None),
@@ -233,16 +233,16 @@ Proteins: 1,2,4,1
 
             Assert.True(board.IsOpenSpace(board.GetNodeIndex(0, 1), true));
 
-            Assert.Single(board.GetGrowMoveActions(1, true, new HashSet<int>(), new Board.ProteinInfo(new int[] { 1, 1, 1, 1 }, board, true)));
+            Assert.Single(board.GetGrowMoveActions(1, true, new HashSet<int>(), new ProteinInfo(new int[] { 1, 1, 1, 1 }, board, true)));
 
             board.Print();
 
             board = new Board(3, 3);
-            board.SetEntities(new List<Entity>()
+            board.SetEntities(new Entity[]
             {
                 new Entity(new Point2d(2, 1, board.GetNodeIndex(2, 1)), EntityType.WALL, null, 0, 0, 0, OrganDirection.None)
             }, true);
-            board.SetEntities(new List<Entity>()
+            board.SetEntities(new Entity[]
             {
                 new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.TENTACLE, true, 1, 1, 1, OrganDirection.South),
                 new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.TENTACLE, true, 2, 2, 2, OrganDirection.East),
@@ -257,10 +257,10 @@ Proteins: 1,2,4,1
 
             board.Print();
 
-            Assert.Single(board.GetGrowMoveActions(2, true, new HashSet<int>(), new Board.ProteinInfo(new int[] { 1, 1, 1, 1 }, board, true)));
+            Assert.Single(board.GetGrowMoveActions(2, true, new HashSet<int>(), new ProteinInfo(new int[] { 1, 1, 1, 1 }, board, true)));
 
             board = new Board(2, 2);
-            board.SetEntities(new List<Entity>()
+            board.SetEntities(new Entity[]
             {
 
                 new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.TENTACLE, true, 2, 2, 2, OrganDirection.North),
@@ -278,20 +278,20 @@ Proteins: 1,2,4,1
         public void Test_GetGrowMoves()
         {
             Board board = new Board(2, 1);
-            board.SetEntities(new List<Entity>(), true);
-            board.SetEntities(new List<Entity>()
+            board.SetEntities(new Entity[0], true);
+            board.SetEntities(new Entity[]
             {
                 new Entity(new Point2d(1, 0, board.GetNodeIndex(1, 0)), EntityType.HARVESTER, true, 3, 3, 3, OrganDirection.West),
                 new Entity(0, 0, board.GetNodeIndex(0, 0), "A", -1, 0, "X", 0, 0)
             });
 
-            List<MoveAction> moves = board.GetGrowMoveActions(3, true, new HashSet<int>(), new Board.ProteinInfo(new int[] { 1, 1, 1, 1 }, board, true));
+            List<MoveAction> moves = board.GetGrowMoveActions(3, true, new HashSet<int>(), new ProteinInfo(new int[] { 1, 1, 1, 1 }, board, true));
             Assert.Single(moves);
             Assert.Equal(1000, moves[0].Score);
 
 
             board = new Board(2, 3);
-            board.SetEntities(new List<Entity>() {
+            board.SetEntities(new Entity[] {
                 new Entity(0, 0, board.GetNodeIndex(0, 0), "WALL", -1, 0, "X", 0, 0),
                 new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.D, null, 0, 0, 0, OrganDirection.None),
                 new Entity(new Point2d(0, 2, board.GetNodeIndex(0, 2)), EntityType.BASIC, false, 4, 4, 4, OrganDirection.West),
@@ -303,11 +303,11 @@ Proteins: 1,2,4,1
 
             board.Print();
 
-            moves = board.GetGrowMoveActions(3, true, new HashSet<int>(), new Board.ProteinInfo(new int[] { 0, 0, 0, 0 }, board, true));
+            moves = board.GetGrowMoveActions(3, true, new HashSet<int>(), new ProteinInfo(new int[] { 0, 0, 0, 0 }, board, true));
             Assert.Equal(2, moves.Count);
             Assert.Equal(-1020, moves[1].Score);
 
-            moves = board.GetGrowBasicMoveActions(3, true, new HashSet<int>(), new Board.ProteinInfo(new int[] { 0, 0, 0, 0 }, board, true));
+            moves = board.GetGrowBasicMoveActions(3, true, new HashSet<int>(), new ProteinInfo(new int[] { 0, 0, 0, 0 }, board, true));
             Assert.Single(moves);
             Assert.Equal(-1050, moves[0].Score);
         }
@@ -316,8 +316,8 @@ Proteins: 1,2,4,1
         public void Test_GetEntityLifeCount()
         {
             Board board = new Board(2, 1);
-            board.SetEntities(new List<Entity>(), true);
-            board.SetEntities(new List<Entity>()
+            board.SetEntities(new Entity[0], true);
+            board.SetEntities(new Entity[]
             {
                 new Entity(new Point2d(1, 0, board.GetNodeIndex(1, 0)), EntityType.HARVESTER, true, 3, 3, 3, OrganDirection.West),
             });
@@ -329,7 +329,7 @@ Proteins: 1,2,4,1
 
 
             board = new Board(2, 3);
-            board.SetEntities(new List<Entity>() {
+            board.SetEntities(new Entity[] {
                 new Entity(0, 0, board.GetNodeIndex(0, 0), "WALL", -1, 0, "X", 0, 0),
                 new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.D, null, 0, 0, 0, OrganDirection.None),
                 new Entity(new Point2d(0, 2, board.GetNodeIndex(0, 2)), EntityType.BASIC, false, 4, 4, 4, OrganDirection.West),
@@ -348,7 +348,7 @@ Proteins: 1,2,4,1
 
 
             board = new Board(3, 1);
-            board.SetEntities(new List<Entity>() {
+            board.SetEntities(new Entity[] {
                 new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.TENTACLE, true, 1, 1, 1, OrganDirection.East),
                 new Entity(new Point2d(2, 0, board.GetNodeIndex(2, 0)), EntityType.TENTACLE, false, 4, 4, 4, OrganDirection.West),
             }, true);
@@ -361,7 +361,7 @@ Proteins: 1,2,4,1
             Assert.Equal(1, oppLifeCount);
 
             board = new Board(3, 3);
-            board.SetEntities(new List<Entity>() {
+            board.SetEntities(new Entity[] {
                 new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
                 new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
                 new Entity(new Point2d(0, 2, board.GetNodeIndex(0, 2)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
@@ -385,7 +385,7 @@ Proteins: 1,2,4,1
         public void Test_GetTentacleMoves()
         {
             Board board = new Board(4, 3);
-            board.SetEntities(new List<Entity>() {
+            board.SetEntities(new Entity[] {
                 new Entity(new Point2d(0, 1, board.GetNodeIndex(0, 1)), EntityType.BASIC, true, 1, 1, 1, OrganDirection.East),
 
                 new Entity(new Point2d(0, 0, board.GetNodeIndex(0, 0)), EntityType.A, null, 0, 0, 0, OrganDirection.None),
@@ -395,7 +395,7 @@ Proteins: 1,2,4,1
 
             board.Print();
 
-            List<MoveAction> actions = board.GetTentacleMoveActions(1, true, new HashSet<int>(), new Board.ProteinInfo(new int[4] { 6, 5, 4, 0 }, board, true));
+            List<MoveAction> actions = board.GetTentacleMoveActions(1, true, new HashSet<int>(), new ProteinInfo(new int[4] { 6, 5, 4, 0 }, board, true));
 
             Assert.Equal(5, actions.Count);
         }

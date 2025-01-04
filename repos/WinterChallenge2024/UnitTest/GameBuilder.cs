@@ -63,7 +63,7 @@ namespace GameSolution.Game
             }
 
 
-            board.SetEntities(entities, true);
+            board.SetEntities(entities.ToArray(), true);
             board.Print();
 
             game.SetNextTurn(board, new int[] { 10, 0, 0, 0 }, new int[] { 10, 0, 0, 0 });
@@ -104,7 +104,7 @@ namespace GameSolution.Game
             }
 
 
-            board.SetEntities(entities, true);
+            board.SetEntities(entities.ToArray(), true);
             board.Print();
 
             game.SetNextTurn(board, new int[] { 10, 0, 1, 1 }, new int[] { 10, 0, 1, 1 });
@@ -138,7 +138,7 @@ namespace GameSolution.Game
             }
 
 
-            board.SetEntities(entities, true);
+            board.SetEntities(entities.ToArray(), true);
             board.Print();
 
             game.SetNextTurn(board, new int[] { 50, 05, 05, 0 }, new int[] { 50, 05, 05, 0 });
@@ -175,7 +175,7 @@ namespace GameSolution.Game
                 }
             }
 
-            board.SetEntities(entities, true);
+            board.SetEntities(entities.ToArray(), true);
             board.Print();
 
             game.SetNextTurn(board, new int[] { 6, 2, 2, 3 }, new int[] { 6, 2, 2, 3 });
@@ -232,7 +232,7 @@ namespace GameSolution.Game
              new Entity(2, 7, board.GetNodeIndex(2,7), "D", -1, 0, "X", 0, 0),
              new Entity(10, 7, board.GetNodeIndex(10,7), "D", -1, 0, "X", 0, 0)
           };
-            board.SetEntities(entities, true);
+            board.SetEntities(entities.ToArray(), true);
             board.Print();
 
             game.SetNextTurn(board, new int[] { 6, 2, 2, 3 }, new int[] { 6, 2, 2, 3 });
@@ -250,7 +250,7 @@ namespace GameSolution.Game
              new Entity(0, 0, board.GetNodeIndex(0,0), "ROOT", 1, 1, "N", 1, 1),
              new Entity(1, 0, board.GetNodeIndex(1,0), "ROOT", 0, 2, "N", 2, 2),
           };
-            board.SetEntities(entities, true);
+            board.SetEntities(entities.ToArray(), true);
             board.Print();
 
             game.SetNextTurn(board, new int[] { 6, 2, 2, 3 }, new int[] { 6, 2, 2, 3 });

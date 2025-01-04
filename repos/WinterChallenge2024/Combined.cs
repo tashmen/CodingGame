@@ -35,7 +35,7 @@ Console.Error.WriteLine($"after board ms: {watch.ElapsedMilliseconds}");
 while (true)
 {
 int entityCount = int.Parse(Console.ReadLine());
-List<Entity> entities = new List<Entity>();
+Entity[] entities = new Entity[entityCount];
 for (int i = 0; i < entityCount; i++)
 {
 inputs = Console.ReadLine().Split(' ');
@@ -48,7 +48,7 @@ string organDir = inputs[5];
 int organParentId = int.Parse(inputs[6]);
 int organRootId = int.Parse(inputs[7]);
 Entity entity = Entity.GetEntity(new Point2d(x, y, board.GetNodeIndex(x, y)), Entity.GetType(type), Entity.GetOwner(owner), organId, organParentId, organRootId, Entity.GetOrganDirection(organDir));
-entities.Add(entity);
+entities[i] = entity;
 }
 inputs = Console.ReadLine().Split(' ');
 int myA = int.Parse(inputs[0]);
@@ -169,7 +169,7 @@ Paths = paths;
 }
 }
 private readonly Dictionary<int, INode> Nodes;
-private Dictionary<int, Dictionary<int, DistancePath>> Paths;
+private DistancePath[,] Paths;
 public Graph()
 {
 Nodes = new Dictionary<int, INode>();
@@ -180,18 +180,18 @@ Nodes[node.Id] = node;
 }
 public void CalculateShortestPaths()
 {
-Paths = new Dictionary<int, Dictionary<int, DistancePath>>();
+Paths = new DistancePath[Nodes.Count, Nodes.Count];
 foreach (INode vertex in Nodes.Values)
 {
-InternalBuildShortestPathsFromStartNode2(vertex);
+InternalBuildShortestPathsFromStartNode(vertex);
 }
 }
 public void BuildShortestPathsFromStartNode(INode startNode, double maxDistance = double.MaxValue)
 {
-Paths = new Dictionary<int, Dictionary<int, DistancePath>>();
-InternalBuildShortestPathsFromStartNode2(startNode, maxDistance);
+Paths = new DistancePath[Nodes.Count, Nodes.Count];
+InternalBuildShortestPathsFromStartNode(startNode, maxDistance);
 }
-private void InternalBuildShortestPathsFromStartNode2(INode startNode, double maxDistance = double.MaxValue)
+private void InternalBuildShortestPathsFromStartNode(INode startNode, double maxDistance = double.MaxValue)
 {
 foreach (INode node in Nodes.Values)
 {
@@ -206,8 +206,7 @@ result = a.StepCount.CompareTo(b.StepCount);
 if (result != 0) return result;
 return a.Link.EndNodeId.CompareTo(b.Link.EndNodeId);
 }));
-Paths[startNode.Id] = new Dictionary<int, DistancePath>();
-Paths[startNode.Id][startNode.Id] = new DistancePath(0.0, new List<ILink>());
+Paths[startNode.Id, startNode.Id] = new DistancePath(0.0, new List<ILink>());
 startNode.IsExplored = true;
 foreach (ILink link in startNode.GetLinks())
 {
@@ -225,7 +224,8 @@ continue;
 }
 adjacentNode.IsExplored = true;
 minimumSpanningTree.Add(bestLink);
-if (!Paths[startNode.Id].TryGetValue(currentNode.Id, out DistancePath currentPath))
+DistancePath currentPath = Paths[startNode.Id, currentNode.Id];
+if (currentPath == null)
 {
 currentPath = new DistancePath(0.0, new List<ILink>());
 }
@@ -234,7 +234,7 @@ else
 currentPath = new DistancePath(currentDist, new List<ILink>(currentPath.Paths));
 }
 currentPath.Paths.Add(bestLink);
-Paths[startNode.Id][bestLink.EndNodeId] = currentPath;
+Paths[startNode.Id, bestLink.EndNodeId] = currentPath;
 if (currentDist >= maxDistance)
 return;
 foreach (ILink adjacentLink in adjacentNode.GetLinks())
@@ -251,16 +251,10 @@ priorityQueue.Add((newDist, newStepCount, adjacentLink));
 }
 public INode GetNextNodeInShortestPath(INode startNode, INode endNode)
 {
-Paths.TryGetValue(startNode.Id, out Dictionary<int, DistancePath> endPoints);
-if (endPoints == null)
-{
-Console.Error.WriteLine("|||Start not found: " + startNode.Id);
-throw new InvalidOperationException();
-}
-endPoints.TryGetValue(endNode.Id, out DistancePath paths);
+DistancePath paths = Paths[startNode.Id, endNode.Id];
 if (paths == null)
 {
-Console.Error.WriteLine("|||End not found: " + endNode.Id + " start: " + startNode.Id);
+Console.Error.WriteLine("Path not found, end: " + endNode.Id + " start: " + startNode.Id);
 throw new InvalidOperationException();
 }
 INode shortest = Nodes[paths.Paths.First().EndNodeId];
@@ -269,16 +263,10 @@ return shortest;
 }
 public IList<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
 {
-Paths.TryGetValue(startNodeId, out Dictionary<int, DistancePath> endPoints);
-if (endPoints == null)
-{
-Console.Error.WriteLine("|||Start not found: " + startNodeId);
-throw new InvalidOperationException();
-}
-endPoints.TryGetValue(endNodeId, out DistancePath paths);
+DistancePath paths = Paths[startNodeId, endNodeId];
 if (paths == null)
 {
-Console.Error.WriteLine("|||End not found: " + endNodeId + " start: " + startNodeId);
+Console.Error.WriteLine("Path not found, end: " + endNodeId + " start: " + startNodeId);
 throw new InvalidOperationException();
 }
 return paths.Paths;
@@ -289,27 +277,17 @@ return GetShortestPathDistance(startNode.Id, endNode.Id);
 }
 public double GetShortestPathDistance(int startId, int endId)
 {
-if (!Paths.TryGetValue(startId, out Dictionary<int, DistancePath> endPoints) || endPoints == null)
-{
+DistancePath path = Paths[startId, endId];
+if (path == null)
 return double.MaxValue;
-}
-if (!endPoints.TryGetValue(endId, out DistancePath path) || path == null)
-{
-return double.MaxValue;
-}
 return path.Distance;
 }
 public bool GetShortest(int startId, int endId, out DistancePath distancePath)
 {
 distancePath = null;
-if (!Paths.TryGetValue(startId, out Dictionary<int, DistancePath> endPoints) || endPoints == null)
-{
+DistancePath path = Paths[startId, endId];
+if (path == null)
 return false;
-}
-if (!endPoints.TryGetValue(endId, out DistancePath path) || path == null)
-{
-return false;
-}
 distancePath = path;
 return true;
 }
@@ -319,7 +297,6 @@ return startNode.GetLinks().Where(l => l.EndNodeId.Equals(endNode.Id)).First().D
 }
 }
 }
-
 namespace Algorithms.Graph
 {
 public class GraphLinks
@@ -334,11 +311,6 @@ public Node(int id, double distance)
 Id = id;
 Distance = distance;
 }
-
-
-
-
-
 public Node CreateAtDistance(double currentDist)
 {
 return new Node(Id, currentDist + Distance);
@@ -356,15 +328,8 @@ public bool ContainsLink(int id1, int id2)
 {
 return Links.ContainsKey(id1) && Links[id1].Where(n => n.Id == id2).Any();
 }
-
-
-
-
-
-
 public void AddLink(int id1, int id2, double distance)
 {
-
 if (ContainsLink(id1, id2))
 return;
 AddLinkInternal(id1, id2, distance);
@@ -376,9 +341,6 @@ public void RemoveLink(int id1, int id2)
 Links[id1].RemoveAll(n => n.Id == id2);
 Links[id2].RemoveAll(n => n.Id == id1);
 }
-
-
-
 public void CalculateShortestPaths()
 {
 Paths = new Dictionary<int, Dictionary<int, List<Node>>>();
@@ -389,26 +351,14 @@ foreach (int vertex in vertices)
 CalculateShortestPathFromStartNode(vertex, vertexCount, 9999999);
 }
 }
-
-
-
-
-
 public void CalculateShortestPathsFromStartNode(int startNode, int maxDistance)
 {
 Paths = new Dictionary<int, Dictionary<int, List<Node>>>();
 CalculateShortestPathFromStartNode(startNode, Links.Keys.Count, maxDistance);
 }
-
-
-
-
-
-
 private void CalculateShortestPathFromStartNode(int startNode, int vertexCount, int maxDistance)
 {
 List<Node> minimumSpanningTree = new List<Node>();
-
 double currentDist = 0;
 Paths[startNode] = new Dictionary<int, List<Node>>();
 minimumSpanningTree.Add(new Node(startNode, currentDist));
@@ -420,7 +370,6 @@ Node parentNode = null;
 foreach (Node currentNode in minimumSpanningTree)
 {
 currentDist = currentNode.Distance;
-
 foreach (Node adjacent in GetLinks(currentNode.Id))
 {
 if (adjacent.IsExplored || minimumSpanningTree.Where(n => n.Id == adjacent.Id).Any())
@@ -470,16 +419,10 @@ currentPath = new List<Node>(currentPath);
 }
 Paths[startNode].Add(bestNode.Id, currentPath);
 currentPath.Add(bestNode);
-
 if (minDist >= maxDistance)
 return;
 }
 }
-
-
-
-
-
 public List<Node> GetLinks(int id)
 {
 return Links[id];
@@ -488,22 +431,10 @@ public Dictionary<int, List<Node>> GetPaths(int startId)
 {
 return Paths[startId];
 }
-
-
-
-
-
-
 public double GetDistance(int startId, int endId)
 {
 return GetLinks(startId).Where(l => l.Id == endId).First().Distance;
 }
-
-
-
-
-
-
 public double GetShortestPathDistance(int startId, int endId)
 {
 Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
@@ -518,12 +449,6 @@ return 99999;
 }
 return paths.Last().Distance;
 }
-
-
-
-
-
-
 public int GetShortestPath(int startId, int endId)
 {
 Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
@@ -542,12 +467,6 @@ int shortest = paths.First().Id;
 Console.Error.WriteLine("|||Shortest: " + shortest + " from: " + startId + " to: " + endId);
 return shortest;
 }
-
-
-
-
-
-
 public List<Node> GetShortestPathAll(int startId, int endId)
 {
 Paths.TryGetValue(startId, out Dictionary<int, List<Node>> endPoints);
@@ -564,7 +483,6 @@ throw new InvalidOperationException();
 }
 return paths;
 }
-
 private void AddLinkInternal(int startNode, int endNode, double distance)
 {
 List<Node> nodeLinks;
@@ -581,7 +499,6 @@ nodeLinks.Add(new Node(endNode, distance));
 }
 }
 }
-
 namespace Algorithms.Graph
 {
 public interface INode
@@ -1218,6 +1135,24 @@ public int Height;
 private Entity[] Entities;
 public int GlobalOrganId = -1;
 public Graph Graph;
+private int _myEntityCount = -1;
+private int _oppEntityCount = -1;
+private Point2d[][][] _locationCache;
+private int[][] _locationIndexCache = null;
+private LocationNeighbor[][] _locationNeighbors = null;
+private string[,,] _keyCache;
+
+const int _maxMovesTotal = 10;
+private static readonly int[,] _maxActionsPerOrganism = { { _maxMovesTotal, 0, 0, 0, 0 }, { 6, 4, 0, 0, 0 }, { 6, 2, 2, 0, 0 }, { 3, 2, 2, 2, 0 }, { 3, 2, 2, 2, 1 } };
+private static Stopwatch _watch = new Stopwatch();
+private int _initialOpenSpacesCount = 0;
+private static Entity[] _tempHolder = new Entity[500];
+private Dictionary<string, Entity[]> _entityCache = new Dictionary<string, Entity[]>();
+private bool[] _isOpenSpaceInitial;
+private Dictionary<string, bool> _locationCheckCache = new Dictionary<string, bool>();
+private Dictionary<string, bool?> _harvestCache = new Dictionary<string, bool?>();
+private Dictionary<string, List<MoveAction>> _moveActionCache = new Dictionary<string, List<MoveAction>>();
+private const int _maxGrowMoves = 7;
 public static OrganDirection[] PossibleDirections = new OrganDirection[] { OrganDirection.North, OrganDirection.South, OrganDirection.East, OrganDirection.West };
 static Board()
 {
@@ -1236,10 +1171,7 @@ InitializeBoard();
 }
 protected override void Reset()
 {
-for (int i = 0; i < Entities.Length; i++)
-{
-Entities[i]?.Dispose();
-}
+
 UpdateBoard();
 }
 public Board CopyFrom(Board board)
@@ -1277,7 +1209,7 @@ _oppEntityCount = board._oppEntityCount;
 _locationCache = board._locationCache;
 _locationIndexCache = board._locationIndexCache;
 _locationNeighbors = board._locationNeighbors;
-_intToStringCache = board._intToStringCache;
+_keyCache = board._keyCache;
 _isOpenSpaceInitial = board._isOpenSpaceInitial;
 _initialOpenSpacesCount = board._initialOpenSpacesCount;
 return this;
@@ -1306,23 +1238,29 @@ return true;
 }
 public void Attack()
 {
-List<Entity> tentacles = GetTentacleEntities();
-List<Entity> deadEntities = new List<Entity>();
-foreach (Entity tentacle in tentacles)
+Entity[] tentacles = GetTentacleEntities();
+Entity[] deadEntities = new Entity[tentacles.Length];
+for (int i = 0, j = 0; j < tentacles.Length; j++)
 {
+Entity tentacle = tentacles[i];
 if (GetEntityWithDirection(tentacle.Location, tentacle.OrganDirection, out Entity entity) && entity.IsMine.HasValue && entity.IsMine != tentacle.IsMine)
 {
-deadEntities.Add(entity);
+deadEntities[i] = entity;
+i++;
 }
 }
 foreach (Entity deadEntity in deadEntities)
 {
+if (deadEntity == null)
+{
+break;
+}
 if (deadEntity.Type == EntityType.ROOT)
 {
 IEnumerable<Entity> deathToRoot = GetEntitiesList().Where(e => e.OrganRootId == deadEntity.OrganId);
 foreach (Entity kill in deathToRoot)
 {
-Entities[kill.Location.index]?.Dispose();
+
 Entities[kill.Location.index] = null;
 }
 }
@@ -1331,7 +1269,7 @@ else
 IEnumerable<Entity> deathToChildren = GetEntitiesList().Where(e => e.OrganParentId == deadEntity.OrganId);
 foreach (Entity kill in deathToChildren)
 {
-Entities[kill.Location.index]?.Dispose();
+
 Entities[kill.Location.index] = null;
 }
 }
@@ -1346,7 +1284,7 @@ if (action.Type != MoveType.WAIT)
 IEnumerable<MoveAction> collisionActions = oppMove.Actions.Where(a => (a.Type == MoveType.GROW || a.Type == MoveType.SPORE) && a.Location.Equals(action.Location));
 if (collisionActions.Count() > 0)
 {
-Entities[action.Location.index]?.Dispose();
+
 Entities[action.Location.index] = Entity.GetEntity(action.Location, EntityType.WALL, null, 0, 0, 0, OrganDirection.None);
 }
 else
@@ -1368,7 +1306,7 @@ case MoveType.GROW:
 Entity growEntity = GetEntityByLocation(action.Location);
 if (growEntity == null || growEntity.IsOpenSpace())
 {
-Entities[action.Location.index]?.Dispose();
+
 Entities[action.Location.index] = Entity.GetEntity(action.Location, action.EntityType, isMine, GlobalOrganId++, action.OrganId, action.OrganRootId, action.OrganDirection);
 }
 break;
@@ -1377,78 +1315,30 @@ Entity sporeEntity = GetEntityByLocation(action.Location);
 if (sporeEntity == null || sporeEntity.IsOpenSpace())
 {
 int organId = GlobalOrganId++;
-Entities[action.Location.index]?.Dispose();
+
 Entities[action.Location.index] = Entity.GetEntity(action.Location, action.EntityType, isMine, organId, organId, organId, action.OrganDirection);
 }
 break;
 }
 }
-public class ProteinInfo
-{
-public int[] Proteins;
-public bool[] HasProteins;
-public bool HasHarvestProteins;
-public bool HasBasicProteins;
-public bool HasTentacleProteins;
-public bool HasSporerProteins;
-public bool HasRootProteins;
-public bool[] HasManyProteins;
-public bool HasManyRootProteins;
-public bool HasManyTentacleProteins;
-public bool HasManySporerProteins;
-public bool HasAtLeastTwoMany;
-public bool IsHarvestingRootProteins;
-public bool IsHarvestingTentacleProteins;
-public bool IsHarvestingSporerProteins;
-public bool IsHarvestingBasicProteins;
-public bool IsHarvestingHarvesterProteins;
-public bool[] IsHarvestingProteins;
-public ProteinInfo(int[] proteins, Board board, bool isMine)
-{
-Proteins = proteins;
-HasProteins = proteins.Select(p => p > 0).ToArray();
-HasHarvestProteins = HasProteins[2] && HasProteins[3];
-HasBasicProteins = HasProteins[0];
-HasTentacleProteins = HasProteins[1] && HasProteins[2];
-HasSporerProteins = HasProteins[1] && HasProteins[3];
-HasRootProteins = HasProteins.All(m => m);
-HasManyProteins = proteins.Select(p => p > 10).ToArray();
-HasManyRootProteins = HasManyProteins.All(m => m);
-HasManyTentacleProteins = HasManyProteins[1] && HasManyProteins[2];
-HasManySporerProteins = HasManyProteins[1] && HasManyProteins[3];
-HasAtLeastTwoMany = HasManyProteins.Count(value => value) > 1;
-int[] harvestingProteins = new int[4];
-board.Harvest(isMine, harvestingProteins);
-IsHarvestingProteins = harvestingProteins.Select(p => p > 0).ToArray();
-IsHarvestingHarvesterProteins = IsHarvestingProteins[2] && IsHarvestingProteins[3];
-IsHarvestingBasicProteins = IsHarvestingProteins[0];
-IsHarvestingTentacleProteins = IsHarvestingProteins[1] && IsHarvestingProteins[2];
-IsHarvestingSporerProteins = IsHarvestingProteins[1] && IsHarvestingProteins[3];
-IsHarvestingRootProteins = IsHarvestingProteins[0] && IsHarvestingProteins[1] && IsHarvestingProteins[2] && IsHarvestingProteins[3];
-}
-}
-
-const int _maxMovesTotal = 10;
-readonly int[,] _maxActionsPerOrganism = { { _maxMovesTotal, 0, 0, 0, 0 }, { 6, 4, 0, 0, 0 }, { 6, 2, 2, 0, 0 }, { 3, 2, 2, 2, 0 }, { 3, 2, 2, 2, 1 } };
-Stopwatch _watch = new Stopwatch();
 public List<Move> GetMoves(int[] proteins, bool isMine, bool debug = false)
 {
 _watch.Reset();
 _watch.Start();
 List<Move> moves = new List<Move>();
-List<Entity> rootEntities = GetRootEntities(isMine);
-int organismCount = rootEntities.Count;
+Entity[] rootEntities = GetRootEntities(isMine);
+int organismCount = rootEntities.Length;
 bool[] organismHasMoves = new bool[organismCount];
 MoveAction[][] organismToMoveActions = new MoveAction[organismCount][];
 ProteinInfo proteinInfo = new ProteinInfo(proteins, this, isMine);
 int i = 0;
 int maxOrgans = 5;
-List<Entity> limitedRootEntities = rootEntities;
+Entity[] limitedRootEntities = rootEntities;
 if (organismCount > maxOrgans)
 {
-limitedRootEntities = rootEntities.Take(maxOrgans).ToList();
+limitedRootEntities = rootEntities.Take(maxOrgans).ToArray();
 }
-int selectedOrgans = limitedRootEntities.Count;
+int selectedOrgans = limitedRootEntities.Length;
 bool hasSufficientProteins = (proteins[0] >= selectedOrgans || proteins[0] == 0) && (proteins[1] >= selectedOrgans || proteins[1] == 0) && (proteins[2] >= selectedOrgans || proteins[2] == 0) && (proteins[3] >= selectedOrgans || proteins[3] == 0);
 HashSet<int> locationsTaken = new HashSet<int>();
 foreach (Entity root in limitedRootEntities)
@@ -1475,7 +1365,7 @@ if (moveActions.Count <= 0 || !sporeHasPriority)
 AddGrowMoveActions(moveActions, root.OrganRootId, isMine, proteinInfo, locationsTaken, debug);
 if (moveActions.Count > 0)
 {
-moveActions = moveActions.OrderBy(m => m.Score).Take(_maxActionsPerOrganism[limitedRootEntities.Count - 1, i]).ToList();
+moveActions = moveActions.OrderBy(m => m.Score).Take(_maxActionsPerOrganism[limitedRootEntities.Length - 1, i]).ToList();
 if (moveActions[0].Score < 0)
 {
 moveActions = moveActions.Where(m => m.Score < 0).ToList();
@@ -1501,7 +1391,7 @@ Console.Error.WriteLine($"{root.OrganId}: " + string.Join('\n', moveActions));
 i++;
 if (_watch.ElapsedMilliseconds > 5)
 {
-Console.Error.WriteLine("Move generation took too long");
+Console.Error.WriteLine($"Move generation took too long organism #: {i}");
 break;
 }
 }
@@ -1754,15 +1644,28 @@ if (moveActions.Count > 0 && _watch.ElapsedMilliseconds > 5)
 Console.Error.WriteLine($"Took too long to find Tentacle Actions: {_watch.ElapsedMilliseconds}");
 return moveActions;
 }
+bool hasHarvestMove = harvestActions.Any(m => m.Score < 0);
+bool hasTentacleMove = tentacleActions.Any(m => m.Score < 0);
 if (proteinInfo.HasBasicProteins)
 {
 List<MoveAction> basicActions = GetGrowBasicMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
-if (harvestActions.Any(m => m.Score < 0))
-basicActions.ForEach(m => m.Score += 100);
-if (tentacleActions.Any(m => m.Score < 0))
-basicActions.ForEach(m => m.Score += 200);
+foreach (MoveAction basicAction in basicActions)
+{
+if (hasHarvestMove)
+basicAction.Score += 100;
+if (hasTentacleMove)
+basicAction.Score += 200;
 if (proteinInfo.HasManyTentacleProteins)
-basicActions.Join(tentacleActions, m1 => m1.Location, m2 => m2.Location, (m1, m2) => m1).ToList().ForEach(a => a.Score += 100);
+{
+foreach (MoveAction tentacleAction in tentacleActions)
+{
+if (tentacleAction.Location.Equals(basicAction.Location))
+{
+basicAction.Score += 100;
+}
+}
+}
+}
 moveActions.AddRange(basicActions);
 if (debug)
 Console.Error.WriteLine($"Basic: {organRootId}: " + string.Join('\n', basicActions));
@@ -1775,12 +1678,18 @@ return moveActions;
 if (proteinInfo.HasSporerProteins)
 {
 List<MoveAction> sporerActions = GetSporerMoveActions(organRootId, isMine, locationsTaken, proteinInfo);
-if (harvestActions.Any(m => m.Score < 0))
-sporerActions.ForEach(m => m.Score += 100);
-if (!proteinInfo.HasManyTentacleProteins && tentacleActions.Any(m => m.Score < 0))
-sporerActions.ForEach(m => m.Score += 100);
+foreach (MoveAction sporerAction in sporerActions)
+{
+if (!proteinInfo.HasManyRootProteins || !proteinInfo.IsHarvestingSporerProteins)
+{
+if (hasHarvestMove)
+sporerAction.Score += 100;
+if (!proteinInfo.HasManyTentacleProteins && hasTentacleMove)
+sporerAction.Score += 100;
+}
 if (!proteinInfo.HasRootProteins)
-sporerActions.ForEach(m => m.Score += 100);
+sporerAction.Score += 100;
+}
 moveActions.AddRange(sporerActions);
 if (debug)
 Console.Error.WriteLine($"Sporer: {organRootId}: " + string.Join('\n', sporerActions));
@@ -1858,7 +1767,7 @@ tentacleAction.Score -= 50;
 if (GetEntity(locationNeighbor.point.index, out Entity entity) && entity.IsMine.HasValue && entity.IsMine != isMine)
 {
 tentacleAction.Score -= 50000;
-if (entity.Type == EntityType.ROOT && GetEntitiesByRoot(entity.OrganId, !isMine).Count > 0)
+if (entity.Type == EntityType.ROOT && GetEntitiesByRoot(entity.OrganId, !isMine).Length > 0)
 {
 tentacleAction.Score -= 50000;
 return new List<MoveAction> { tentacleAction };
@@ -1874,7 +1783,7 @@ foreach (LocationNeighbor locationNeighbor2 in GetLocationNeighbors(nextLocation
 {
 if (GetEntity(locationNeighbor2.point.index, out Entity entity2) && entity2.IsMine.HasValue && entity2.IsMine != isMine)
 {
-tentacleAction.Score -= 50;
+tentacleAction.Score -= 30000;
 }
 }
 }
@@ -1899,22 +1808,26 @@ moveActions.Add(moveAction);
 }
 return moveActions;
 }
-private Dictionary<string, List<MoveAction>> _moveActionCache = new Dictionary<string, List<MoveAction>>();
-private const int _maxMoves = 7;
 public List<MoveAction> GetGrowMoveActions(int organRootId, bool isMine, HashSet<int> locationsTaken, ProteinInfo proteinInfo)
 {
-string key = (isMine ? "grow1_" : "grow0_") + organRootId.ToString();
+string key = GetKey(6, isMine, organRootId);
 if (!_moveActionCache.TryGetValue(key, out List<MoveAction> moveActions))
 {
-List<Entity> oppRootEntities = GetRootEntities(!isMine);
-List<Entity> harvestableEntities = GetHarvestableEntities();
-List<Entity> harvestingEntities = GetHarvestedEntities(isMine);
+Entity[] oppRootEntities = GetRootEntities(!isMine);
+Entity[] harvestableEntities = GetHarvestableEntities();
+Entity[] harvestingEntities = GetHarvestedEntities(isMine);
 HashSet<EntityType> harvestedTypes = harvestingEntities.Select(e => e.Type).ToHashSet();
-List<Entity> toHarvestEntities = harvestedTypes.Count < 4 ? harvestableEntities.Where(e => !harvestedTypes.Contains(e.Type)).ToList() : new List<Entity>();
-bool hasOppRoot = oppRootEntities.Any();
-bool hasHarvestable = toHarvestEntities.Any();
+bool hasOppRoot = oppRootEntities.Length > 0;
+bool hasHarvestable = true;
+Entity[] toHarvestEntities = null;
+if (harvestedTypes.Count < 4)
+{
+toHarvestEntities = harvestableEntities.Where(e => !harvestedTypes.Contains(e.Type)).ToArray();
+}
+else
+hasHarvestable = false;
 moveActions = new List<MoveAction>();
-List<Entity> entities = GetEntitiesByRoot(organRootId, isMine);
+Entity[] entities = GetEntitiesByRoot(organRootId, isMine);
 HashSet<int> locationsChecked = new HashSet<int>(locationsTaken);
 foreach (Entity entity in entities)
 {
@@ -1928,7 +1841,14 @@ MoveAction moveAction = MoveAction.CreateGrow(entity.OrganId, locationNeighbor.p
 moveAction.Score = 0;
 if (hasHarvestable)
 {
-moveAction.Score += toHarvestEntities.Min(r => Graph.GetShortestPathDistance(r.Location.index, moveAction.Location.index));
+double minValue = 99999;
+for (int i = 0; i < toHarvestEntities.Length; i++)
+{
+double distance = Graph.GetShortestPathDistance(toHarvestEntities[i].Location.index, moveAction.Location.index);
+if (minValue > distance)
+minValue = distance;
+}
+moveAction.Score += minValue;
 }
 else if (hasOppRoot)
 {
@@ -1956,9 +1876,9 @@ moveActions.Add(moveAction);
 }
 }
 }
-if (moveActions.Count > _maxMoves)
+if (moveActions.Count > _maxGrowMoves)
 {
-moveActions = moveActions.OrderBy(m => m.Score).Take(_maxMoves).ToList();
+moveActions = moveActions.OrderBy(m => m.Score).Take(_maxGrowMoves).ToList();
 }
 _moveActionCache[key] = moveActions;
 }
@@ -2034,10 +1954,9 @@ moveActions.Add(moveAction);
 }
 return moveActions;
 }
-private Dictionary<string, bool?> _harvestCache = new Dictionary<string, bool?>();
 public bool? IsHarvesting(int location, bool isMine)
 {
-string key = (isMine ? "harvest1_" : "harvest0_") + location.ToString();
+string key = GetKey(0, isMine, location);
 if (!_harvestCache.TryGetValue(key, out bool? result))
 {
 result = null;
@@ -2078,7 +1997,7 @@ return true;
 }
 public int[] GetHarvestProteins(bool isMine)
 {
-List<Entity> harvesters = GetHarvesterEntities(isMine);
+Entity[] harvesters = GetHarvesterEntities(isMine);
 int[] harvestedProteins = new int[4] { 0, 0, 0, 0 };
 foreach (Entity harvester in harvesters)
 {
@@ -2106,7 +2025,7 @@ throw new Exception("No direction given");
 }
 public bool IsHarvestExactly2spaces(Point2d location)
 {
-List<Entity> harvestEntities = GetHarvestableEntities();
+Entity[] harvestEntities = GetHarvestableEntities();
 foreach (Entity entity in harvestEntities)
 {
 if (location.Equals(entity.Location))
@@ -2119,18 +2038,17 @@ return true;
 }
 return false;
 }
-Dictionary<string, bool> _locationCheckCache = new Dictionary<string, bool>();
 public bool IsOpponentWithin3Spaces(Point2d location, bool isMine)
 {
-string key = (isMine ? "opponentclose_1" : "opponentclose_2") + location.index.ToString();
+string key = GetKey(1, isMine, location.index);
 if (!_locationCheckCache.TryGetValue(key, out bool result))
 {
-List<Entity> oppEntities = GetEntities(!isMine);
+Entity[] oppEntities = GetEntities(!isMine);
 foreach (Entity oppEntity in oppEntities)
 {
 Graph.GetShortest(location.index, oppEntity.Location.index, out DistancePath distancePath);
 double distance = distancePath.Distance;
-if (distance < 3)
+if (distance <= 3)
 {
 result = true;
 
@@ -2171,8 +2089,6 @@ private bool IsOpenSpace(int location)
 {
 return !GetEntity(location, out Entity entity) || entity.IsOpenSpace();
 }
-private string[] _intToStringCache;
-private bool[] _isOpenSpaceInitial;
 public bool IsOpenSpace(int location, bool isMine)
 {
 if (!_isOpenSpaceInitial[location] || !IsOpenSpace(location))
@@ -2184,7 +2100,7 @@ return !HasOpposingTentacle(location, isMine);
 
 private bool HasOpposingTentacle(int location, bool isMine)
 {
-string key = $"{(isMine ? "opposingtentacle_1" : "opposingtentacle_2")}{_intToStringCache[location]}";
+string key = GetKey(2, isMine, location);
 if (!_locationCheckCache.TryGetValue(key, out bool result))
 {
 result = false;
@@ -2244,21 +2160,22 @@ foreach (Entity entity in GetHarvestedEntities(isMine))
 proteins[entity.Type - EntityType.A]++;
 }
 }
-public List<Entity> GetHarvestedEntities(bool isMine)
+public Entity[] GetHarvestedEntities(bool isMine)
 {
-string key = isMine ? "harvested_1" : "harvested_0";
-if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
+string key = GetKey(3, isMine, 0);
+if (!_entityCache.TryGetValue(key, out Entity[] entities))
 {
-entities = new List<Entity>();
-List<Entity> harvesters = GetHarvesterEntities(isMine);
+List<Entity> entitiesList = new List<Entity>();
+Entity[] harvesters = GetHarvesterEntities(isMine);
 HashSet<int> harvestedLocations = new HashSet<int>();
 foreach (Entity harvester in harvesters)
 {
 if (GetEntityWithDirection(harvester.Location, harvester.OrganDirection, out Entity entity) && entity.IsOpenSpace() && harvestedLocations.Add(entity.Location.index))
 {
-entities.Add(entity);
+entitiesList.Add(entity);
 }
 }
+entities = entitiesList.ToArray();
 _entityCache[key] = entities;
 }
 return entities;
@@ -2272,12 +2189,12 @@ public bool GetEntity(Point2d location, out Entity entity)
 {
 return GetEntity(GetNodeIndex(location), out entity);
 }
-public List<Entity> GetHarvestableEntities()
+public Entity[] GetHarvestableEntities()
 {
 string key = "harvestable";
-if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
+if (!_entityCache.TryGetValue(key, out Entity[]? entities))
 {
-entities = GetEntitiesList().Where(e => e.IsOpenSpace()).ToList();
+entities = GetEntitiesList().Where(e => e.IsOpenSpace()).ToArray();
 _entityCache[key] = entities;
 }
 return entities;
@@ -2292,83 +2209,143 @@ Entity entity = null;
 GetEntity(location, out entity);
 return entity;
 }
-public List<Entity> GetHarvesterEntities(bool isMine)
+public Entity[] GetHarvesterEntities(bool isMine)
 {
 string key = isMine ? "harvest1" : "harvest0";
-if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
+if (!_entityCache.TryGetValue(key, out Entity[]? entities))
 {
-entities = GetEntities(isMine).Where(e => e.Type == EntityType.HARVESTER).ToList();
+entities = GetEntities(isMine).Where(e => e.Type == EntityType.HARVESTER).ToArray();
 _entityCache[key] = entities;
 }
 return entities;
 }
-public List<Entity> GetRootEntities(bool isMine)
+public Entity[] GetRootEntities(bool isMine)
 {
 string key = isMine ? "root1" : "root0";
-if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
+if (!_entityCache.TryGetValue(key, out Entity[]? entities))
 {
-entities = GetEntities(isMine).Where(e => e.Type == EntityType.ROOT).OrderByDescending(e => e.OrganId).ToList();
+Entity[] baseEntities = GetEntities(isMine);
+int j = 0;
+for (int i = 0; i < baseEntities.Length; i++)
+{
+Entity baseEntity = baseEntities[i];
+if (baseEntity.Type == EntityType.ROOT)
+{
+_tempHolder[j++] = baseEntity;
+}
+}
+entities = new Entity[j];
+for (int i = 0; i < j; i++)
+{
+entities[i] = _tempHolder[i];
+}
+Array.Sort(entities, (m1, m2) => m2.OrganId.CompareTo(m1.OrganId));
+
 _entityCache[key] = entities;
 }
 return entities;
 }
-public List<Entity> GetSporerEntities(int organRootId, bool isMine)
+public Entity[] GetSporerEntities(int organRootId, bool isMine)
 {
-string key = (isMine ? "sporer1" : "sporer0") + organRootId.ToString();
-if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
+string key = GetKey(4, isMine, organRootId);
+if (!_entityCache.TryGetValue(key, out Entity[]? entities))
 {
-entities = GetEntitiesByRoot(organRootId, isMine).Where(e => e.Type == EntityType.SPORER).ToList();
+entities = GetEntitiesByRoot(organRootId, isMine).Where(e => e.Type == EntityType.SPORER).ToArray();
 _entityCache[key] = entities;
 }
 return entities;
 }
-public List<Entity> GetTentacleEntities(bool isMine)
+public Entity[] GetTentacleEntities(bool isMine)
 {
 string key = isMine ? "tentacles1" : "tentacles0";
-if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
+if (!_entityCache.TryGetValue(key, out Entity[]? entities))
 {
-entities = GetTentacleEntities().Where(e => e.IsMine == isMine).ToList();
+entities = GetTentacleEntities().Where(e => e.IsMine == isMine).ToArray();
 _entityCache[key] = entities;
 }
 return entities;
 }
-public List<Entity> GetTentacleEntities()
+public Entity[] GetTentacleEntities()
 {
 string key = "tentacles";
-if (!_entityCache.TryGetValue(key, out List<Entity>? entities))
+if (!_entityCache.TryGetValue(key, out Entity[]? entities))
 {
-entities = GetEntitiesList().Where(e => e.Type == EntityType.TENTACLE).ToList();
+entities = GetEntitiesList().Where(e => e.Type == EntityType.TENTACLE).ToArray();
 _entityCache[key] = entities;
 }
 return entities;
 }
-public List<Entity> GetEntitiesList()
+public Entity[] GetEntitiesList()
 {
 string key = "all";
-if (!_entityCache.TryGetValue(key, out List<Entity> entities))
+if (!_entityCache.TryGetValue(key, out Entity[] entities))
 {
-entities = Entities.Where(e => e != null).Select(e => e).ToList();
+Entity[] baseEntities = Entities;
+int j = 0;
+for (int i = 0; i < baseEntities.Length; i++)
+{
+Entity baseEntity = baseEntities[i];
+if (baseEntity != null)
+{
+_tempHolder[j++] = baseEntity;
+}
+}
+entities = new Entity[j];
+for (int i = 0; i < j; i++)
+{
+entities[i] = _tempHolder[i];
+}
+
 _entityCache[key] = entities;
 }
 return entities;
 }
-private Dictionary<string, List<Entity>> _entityCache = new Dictionary<string, List<Entity>>();
-public List<Entity> GetEntities(bool isMine)
+public Entity[] GetEntities(bool isMine)
 {
 string key = isMine ? "e1" : "e0";
-if (!_entityCache.TryGetValue(key, out List<Entity> entities))
+if (!_entityCache.TryGetValue(key, out Entity[] entities))
 {
-entities = GetEntitiesList().Where(e => e.IsMine.HasValue && e.IsMine == isMine).ToList();
+Entity[] baseEntities = GetEntitiesList();
+int j = 0;
+for (int i = 0; i < baseEntities.Length; i++)
+{
+Entity baseEntity = baseEntities[i];
+if (baseEntity.IsMine.HasValue && baseEntity.IsMine == isMine)
+{
+_tempHolder[j++] = baseEntity;
+}
+}
+entities = new Entity[j];
+for (int i = 0; i < j; i++)
+{
+entities[i] = _tempHolder[i];
+}
+
 _entityCache[key] = entities;
 }
 return entities;
 }
-public List<Entity> GetEntitiesByRoot(int organRootId, bool isMine)
+public Entity[] GetEntitiesByRoot(int organRootId, bool isMine)
 {
-string key = $"{organRootId}_{isMine}";
-if (!_entityCache.TryGetValue(key, out List<Entity> entities))
+string key = GetKey(5, isMine, organRootId);
+if (!_entityCache.TryGetValue(key, out Entity[] entities))
 {
-entities = GetEntities(isMine).Where(e => e.OrganRootId == organRootId).ToList();
+Entity[] baseEntities = GetEntities(isMine);
+int j = 0;
+for (int i = 0; i < baseEntities.Length; i++)
+{
+Entity baseEntity = baseEntities[i];
+if (baseEntity.OrganRootId == organRootId)
+{
+_tempHolder[j++] = baseEntity;
+}
+}
+entities = new Entity[j];
+for (int i = 0; i < j; i++)
+{
+entities[i] = _tempHolder[i];
+}
+
 _entityCache[key] = entities;
 }
 return entities;
@@ -2377,25 +2354,22 @@ public Entity[] GetEntities()
 {
 return Entities;
 }
-private int _myEntityCount = -1;
 public int GetMyEntityCount()
 {
 if (_myEntityCount < 0)
 {
-_myEntityCount = GetEntities(true).Count;
+_myEntityCount = GetEntities(true).Length;
 }
 return _myEntityCount;
 }
-private int _oppEntityCount = -1;
 public int GetOppEntityCount()
 {
 if (_oppEntityCount < 0)
 {
-_oppEntityCount = GetEntities(false).Count;
+_oppEntityCount = GetEntities(false).Length;
 }
 return _oppEntityCount;
 }
-private int _initialOpenSpacesCount = 0;
 public int GetInitialOpenSpacesCount()
 {
 return _initialOpenSpacesCount;
@@ -2433,12 +2407,12 @@ locationsToCheckForInfiniteGrowth.Enqueue(locationNeighbor.point.index);
 }
 return GetInitialOpenSpacesCount() - locationsChecked.Count;
 }
-public void SetEntities(IList<Entity> entities, bool isFirstTurn = false)
+public void SetEntities(Entity[] entities, bool isFirstTurn = false)
 {
 Array.Clear(Entities);
 foreach (Entity entity in entities)
 {
-Entities[entity.Location.index]?.Dispose();
+
 Entities[entity.Location.index] = entity;
 if (entity.OrganId > 0 && GlobalOrganId <= entity.OrganId)
 {
@@ -2527,12 +2501,13 @@ this.point = new Point2d(x, y, index);
 this.direction = direction;
 }
 }
-private Point2d[][][] _locationCache;
-private int[][] _locationIndexCache = null;
-private List<LocationNeighbor>[] _locationNeighbors = null;
+private string GetKey(int i, bool isMine, int location)
+{
+return _keyCache[i, isMine ? 1 : 0, location];
+}
 public void InitializeBoard()
 {
-_intToStringCache = new string[Width * Height];
+_keyCache = new string[20, 2, Width * Height];
 _locationIndexCache = new int[Width][];
 for (int x = 0; x < Width; x++)
 {
@@ -2541,7 +2516,11 @@ for (int y = 0; y < Height; y++)
 {
 int index = GetNodeIndexInternal(x, y);
 _locationIndexCache[x][y] = index;
-_intToStringCache[index] = index.ToString();
+for (int i = 0; i < 20; i++)
+{
+_keyCache[i, 0, index] = $"{i}_0_{index}";
+_keyCache[i, 1, index] = $"{i}_1_{index}";
+}
 }
 }
 _locationCache = new Point2d[Width + 2][][];
@@ -2571,7 +2550,7 @@ private void CalculatePathsAndNeighbors()
 _isOpenSpaceInitial = new bool[Width * Height];
 Array.Fill(_isOpenSpaceInitial, true);
 _initialOpenSpacesCount = Width * Height;
-_locationNeighbors = new List<LocationNeighbor>[Width * Height];
+_locationNeighbors = new LocationNeighbor[Width * Height][];
 for (int x = 0; x < Width; x++)
 {
 for (int y = 0; y < Height; y++)
@@ -2579,7 +2558,7 @@ for (int y = 0; y < Height; y++)
 int index = GetNodeIndex(x, y);
 Node node = new Node(index);
 Graph.AddNode(node);
-_locationNeighbors[index] = new List<LocationNeighbor>();
+List<LocationNeighbor> tempNeighbors = new List<LocationNeighbor>(4);
 for (int z = 0; z < 4; z++)
 {
 Point2d location = GetNextLocation(new Point2d(x, y, GetNodeIndex(x, y)), PossibleDirections[z]);
@@ -2589,7 +2568,7 @@ if (IsOpenSpace(location.index) || (GetEntity(location.index, out Entity entity)
 {
 int nextIndex = GetNodeIndex(location);
 node.AddLink(new Link(node, new Node(nextIndex), 1));
-_locationNeighbors[index].Add(new LocationNeighbor(location.x, location.y, nextIndex, PossibleDirections[z]));
+tempNeighbors.Add(new LocationNeighbor(location.x, location.y, nextIndex, PossibleDirections[z]));
 }
 else
 {
@@ -2599,6 +2578,7 @@ _isOpenSpaceInitial[location.index] = false;
 }
 }
 }
+_locationNeighbors[index] = tempNeighbors.ToArray();
 }
 }
 Graph.CalculateShortestPaths();
@@ -2607,17 +2587,17 @@ private int GetNodeIndexInternal(int x, int y)
 {
 return x * Height + y;
 }
-public List<LocationNeighbor> GetLocationNeighbors(int nodeIndex)
+public LocationNeighbor[] GetLocationNeighbors(int nodeIndex)
 {
 return _locationNeighbors[nodeIndex];
 }
-public List<LocationNeighbor> GetLocationNeighbors(Point2d location)
+public LocationNeighbor[] GetLocationNeighbors(Point2d location)
 {
 return _locationNeighbors[location.index];
 }
 public IEnumerable<LocationNeighbor> GetOpenSpaceLocationNeighbor(Point2d location, bool isMine)
 {
-for (int i = 0; i < _locationNeighbors[location.index].Count; i++)
+for (int i = 0; i < _locationNeighbors[location.index].Length; i++)
 {
 LocationNeighbor locationNeighbor = _locationNeighbors[location.index][i];
 if (IsOpenSpace(locationNeighbor.point.index, isMine))
@@ -2662,7 +2642,7 @@ East,
 West,
 None
 }
-public class Entity : PooledObject<Entity>
+public class Entity 
 {
 public bool? IsMine;
 public Point2d Location;
@@ -2672,10 +2652,7 @@ public OrganDirection OrganDirection;
 public int OrganParentId;
 public int OrganRootId;
 private bool _IsOpenSpace;
-static Entity()
-{
-SetInitialCapacity(100000);
-}
+
 public Entity()
 {
 }
@@ -2705,12 +2682,10 @@ OrganRootId = organRootId;
 OrganDirection = organDirection;
 _IsOpenSpace = IsOpenSpaceInternal();
 }
-protected override void Reset()
-{
-}
+
 public static Entity GetEntity(Point2d location, EntityType type, bool? isMine, int organId, int organParentId, int organRootId, OrganDirection organDirection)
 {
-Entity entity = Get();
+Entity entity = new Entity();
 entity.Location = location;
 entity.IsMine = isMine;
 entity.Type = type;
@@ -3022,6 +2997,54 @@ unchecked
 {
 return (x * 397) ^ y; 
 }
+}
+}
+}
+
+namespace GameSolution.Entities
+{
+public class ProteinInfo
+{
+public int[] Proteins;
+public bool[] HasProteins;
+public bool HasHarvestProteins;
+public bool HasBasicProteins;
+public bool HasTentacleProteins;
+public bool HasSporerProteins;
+public bool HasRootProteins;
+public bool[] HasManyProteins;
+public bool HasManyRootProteins;
+public bool HasManyTentacleProteins;
+public bool HasManySporerProteins;
+public bool HasAtLeastTwoMany;
+public bool IsHarvestingRootProteins;
+public bool IsHarvestingTentacleProteins;
+public bool IsHarvestingSporerProteins;
+public bool IsHarvestingBasicProteins;
+public bool IsHarvestingHarvesterProteins;
+public bool[] IsHarvestingProteins;
+public ProteinInfo(int[] proteins, Board board, bool isMine)
+{
+Proteins = proteins;
+HasProteins = proteins.Select(p => p > 0).ToArray();
+HasHarvestProteins = HasProteins[2] && HasProteins[3];
+HasBasicProteins = HasProteins[0];
+HasTentacleProteins = HasProteins[1] && HasProteins[2];
+HasSporerProteins = HasProteins[1] && HasProteins[3];
+HasRootProteins = HasProteins.All(m => m);
+HasManyProteins = proteins.Select(p => p > 10).ToArray();
+HasManyRootProteins = HasManyProteins.All(m => m);
+HasManyTentacleProteins = HasManyProteins[1] && HasManyProteins[2];
+HasManySporerProteins = HasManyProteins[1] && HasManyProteins[3];
+HasAtLeastTwoMany = HasManyProteins.Count(value => value) > 1;
+int[] harvestingProteins = new int[4];
+board.Harvest(isMine, harvestingProteins);
+IsHarvestingProteins = harvestingProteins.Select(p => p > 0).ToArray();
+IsHarvestingHarvesterProteins = IsHarvestingProteins[2] && IsHarvestingProteins[3];
+IsHarvestingBasicProteins = IsHarvestingProteins[0];
+IsHarvestingTentacleProteins = IsHarvestingProteins[1] && IsHarvestingProteins[2];
+IsHarvestingSporerProteins = IsHarvestingProteins[1] && IsHarvestingProteins[3];
+IsHarvestingRootProteins = IsHarvestingProteins[0] && IsHarvestingProteins[1] && IsHarvestingProteins[2] && IsHarvestingProteins[3];
 }
 }
 }
