@@ -81,26 +81,10 @@ namespace UnitTest.Algorithms
             int numberOfClones = 1000000;
             for (int i = 0; i < numberOfClones; i++)
             {
-                using (IGameState obj = state.Clone()) ;
+                IGameState obj = state.Clone();
             }
             watch.Stop();
             Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds / (double)numberOfClones}");
         }
-
-        [Fact]
-        public void RunManyClones2()
-        {
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            int numberOfClones = 1000000;
-            for (int i = 0; i < numberOfClones; i++)
-            {
-                state.Clone2();
-            }
-            watch.Stop();
-
-            Console.Error.WriteLine($"Elapsed ms per clone: {watch.ElapsedMilliseconds / (double)numberOfClones}");
-        }
-
     }
 }

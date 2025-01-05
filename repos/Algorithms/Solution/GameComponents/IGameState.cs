@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 
 namespace Algorithms.GameComponent
 {
-    public interface IGameState : IDisposable
+    public interface IGameState
     {
         /// <summary>
         /// Retrieve the possible moves

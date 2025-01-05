@@ -74,8 +74,8 @@ namespace Algorithms.Trees
                 {
                     for (int i = 0; i < numRollouts; i++)
                     {
-                        using (IGameState clonedState = childNode.state.Clone())
-                            winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
+                        IGameState clonedState = childNode.state.Clone();
+                        winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
                         if (!winner.HasValue)
                         {
                             break;//We simulated a game, but it didn't end so we are out of time...

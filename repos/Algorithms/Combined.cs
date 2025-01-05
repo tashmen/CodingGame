@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace Algorithms.GameComponent
 {
-public interface IGameState : IDisposable
+public interface IGameState
 {
 
 
@@ -447,7 +447,7 @@ return shortest;
 
 
 
-public IList<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
+public List<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
 {
 DistancePath paths = Paths[startNodeId, endNodeId];
 if (paths == null)
@@ -1521,10 +1521,6 @@ node.parent = parent;
 return node;
 }
 
-~GameTreeNode()
-{
-state.Dispose();
-}
 public GameTreeNode GetChild(int index)
 {
 return children[index];
@@ -1710,7 +1706,7 @@ else
 {
 for (int i = 0; i < numRollouts; i++)
 {
-using (IGameState clonedState = childNode.state.Clone())
+IGameState clonedState = childNode.state.Clone();
 winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
 if (!winner.HasValue)
 {

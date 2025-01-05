@@ -161,7 +161,7 @@ namespace Algorithms.Graph
         /// <param name="endNodeId">End node id</param>
         /// <returns>The full path from start to end</returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public IList<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
+        public List<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
         {
             DistancePath paths = Paths[startNodeId, endNodeId];
             if (paths == null)

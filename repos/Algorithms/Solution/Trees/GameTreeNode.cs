@@ -61,10 +61,6 @@ namespace Algorithms.Trees
             }
             children.Clear();
         }*/
-        ~GameTreeNode()
-        {
-            state.Dispose();
-        }
 
         public GameTreeNode GetChild(int index)
         {
