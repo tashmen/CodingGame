@@ -86,7 +86,7 @@ class Player
             }
             else
             {
-                move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 8, 20);
+                move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 20 : 970, -1, 20);
                 //move = ((List<Move>)gameState.GetPossibleMoves(true))[0];
                 Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
 

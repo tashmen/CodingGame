@@ -1,12 +1,11 @@
 ﻿using Algorithms.GameComponent;
-using Algorithms.Utility;
 using GameSolution.Entities;
 using System.Collections;
 using System.Diagnostics;
 
 namespace GameSolution.Game
 {
-    public class GameState : PooledObject<GameState>, IGameState
+    public class GameState : IGameState
     {
         public static int MaxTurns = 100;
 
@@ -19,11 +18,6 @@ namespace GameSolution.Game
         public Move? maxMove;
         public Move? minMove;
 
-        static GameState()
-        {
-            SetInitialCapacity(20000);
-        }
-
         public GameState()
         {
             Turn = 0;
@@ -33,13 +27,6 @@ namespace GameSolution.Game
             minMove = null;
             _myMoves = new List<Move>();
             _oppMoves = new List<Move>();
-        }
-
-        protected override void Reset()
-        {
-            Board.Dispose();
-            _myMoves.Clear();
-            _oppMoves.Clear();
         }
 
         private GameState CopyFrom(GameState state)
@@ -136,7 +123,7 @@ namespace GameSolution.Game
 
         public IGameState Clone()
         {
-            GameState cleanState = Get();
+            GameState cleanState = new GameState();
             cleanState.CopyFrom(this);
             return cleanState;
         }

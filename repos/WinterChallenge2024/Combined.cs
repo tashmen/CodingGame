@@ -2,7 +2,6 @@
 using Algorithms.GameComponent;
 using Algorithms.Graph;
 using Algorithms.Trees;
-using Algorithms.Utility;
 using GameSolution.Entities;
 using GameSolution.Game;
 using static Algorithms.Graph.Graph;
@@ -11,8 +10,11 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
+using System.Threading.Tasks;
 
 
 class Player
@@ -87,7 +89,7 @@ move.SetActions(moveActions);
 }
 else
 {
-move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 8, 20);
+move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 20 : 970, -1, 20);
 
 Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
 if (!submit)
@@ -109,55 +111,19 @@ move.Output();
 }
 }
 
-
-
 namespace Algorithms.GameComponent
 {
-public interface IGameState : IDisposable
+public interface IGameState
 {
-
-
-
-
-
 IList GetPossibleMoves(bool isMax);
-
-
-
-
-
 void ApplyMove(object move, bool isMax);
-
-
-
-
-
 object GetMove(bool isMax);
-
-
-
-
 IGameState Clone();
-
-
-
-
 double? GetWinner();
-
-
-
-
-
 bool Equals(IGameState state);
-
-
-
-
-
 double Evaluate(bool isMax);
 }
 }
-
 namespace Algorithms.Graph
 {
 public class Graph
@@ -265,7 +231,7 @@ INode shortest = Nodes[paths.Paths.First().EndNodeId];
 Console.Error.WriteLine("|||Shortest: " + shortest + " from: " + startNode.Id + " to: " + endNode.Id);
 return shortest;
 }
-public IList<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
+public List<ILink> GetShortestPathAll(int startNodeId, int endNodeId)
 {
 DistancePath paths = Paths[startNodeId, endNodeId];
 if (paths == null)
@@ -591,10 +557,6 @@ node.isMax = isMax;
 node.parent = parent;
 return node;
 }
-~GameTreeNode()
-{
-state.Dispose();
-}
 public GameTreeNode GetChild(int index)
 {
 return children[index];
@@ -770,7 +732,7 @@ else
 {
 for (int i = 0; i < numRollouts; i++)
 {
-using (IGameState clonedState = childNode.state.Clone())
+IGameState clonedState = childNode.state.Clone();
 winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
 if (!winner.HasValue)
 {
@@ -1021,7 +983,6 @@ return childNode;
 }
 }
 }
-
 namespace Algorithms.Utility
 {
 public static class BitFunctions
@@ -1057,7 +1018,6 @@ return (long)1 << index;
 }
 }
 }
-
 namespace Algorithms.Utility
 {
 public class ObjectPool<T> where T : PooledObject<T>, new()
@@ -1132,7 +1092,7 @@ _pool.Return((T)this);
 
 namespace GameSolution.Entities
 {
-public class Board : PooledObject<Board>
+public class Board
 {
 public int Width;
 public int Height;
@@ -1158,10 +1118,6 @@ private Dictionary<string, bool?> _harvestCache = new Dictionary<string, bool?>(
 private Dictionary<string, List<MoveAction>> _moveActionCache = new Dictionary<string, List<MoveAction>>();
 private const int _maxGrowMoves = 7;
 public static OrganDirection[] PossibleDirections = new OrganDirection[] { OrganDirection.North, OrganDirection.South, OrganDirection.East, OrganDirection.West };
-static Board()
-{
-SetInitialCapacity(20000);
-}
 public Board()
 {
 }
@@ -1172,11 +1128,6 @@ Height = height;
 Entities = new Entity[Width * Height];
 Graph = new Graph();
 InitializeBoard();
-}
-protected override void Reset()
-{
-
-UpdateBoard();
 }
 public Board CopyFrom(Board board)
 {
@@ -1589,41 +1540,37 @@ continue;
 bool? isHarvesting = IsHarvesting(location, isMine);
 MoveAction sporeMove = MoveAction.CreateSpore(sporer.OrganId, location);
 moveActions.Add(sporeMove);
-if (!(isHarvesting.HasValue && isHarvesting.Value) && IsHarvestExactly2spaces(location))
+if (!(isHarvesting.HasValue && isHarvesting.Value) && proteinInfo.HasHarvestable && IsHarvestExactly2spaces(location, proteinInfo.ToHarvestEntities))
 {
 sporeMove.Score = -1000;
 }
 else
 {
-if (proteinInfo.hasHarvestable)
+if (proteinInfo.HasHarvestable)
 {
 double minValue = 99999;
-for (int i = 0; i < proteinInfo.toHarvestEntities.Length; i++)
+for (int i = 0; i < proteinInfo.ToHarvestEntities.Length; i++)
 {
-double pathDistance = Graph.GetShortestPathDistance(proteinInfo.toHarvestEntities[i].Location.index, sporeMove.Location.index);
+double pathDistance = Graph.GetShortestPathDistance(proteinInfo.ToHarvestEntities[i].Location.index, sporeMove.Location.index);
 if (minValue > pathDistance)
 minValue = pathDistance;
 }
 sporeMove.Score = minValue - 29;
-if (proteinInfo.IsHarvestingProteins[0])
-sporeMove.Score -= 100;
+
 }
 else
 sporeMove.Score = 1000;
 }
 if (proteinInfo.HasManyRootProteins || proteinInfo.IsHarvestingRootProteins)
 {
-sporeMove.Score -= 2000;
+sporeMove.Score -= 500;
 }
 }
 else
 {
 break;
 }
-if (moveActions.Count > 2)
-{
-break;
-}
+
 }
 }
 return moveActions;
@@ -1728,6 +1675,10 @@ if (proteinInfo.IsHarvestingSporerProteins)
 {
 sporerAction.Score -= 100;
 }
+if (proteinInfo.Proteins[3] + proteinInfo.HarvestingProteins[3] < 2)
+{
+sporerAction.Score += 300;
+}
 Point2d location = locationNeighbor.point;
 bool isOpen = true;
 for (int i = 0; i < 1; i++)
@@ -1738,7 +1689,7 @@ if (!ValidateLocation(location) || !IsOpenSpace(location.index, isMine))
 isOpen = false;
 break;
 }
-location = GetNextLocation(location, locationNeighbor.direction);
+
 }
 if (isOpen)
 {
@@ -1846,12 +1797,12 @@ if (IsOpenSpace(locationNeighbor.point.index, isMine))
 {
 MoveAction moveAction = MoveAction.CreateGrow(entity.OrganId, locationNeighbor.point, EntityType.NONE, entity.OrganRootId);
 moveAction.Score = 0;
-if (proteinInfo.hasHarvestable)
+if (proteinInfo.HasHarvestable)
 {
 double minValue = 99999;
-for (int i = 0; i < proteinInfo.toHarvestEntities.Length; i++)
+for (int i = 0; i < proteinInfo.ToHarvestEntities.Length; i++)
 {
-double distance = Graph.GetShortestPathDistance(proteinInfo.toHarvestEntities[i].Location.index, moveAction.Location.index);
+double distance = Graph.GetShortestPathDistance(proteinInfo.ToHarvestEntities[i].Location.index, moveAction.Location.index);
 if (minValue > distance)
 minValue = distance;
 }
@@ -1869,7 +1820,7 @@ if (GetEntity(locationNeighbor.point.index, out Entity harvestEntity) && !protei
 moveAction.Score -= 1000;
 }
 bool isOppIn3Spaces = IsOpponentClose(moveAction.Location, isMine);
-if (isHarvesting.Value && !isOppIn3Spaces)
+if (!isOppIn3Spaces)
 {
 if (proteinInfo.HarvestingProteins[harvestEntity.Type - EntityType.A] <= 1)
 moveAction.Score += 1000;
@@ -1910,10 +1861,7 @@ moveAction.Score -= 100;
 }
 else
 moveAction.Score -= 30;
-if (proteinInfo.IsHarvestingBasicProteins)
-{
-moveAction.Score -= 100;
-}
+
 moveActions.Add(moveAction);
 }
 
@@ -2035,9 +1983,9 @@ return OrganDirection.East;
 }
 throw new Exception("No direction given");
 }
-public bool IsHarvestExactly2spaces(Point2d location)
+public bool IsHarvestExactly2spaces(Point2d location, Entity[] toHarvestEntities)
 {
-Entity[] harvestEntities = GetHarvestableEntities();
+Entity[] harvestEntities = toHarvestEntities;
 foreach (Entity entity in harvestEntities)
 {
 if (location.Equals(entity.Location))
@@ -2058,6 +2006,7 @@ if (!_locationCheckCache.TryGetValue(key, out bool result))
 Entity[] oppEntities = GetEntities(!isMine);
 foreach (Entity oppEntity in oppEntities)
 {
+bool shouldContinue = false;
 Graph.GetShortest(location.index, oppEntity.Location.index, out DistancePath distancePath);
 double distance = distancePath.Distance;
 if (distance <= 4)
@@ -2067,9 +2016,12 @@ foreach (ILink link in distancePath.Paths)
 {
 if (!IsOpponentOrOpenSpace(link.EndNodeId, isMine))
 {
+shouldContinue = true;
+break;
+}
+}
+if (shouldContinue)
 continue;
-}
-}
 result = true;
 _locationCheckCache[key] = result;
 return result;
@@ -2438,7 +2390,7 @@ CalculatePathsAndNeighbors();
 }
 public Board Clone()
 {
-Board cleanState = Get();
+Board cleanState = new Board();
 cleanState.CopyFrom(this);
 return cleanState;
 }
@@ -3036,8 +2988,8 @@ public bool IsHarvestingSporerProteins;
 public bool IsHarvestingBasicProteins;
 public bool IsHarvestingHarvesterProteins;
 public bool[] IsHarvestingProteins;
-public bool hasHarvestable;
-public Entity[] toHarvestEntities = null;
+public bool HasHarvestable;
+public Entity[] ToHarvestEntities = null;
 public ProteinInfo(int[] proteins, Board board, bool isMine)
 {
 Proteins = proteins;
@@ -3064,13 +3016,13 @@ Entity[] harvestableEntities = board.GetHarvestableEntities();
 Entity[] harvestingEntities = board.GetHarvestedEntities(isMine);
 HashSet<EntityType> harvestableTypes = harvestableEntities.Select(e => e.Type).ToHashSet();
 HashSet<EntityType> harvestedTypes = harvestingEntities.Select(e => e.Type).ToHashSet();
-hasHarvestable = true;
+HasHarvestable = true;
 if (harvestedTypes.Count < harvestableTypes.Count)
 {
-toHarvestEntities = harvestableEntities.Where(e => !harvestedTypes.Contains(e.Type)).ToArray();
+ToHarvestEntities = harvestableEntities.Where(e => !harvestedTypes.Contains(e.Type)).ToArray();
 }
 else
-hasHarvestable = false;
+HasHarvestable = false;
 }
 }
 }
@@ -3095,7 +3047,7 @@ return move;
 
 namespace GameSolution.Game
 {
-public class GameState : PooledObject<GameState>, IGameState
+public class GameState : IGameState
 {
 public static int MaxTurns = 100;
 public Board Board;
@@ -3104,10 +3056,6 @@ public int[] MyProtein;
 public int[] OppProtein;
 public Move? maxMove;
 public Move? minMove;
-static GameState()
-{
-SetInitialCapacity(20000);
-}
 public GameState()
 {
 Turn = 0;
@@ -3117,12 +3065,6 @@ maxMove = null;
 minMove = null;
 _myMoves = new List<Move>();
 _oppMoves = new List<Move>();
-}
-protected override void Reset()
-{
-Board.Dispose();
-_myMoves.Clear();
-_oppMoves.Clear();
 }
 private GameState CopyFrom(GameState state)
 {
@@ -3208,7 +3150,7 @@ throw new Exception("Invalid move played; proteins can't be negative");
 }
 public IGameState Clone()
 {
-GameState cleanState = Get();
+GameState cleanState = new GameState();
 cleanState.CopyFrom(this);
 return cleanState;
 }

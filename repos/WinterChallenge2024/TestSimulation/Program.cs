@@ -15,6 +15,9 @@ namespace TestSimulation
             MonteCarloTreeSearch oppSearch = new MonteCarloTreeSearch(true, MonteCarloTreeSearch.SearchStrategy.Sequential, mathLogCacheSize: 50000);
             Stopwatch watch = new Stopwatch();
 
+            //Minimax myMinimaxSearch = new Minimax();
+            //Minimax oppMinimaxSearch = new Minimax();
+
             do
             {
                 //GC.Collect();
@@ -24,8 +27,16 @@ namespace TestSimulation
                 //maxTime = 6000;
                 watch.Reset();
                 watch.Start();
+
+
                 search.SetState(game, true, false);
-                Move move = (Move)search.GetNextMove(watch, simulationTime, 4, 1);
+                Move move = (Move)search.GetNextMove(watch, simulationTime, -1, 20);
+
+                /*
+                myMinimaxSearch.SetState(game, true, false);
+                Move move = (Move)myMinimaxSearch.GetNextMove(watch, simulationTime, -1);
+                */
+
                 watch.Stop();
                 Console.Error.WriteLine($"Elapsed: {watch.ElapsedMilliseconds}");
                 if (watch.ElapsedMilliseconds > maxTime)
@@ -37,8 +48,17 @@ namespace TestSimulation
 
                 watch.Reset();
                 watch.Start();
+
+
                 oppSearch.SetState(game, false, false);
-                move = (Move)oppSearch.GetNextMove(watch, simulationTime, 4, 1);
+                move = (Move)oppSearch.GetNextMove(watch, simulationTime, -1, 20);
+
+                /*
+                oppMinimaxSearch.SetState(game, false, false);
+                move = (Move)oppMinimaxSearch.GetNextMove(watch, simulationTime, -1);
+                */
+
+
                 watch.Stop();
                 Console.Error.WriteLine($"Elapsed: {watch.ElapsedMilliseconds}");
                 if (watch.ElapsedMilliseconds > maxTime)

@@ -23,8 +23,8 @@
         public bool IsHarvestingBasicProteins;
         public bool IsHarvestingHarvesterProteins;
         public bool[] IsHarvestingProteins;
-        public bool hasHarvestable;
-        public Entity[] toHarvestEntities = null;
+        public bool HasHarvestable;
+        public Entity[] ToHarvestEntities = null;
         public ProteinInfo(int[] proteins, Board board, bool isMine)
         {
             Proteins = proteins;
@@ -55,13 +55,13 @@
 
             HashSet<EntityType> harvestableTypes = harvestableEntities.Select(e => e.Type).ToHashSet();
             HashSet<EntityType> harvestedTypes = harvestingEntities.Select(e => e.Type).ToHashSet();
-            hasHarvestable = true;
+            HasHarvestable = true;
             if (harvestedTypes.Count < harvestableTypes.Count)
             {
-                toHarvestEntities = harvestableEntities.Where(e => !harvestedTypes.Contains(e.Type)).ToArray();
+                ToHarvestEntities = harvestableEntities.Where(e => !harvestedTypes.Contains(e.Type)).ToArray();
             }
             else
-                hasHarvestable = false;
+                HasHarvestable = false;
 
         }
     }
