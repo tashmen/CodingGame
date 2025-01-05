@@ -1,7 +1,6 @@
 ﻿using Algorithms.Trees;
 using GameSolution.Entities;
 using GameSolution.Game;
-using System;
 using System.Diagnostics;
 
 /**
@@ -13,7 +12,7 @@ class Player
     static void Main(string[] args)
     {
         bool submit = false;
-        bool showMove = false;
+        bool showMove = true;
         MonteCarloTreeSearch search = new MonteCarloTreeSearch(!submit, MonteCarloTreeSearch.SearchStrategy.Sequential, mathLogCacheSize: 5000);
         GameState gameState = new GameState();
 
@@ -31,7 +30,9 @@ class Player
         // game loop
         while (true)
         {
+            Console.Error.WriteLine("Waiting on input");
             int entityCount = int.Parse(Console.ReadLine());
+            Console.Error.WriteLine("Input received");
             Entity[] entities = new Entity[entityCount];
             for (int i = 0; i < entityCount; i++)
             {
@@ -85,7 +86,8 @@ class Player
             }
             else
             {
-                move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 4, 1);
+                move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 45 : 970, 8, 20);
+                //move = ((List<Move>)gameState.GetPossibleMoves(true))[0];
                 Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
 
                 if (!submit)
@@ -101,6 +103,7 @@ class Player
             Console.Error.WriteLine($"after print move ms: {watch.ElapsedMilliseconds}");
             watch.Stop();
             watch.Reset();
+            Console.Error.WriteLine($"Required action count: {requiredActionsCount}");
             move.Output();
         }
     }

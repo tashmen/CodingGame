@@ -1,5 +1,4 @@
-﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Running;
 using Microsoft.CodeAnalysis;
 
 public class LoopPerformance
@@ -120,6 +119,7 @@ public class LoopPerformance
     }
     */
 
+    /*
     [Benchmark]
     public void ForLoopVsLinq()
     {
@@ -138,6 +138,7 @@ public class LoopPerformance
             entities[i] = _tempHolder[i];
         }
     }
+    */
 
     /*
     [Benchmark]
@@ -162,12 +163,128 @@ public class LoopPerformance
         int[] entities = array.Where(e => e == 6).ToArray();
     }
     */
-}
 
-class Program
-{
-    static void Main(string[] args)
+    /*
+    [GlobalSetup]
+    public void Warmup()
     {
-        BenchmarkRunner.Run<LoopPerformance>();
+        Board2 board = new Board2();
+
+    }
+
+    [Benchmark]
+    public void PooledObject()
+    {
+
+        for (int i = 0; i < 1000000; i++)
+        {
+            using (Board2 board = Board2.Get())
+            {
+
+            }
+        }
+
+    }
+
+    [Benchmark]
+    public void NonPooledObject()
+    {
+
+        for (int i = 0; i < 1000000; i++)
+        {
+            _ = new Board3();
+        }
+
+    }
+    */
+
+    /*
+    [GlobalSetup]
+    public void Warmup()
+    {
+        Entity2 board = new Entity2();
+
+    }
+
+    [Benchmark]
+    public void PooledEntityObject()
+    {
+
+        for (int i = 0; i < 1000000; i++)
+        {
+            using (Entity2 board = Entity2.Get())
+            {
+
+            }
+        }
+
+    }
+
+    [Benchmark]
+    public void NonPooledEntityObject()
+    {
+
+        for (int i = 0; i < 1000000; i++)
+        {
+            _ = new Entity3();
+        }
+    }
+    */
+
+
+    /*
+    [GlobalSetup]
+    public void Warmup()
+    {
+        Board2 b = new Board2();
+        GameState2 g = new GameState2();
+    }
+    */
+
+    /*
+    [Benchmark]
+    public void PooledGameStateObject()
+    {
+
+        for (int i = 0; i < 1000000; i++)
+        {
+            using (GameState2 board = GameState2.Get())
+            {
+
+            }
+        }
+
+    }
+    */
+
+    /*
+    [Benchmark]
+    public void NonPooledGameStateObject_NonPooledBoard()
+    {
+
+        for (int i = 0; i < 1000000; i++)
+        {
+            _ = new GameState3();
+        }
+    }
+    */
+
+    /*
+    [Benchmark]
+    public void NonPooledGameState_PooledBoard()
+    {
+        for (int i = 0; i < 1000000; i++)
+        {
+            (new GameState4()).Dispose();
+        }
+    }
+    */
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            BenchmarkRunner.Run<LoopPerformance>();
+        }
     }
 }

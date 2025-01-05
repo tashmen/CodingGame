@@ -1,17 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-     <OutputType>Exe</OutputType>
+     <OutputType>Library</OutputType>
      <TargetFramework>net6.0</TargetFramework>
      <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-     <Folder Include="Algorithms\" />
+    <ProjectReference Include="..\GameSolutionInternal\GameSolutionInternal.csproj" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-     <Exec Command="C:\Users\jnorc\source\repos\SourceCombiner\SourceCombine\bin\Release\SourceCombine.exe $(ProjectPath) $(SolutionDir)\Combined.cs false $(ProjectDir)" />
+     <Exec Command="C:\Users\jnorc\source\repos\SourceCombiner\SourceCombine\bin\Release\SourceCombine.exe $(SolutionDir)\GameSolutionInternal\GameSolutionInternal.csproj $(SolutionDir)\Combined.cs false $(SolutionDir)\GameSolutionInternal" />
   </Target>
 
 </Project>

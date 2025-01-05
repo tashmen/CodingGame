@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 
 namespace GameSolution.Entities
 {
@@ -222,6 +220,7 @@ namespace GameSolution.Entities
         {
             foreach (MoveAction action in Actions)
             {
+                Console.Error.WriteLine(action.ToString());
                 Console.WriteLine(action.ToString());
             }
         }

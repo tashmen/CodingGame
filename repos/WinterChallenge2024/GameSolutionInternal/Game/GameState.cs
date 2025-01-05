@@ -1,11 +1,8 @@
 ﻿using Algorithms.GameComponent;
 using Algorithms.Utility;
 using GameSolution.Entities;
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace GameSolution.Game
 {
@@ -195,10 +192,15 @@ namespace GameSolution.Game
 
             double proteinValue = (myHarvestProteinsSum + myProteinBoost - oppProteinBoost - oppHarvestProteinsSum) / (myHarvestProteinsSum + oppHarvestProteinsSum + 1 + myProteinBoost + oppProteinBoost);
 
-            int myEntityLife = Board.GetEntityLifeCount(true);
-            int oppEntityLife = Board.GetEntityLifeCount(false);
+            int myEntityLife = myEntities > oppEntities ? Board.GetEntityLifeCount(true) : 0;
+            int oppEntityLife = myEntities < oppEntities ? Board.GetEntityLifeCount(false) : 0;
             int totalLife = Board.GetInitialOpenSpacesCount();
-            double lifeScore = (myEntityLife - oppEntityLife) / (double)totalLife;
+            double lifeScore = 0;
+            double lifeDifference = (myEntityLife - oppEntityLife);
+            //if (lifeDifference > 0)
+            {
+                lifeScore = lifeDifference / totalLife;
+            }
 
             int myProtein = MyProtein.Sum();
             int oppProtein = OppProtein.Sum();
@@ -292,7 +294,7 @@ namespace GameSolution.Game
             int myEntitiesCount = Board.GetMyEntityCount();
             int oppEntitiesCount = Board.GetOppEntityCount();
 
-            if (Turn < 100)
+            if (Turn <= 100)
             {
                 if (myEntitiesCount == 0)
                     return CheckGameEnd(myEntitiesCount, oppEntitiesCount);
@@ -321,7 +323,7 @@ namespace GameSolution.Game
 
             }
 
-            if (Turn >= 100 || Board.IsFull())
+            if (Turn > 100 || Board.IsFull())
             {
                 return CheckGameEnd(myEntitiesCount, oppEntitiesCount);
             }

@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace GameSolution.Entities
+﻿namespace GameSolution.Entities
 {
     public class ProteinInfo
     {
@@ -18,12 +16,15 @@ namespace GameSolution.Entities
         public bool HasManySporerProteins;
         public bool HasAtLeastTwoMany;
 
+        public int[] HarvestingProteins;
         public bool IsHarvestingRootProteins;
         public bool IsHarvestingTentacleProteins;
         public bool IsHarvestingSporerProteins;
         public bool IsHarvestingBasicProteins;
         public bool IsHarvestingHarvesterProteins;
         public bool[] IsHarvestingProteins;
+        public bool hasHarvestable;
+        public Entity[] toHarvestEntities = null;
         public ProteinInfo(int[] proteins, Board board, bool isMine)
         {
             Proteins = proteins;
@@ -40,14 +41,27 @@ namespace GameSolution.Entities
             HasManySporerProteins = HasManyProteins[1] && HasManyProteins[3];
             HasAtLeastTwoMany = HasManyProteins.Count(value => value) > 1;
 
-            int[] harvestingProteins = new int[4];
-            board.Harvest(isMine, harvestingProteins);
-            IsHarvestingProteins = harvestingProteins.Select(p => p > 0).ToArray();
+            HarvestingProteins = new int[4];
+            board.Harvest(isMine, HarvestingProteins);
+            IsHarvestingProteins = HarvestingProteins.Select(p => p > 0).ToArray();
             IsHarvestingHarvesterProteins = IsHarvestingProteins[2] && IsHarvestingProteins[3];
             IsHarvestingBasicProteins = IsHarvestingProteins[0];
             IsHarvestingTentacleProteins = IsHarvestingProteins[1] && IsHarvestingProteins[2];
             IsHarvestingSporerProteins = IsHarvestingProteins[1] && IsHarvestingProteins[3];
             IsHarvestingRootProteins = IsHarvestingProteins[0] && IsHarvestingProteins[1] && IsHarvestingProteins[2] && IsHarvestingProteins[3];
+
+            Entity[] harvestableEntities = board.GetHarvestableEntities();
+            Entity[] harvestingEntities = board.GetHarvestedEntities(isMine);
+
+            HashSet<EntityType> harvestableTypes = harvestableEntities.Select(e => e.Type).ToHashSet();
+            HashSet<EntityType> harvestedTypes = harvestingEntities.Select(e => e.Type).ToHashSet();
+            hasHarvestable = true;
+            if (harvestedTypes.Count < harvestableTypes.Count)
+            {
+                toHarvestEntities = harvestableEntities.Where(e => !harvestedTypes.Contains(e.Type)).ToArray();
+            }
+            else
+                hasHarvestable = false;
 
         }
     }

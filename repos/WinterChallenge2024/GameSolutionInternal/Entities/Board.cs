@@ -1,9 +1,6 @@
 ﻿using Algorithms.Graph;
 using Algorithms.Utility;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using static Algorithms.Graph.Graph;
 
@@ -25,7 +22,7 @@ namespace GameSolution.Entities
         private LocationNeighbor[][] _locationNeighbors = null;
         private string[,,] _keyCache;
         //First is by the number of organisms and second is by current organism number; general goal was to limit to a maximum expansion of 24 moves and then we take 10
-        const int _maxMovesTotal = 10;
+        const int _maxMovesTotal = 20;
         private static readonly int[,] _maxActionsPerOrganism = { { _maxMovesTotal, 0, 0, 0, 0 }, { 6, 4, 0, 0, 0 }, { 6, 2, 2, 0, 0 }, { 3, 2, 2, 2, 0 }, { 3, 2, 2, 2, 1 } };
         private static Stopwatch _watch = new Stopwatch();
 
@@ -258,10 +255,9 @@ namespace GameSolution.Entities
             {
                 List<MoveAction> moveActions = new List<MoveAction>();
 
-                bool sporeHasPriority = organismCount < 2 || proteinInfo.HasManyRootProteins || proteinInfo.IsHarvestingRootProteins;
-                if (proteinInfo.HasRootProteins && sporeHasPriority)
+                if (proteinInfo.HasRootProteins)
                 {
-                    AddSporeMoveActions(moveActions, root.OrganRootId, isMine, locationsTaken);
+                    AddSporeMoveActions(moveActions, root.OrganRootId, isMine, locationsTaken, proteinInfo);
                     if (debug)
                         Console.Error.WriteLine($"Spore: {root.OrganRootId}: " + string.Join('\n', moveActions));
                     if (moveActions.Count > 0)
@@ -275,25 +271,25 @@ namespace GameSolution.Entities
                     }
                 }
 
-                if (moveActions.Count <= 0 || !sporeHasPriority)
-                {
-                    AddGrowMoveActions(moveActions, root.OrganRootId, isMine, proteinInfo, locationsTaken, debug);
 
-                    if (moveActions.Count > 0)
+                AddGrowMoveActions(moveActions, root.OrganRootId, isMine, proteinInfo, locationsTaken, debug);
+
+                if (moveActions.Count > 0)
+                {
+                    moveActions = moveActions.OrderBy(m => m.Score).Take(_maxActionsPerOrganism[limitedRootEntities.Length - 1, i]).ToList();
+                    /*if (moveActions[0].Score < -100000)
                     {
-                        moveActions = moveActions.OrderBy(m => m.Score).Take(_maxActionsPerOrganism[limitedRootEntities.Length - 1, i]).ToList();
-                        if (moveActions[0].Score < -100000)
-                        {
-                            moveActions = moveActions.Where(m => m.Score < -100000).ToList();
-                            organismHasMoves[i] = true;
-                        }
-                        else if (moveActions[0].Score < 0)
-                        {
-                            moveActions = moveActions.Where(m => m.Score < 0).ToList();
-                            organismHasMoves[i] = true;
-                        }
+                        moveActions = moveActions.Where(m => m.Score < -100000).ToList();
+                        organismHasMoves[i] = true;
+                    }
+                    else*/
+                    if (moveActions[0].Score < 0)
+                    {
+                        moveActions = moveActions.Where(m => m.Score < 0).ToList();
+                        organismHasMoves[i] = true;
                     }
                 }
+
 
 
 
@@ -321,8 +317,7 @@ namespace GameSolution.Entities
 
                 if (_watch.ElapsedMilliseconds > 5)
                 {
-                    Console.Error.WriteLine($"Move generation took too long organism #: {i}");
-                    break;
+                    Console.Error.WriteLine($"Move generation took too long organism #: {i}, {_watch.ElapsedMilliseconds} ms");
                 }
             }
             _watch.Stop();
@@ -521,34 +516,56 @@ namespace GameSolution.Entities
         }
 
 
-        public List<MoveAction> AddSporeMoveActions(List<MoveAction> moveActions, int organRootId, bool isMine, HashSet<int> locationsTaken)
+        public List<MoveAction> AddSporeMoveActions(List<MoveAction> moveActions, int organRootId, bool isMine, HashSet<int> locationsTaken, ProteinInfo proteinInfo)
         {
             IEnumerable<Entity> sporers = GetSporerEntities(organRootId, isMine);
 
             foreach (Entity sporer in sporers)
             {
                 Point2d location = sporer.Location;
-                int distance = 0;
+                //int distance = 0;
                 while (true)
                 {
-                    distance++;
+                    //distance++;
                     location = GetNextLocation(location, sporer.OrganDirection);
                     if (ValidateLocation(location) && IsOpenSpace(location.index, isMine))
                     {
-                        if (distance <= 3 || locationsTaken.Contains(location.index))
+                        //we don't care about distance anymore; a spore location is still valid even if it's one space away.
+                        if (/*distance <= 3 || */locationsTaken.Contains(location.index))
                         {
                             continue;
                         }
                         bool? isHarvesting = IsHarvesting(location, isMine);
                         MoveAction sporeMove = MoveAction.CreateSpore(sporer.OrganId, location);
                         moveActions.Add(sporeMove);
+
                         if (!(isHarvesting.HasValue && isHarvesting.Value) && IsHarvestExactly2spaces(location))
                         {
                             sporeMove.Score = -1000;
                         }
                         else
                         {
-                            sporeMove.Score = 1000;
+                            if (proteinInfo.hasHarvestable)
+                            {
+                                double minValue = 99999;
+                                for (int i = 0; i < proteinInfo.toHarvestEntities.Length; i++)
+                                {
+                                    double pathDistance = Graph.GetShortestPathDistance(proteinInfo.toHarvestEntities[i].Location.index, sporeMove.Location.index);
+                                    if (minValue > pathDistance)
+                                        minValue = pathDistance;
+                                }
+                                sporeMove.Score = minValue - 29;//30 is a basic move action so make this override a basic action if it's closer.
+
+                                if (proteinInfo.IsHarvestingProteins[0])
+                                    sporeMove.Score -= 100;//another -100 for if we have A so that it takes priority over basic even with the A bonus.
+                            }
+                            else
+                                sporeMove.Score = 1000;
+                        }
+
+                        if (proteinInfo.HasManyRootProteins || proteinInfo.IsHarvestingRootProteins)
+                        {
+                            sporeMove.Score -= 2000;//move spores if we have the resources...
                         }
                     }
                     else
@@ -556,7 +573,7 @@ namespace GameSolution.Entities
                         break;
                     }
 
-                    if (moveActions.Count > 9)
+                    if (moveActions.Count > 2)
                     {
                         break;
                     }
@@ -592,7 +609,6 @@ namespace GameSolution.Entities
             if (moveActions.Count > 0 && _watch.ElapsedMilliseconds > 5)
             {
                 Console.Error.WriteLine($"Took too long to find Harvest Actions: {_watch.ElapsedMilliseconds}");
-                return moveActions;
             }
 
             List<MoveAction> tentacleActions = new List<MoveAction>();
@@ -607,7 +623,6 @@ namespace GameSolution.Entities
             if (moveActions.Count > 0 && _watch.ElapsedMilliseconds > 5)
             {
                 Console.Error.WriteLine($"Took too long to find Tentacle Actions: {_watch.ElapsedMilliseconds}");
-                return moveActions;
             }
 
             bool hasHarvestMove = harvestActions.Any(m => m.Score < 0);
@@ -645,7 +660,6 @@ namespace GameSolution.Entities
             if (moveActions.Count > 0 && _watch.ElapsedMilliseconds > 5)
             {
                 Console.Error.WriteLine($"Took too long to find Basic Actions: {_watch.ElapsedMilliseconds}");
-                return moveActions;
             }
 
             if (proteinInfo.HasSporerProteins)
@@ -658,8 +672,8 @@ namespace GameSolution.Entities
                     {
                         if (hasHarvestMove)
                             sporerAction.Score += 100;//Prefer harvest actions over sporers
-                        if (!proteinInfo.HasManyTentacleProteins && hasTentacleMove)
-                            sporerAction.Score += 100;//Prefer tentacle actions over sporers
+                        if (!proteinInfo.HasManyTentacleProteins && !proteinInfo.HasTentacleProteins && hasTentacleMove)
+                            sporerAction.Score += 100;//Prefer tentacle actions over sporers, but only if they weren't granted through having proteins
                     }
                     if (!proteinInfo.HasRootProteins)
                         sporerAction.Score += 100;
@@ -685,6 +699,7 @@ namespace GameSolution.Entities
                 List<MoveAction> sporerMoves = new List<MoveAction>();
                 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(growAction.Location))
                 {
+                    //Console.Error.WriteLine($"checking direction: {locationNeighbor.direction}");
                     MoveAction sporerAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.SPORER, growAction.OrganRootId, locationNeighbor.direction);
                     sporerAction.Score = growAction.Score;
 
@@ -693,17 +708,21 @@ namespace GameSolution.Entities
                         sporerAction.Score -= 100;
                     }
 
-                    Point2d location = growAction.Location;
+
+                    Point2d location = locationNeighbor.point;
                     bool isOpen = true;
-                    for (int i = 0; i < 4; i++)
+                    for (int i = 0; i < 1; i++)//As long as there is one valid space we are good to go.
                     {
-                        location = GetNextLocation(location, locationNeighbor.direction);
                         if (!ValidateLocation(location) || !IsOpenSpace(location.index, isMine))
                         {
+                            /*
+                            if (ValidateLocation(location))
+                                Console.Error.WriteLine($"Found something in the way on: {location.x}, {location.y}, grow location {growAction.Location.x}, {growAction.Location.y}, direction: {locationNeighbor.direction}");
+                            */
                             isOpen = false;
                             break;
                         }
-
+                        location = GetNextLocation(location, locationNeighbor.direction);
                     }
                     if (isOpen)
                     {
@@ -736,7 +755,7 @@ namespace GameSolution.Entities
             {
                 List<MoveAction> tentacleMoveActions = new List<MoveAction>();
                 //Could suggest the direction based on the shortest path.
-                bool isOppIn3Spaces = IsOpponentWithin3Spaces(growAction.Location, isMine);
+                bool isOppIn3Spaces = IsOpponentClose(growAction.Location, isMine);
                 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(growAction.Location))
                 {
                     MoveAction tentacleAction = MoveAction.CreateGrow(growAction.OrganId, growAction.Location, EntityType.TENTACLE, growAction.OrganRootId, locationNeighbor.direction);
@@ -806,22 +825,9 @@ namespace GameSolution.Entities
             if (!_moveActionCache.TryGetValue(key, out List<MoveAction> moveActions))
             {
                 Entity[] oppRootEntities = GetRootEntities(!isMine);
-                Entity[] harvestableEntities = GetHarvestableEntities();
-                Entity[] harvestingEntities = GetHarvestedEntities(isMine);
-                HashSet<EntityType> harvestedTypes = harvestingEntities.Select(e => e.Type).ToHashSet();
-
-
 
                 bool hasOppRoot = oppRootEntities.Length > 0;
-                bool hasHarvestable = true;
 
-                Entity[] toHarvestEntities = null;
-                if (harvestedTypes.Count < 4)
-                {
-                    toHarvestEntities = harvestableEntities.Where(e => !harvestedTypes.Contains(e.Type)).ToArray();
-                }
-                else
-                    hasHarvestable = false;
 
 
                 moveActions = new List<MoveAction>();
@@ -837,12 +843,12 @@ namespace GameSolution.Entities
                             {
                                 MoveAction moveAction = MoveAction.CreateGrow(entity.OrganId, locationNeighbor.point, EntityType.NONE, entity.OrganRootId);
                                 moveAction.Score = 0;
-                                if (hasHarvestable)
+                                if (proteinInfo.hasHarvestable)
                                 {
                                     double minValue = 99999;
-                                    for (int i = 0; i < toHarvestEntities.Length; i++)
+                                    for (int i = 0; i < proteinInfo.toHarvestEntities.Length; i++)
                                     {
-                                        double distance = Graph.GetShortestPathDistance(toHarvestEntities[i].Location.index, moveAction.Location.index);
+                                        double distance = Graph.GetShortestPathDistance(proteinInfo.toHarvestEntities[i].Location.index, moveAction.Location.index);
                                         if (minValue > distance)
                                             minValue = distance;
                                     }
@@ -860,10 +866,11 @@ namespace GameSolution.Entities
                                     {
                                         moveAction.Score -= 1000;//if we have no C/D then eat it.  We need C/D to build harvesters
                                     }
-                                    bool isOppIn3Spaces = IsOpponentWithin3Spaces(moveAction.Location, isMine);
+                                    bool isOppIn3Spaces = IsOpponentClose(moveAction.Location, isMine);
                                     if (isHarvesting.Value && !isOppIn3Spaces)
                                     {
-                                        moveAction.Score += 1000;
+                                        if (proteinInfo.HarvestingProteins[harvestEntity.Type - EntityType.A] <= 1)
+                                            moveAction.Score += 1000;
                                     }
 
                                     if (isOppIn3Spaces)
@@ -933,7 +940,7 @@ namespace GameSolution.Entities
 
             foreach (MoveAction growAction in growMoveActions)
             {
-                bool isOppIn3Spaces = IsOpponentWithin3Spaces(growAction.Location, isMine);
+                bool isOppIn3Spaces = IsOpponentClose(growAction.Location, isMine);
                 List<MoveAction> harvestActions = new List<MoveAction>();
                 foreach (LocationNeighbor locationNeighbor in GetLocationNeighbors(growAction.Location))
                 {
@@ -950,12 +957,19 @@ namespace GameSolution.Entities
                     if (IsHarvestSpace(locationNeighbor.point.index, out Entity harvest) && !proteinInfo.IsHarvestingProteins[harvest.Type - EntityType.A])
                     {
                         harvestAction.Score -= 500;
+
+                        if (IsHarvestSpace(growAction.Location.index, out Entity currentHarvestSpace) && proteinInfo.Proteins[currentHarvestSpace.Type - EntityType.A] > proteinInfo.Proteins[harvest.Type - EntityType.A])
+                        {
+                            harvestAction.Score -= 500;
+                        }
                     }
 
                     if (isHarvesting.HasValue && !isHarvesting.Value)
                     {
                         harvestAction.Score -= 500;
                     }
+
+
 
                     /* Just because we have harvester resources doesn't mean we should build them.  Tentacles or sporers would be better if we have too many resources.
                     if (proteinInfo.IsHarvestingHarvesterProteins)
@@ -1074,7 +1088,7 @@ namespace GameSolution.Entities
             return false;
         }
 
-        public bool IsOpponentWithin3Spaces(Point2d location, bool isMine)
+        public bool IsOpponentClose(Point2d location, bool isMine)
         {
             string key = GetKey(1, isMine, location.index);
             if (!_locationCheckCache.TryGetValue(key, out bool result))
@@ -1084,18 +1098,17 @@ namespace GameSolution.Entities
                 {
                     Graph.GetShortest(location.index, oppEntity.Location.index, out DistancePath distancePath);
                     double distance = distancePath.Distance;
-                    if (distance <= 3)
+                    if (distance <= 4)
                     {
-                        result = true;
                         //Follow the path and check if it's really open or if we are in the way.
                         foreach (ILink link in distancePath.Paths)
                         {
                             if (!IsOpponentOrOpenSpace(link.EndNodeId, isMine))
                             {
-                                result = false;
-                                break;
+                                continue;
                             }
                         }
+                        result = true;
                         _locationCheckCache[key] = result;
                         return result;
                     }
