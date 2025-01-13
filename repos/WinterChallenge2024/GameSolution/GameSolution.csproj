@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-     <Exec Command="C:\Users\jnorc\source\repos\SourceCombiner\SourceCombine\bin\Release\SourceCombine.exe $(SolutionDir)\GameSolutionInternal\GameSolutionInternal.csproj $(SolutionDir)\Combined.cs false $(SolutionDir)\GameSolutionInternal" />
+     <Exec Command="$(SolutionDir)\..\SourceCombiner\SourceCombine\bin\Release\SourceCombine.exe $(SolutionDir)\GameSolutionInternal\GameSolutionInternal.csproj $(SolutionDir)\Combined.cs false $(SolutionDir)\GameSolutionInternal" />
   </Target>
 
 </Project>

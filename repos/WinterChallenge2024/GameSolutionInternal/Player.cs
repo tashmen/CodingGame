@@ -13,7 +13,7 @@ class Player
     {
         bool submit = false;
         bool showMove = true;
-        MonteCarloTreeSearch search = new MonteCarloTreeSearch(!submit, MonteCarloTreeSearch.SearchStrategy.Sequential, mathLogCacheSize: 5000);
+        MonteCarloTreeSearch search = new MonteCarloTreeSearch(!submit, MonteCarloTreeSearch.SearchStrategy.Sequential, mathLogCacheSize: 500000);
         GameState gameState = new GameState();
 
         string[] inputs;
@@ -86,8 +86,8 @@ class Player
             }
             else
             {
-                move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 20 : 970, -1, 20);
-                //move = ((List<Move>)gameState.GetPossibleMoves(true))[0];
+                //move = (Move)search.GetNextMove(watch, gameState.Turn > 1 ? 20 : 970, 4, 1);
+                move = ((List<Move>)gameState.GetPossibleMoves(true))[0];
                 Console.Error.WriteLine($"after move ms: {watch.ElapsedMilliseconds}");
 
                 if (!submit)
