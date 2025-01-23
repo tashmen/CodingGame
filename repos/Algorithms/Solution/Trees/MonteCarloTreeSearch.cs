@@ -62,8 +62,6 @@ namespace Algorithms.Trees
                 }
                 object move = SelectMove(selectedNode);
                 GameTreeNode childNode = Expand(selectedNode, move);
-                if (watch.ElapsedMilliseconds >= timeLimit)
-                    break;
                 double? winner = childNode.GetWinner();
                 if (winner.HasValue)
                 {
@@ -75,7 +73,7 @@ namespace Algorithms.Trees
                     for (int i = 0; i < numRollouts; i++)
                     {
                         IGameState clonedState = childNode.state.Clone();
-                        winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
+                        winner = SimulateGame(clonedState, depth, childNode.isMax);
                         if (!winner.HasValue)
                         {
                             break;//We simulated a game, but it didn't end so we are out of time...
@@ -122,26 +120,15 @@ namespace Algorithms.Trees
             }
         }
 
-        private double? SimulateGame(IGameState state, Stopwatch watch, int timeLimit, int depth, bool isMax)
+        private double? SimulateGame(IGameState state, int depth, bool isMax)
         {
             double? winner;
             do
             {
-                if (watch.ElapsedMilliseconds >= timeLimit)
-                {
-                    return null;
-                }
-
                 object move = SelectMoveAtRandom(state, isMax);
                 state.ApplyMove(move, isMax);
-
                 depth--;
                 isMax = !isMax;
-
-                if (watch.ElapsedMilliseconds >= timeLimit)
-                {
-                    return null;
-                }
                 winner = state.GetWinner();
             }
             while (!winner.HasValue && depth != 0);

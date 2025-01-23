@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Algorithms.Genetic
+﻿namespace Algorithms.Genetic
 {
     /* Interface for the individuals within the population for a genetic algorithm */
     public interface Individual

@@ -68,7 +68,7 @@ namespace Algorithms.NeuralNetwork
                 neuronLayers[x] = new NeuronLayer(numNeurons[x], numInputs[x]);
                 totalNumWeightsInNetwork += numNeurons[x] * numInputs[x];
             }
-            setWeights(net.getWeights());
+            SetWeights(net.GetWeights());
             Fitness = 0;
         }
 
@@ -86,18 +86,18 @@ namespace Algorithms.NeuralNetwork
                 numInputs[x] = reader.ReadInt32();
             }
             nFirstInputs = numInputs[0];
-            neuronLayers=new NeuronLayer[numLayers];
+            neuronLayers = new NeuronLayer[numLayers];
             for (int x = 0; x < numLayers; x++)
             {
-                neuronLayers[x]=new NeuronLayer(numNeurons[x], numInputs[x]);
+                neuronLayers[x] = new NeuronLayer(numNeurons[x], numInputs[x]);
                 totalNumWeightsInNetwork += numNeurons[x] * numInputs[x];
             }
-            double[] weights = new double[getNumWeights()];
-            for(int i = 0; i<weights.Length; i++)
+            double[] weights = new double[GetNumWeights()];
+            for (int i = 0; i < weights.Length; i++)
             {
                 weights[i] = reader.ReadDouble();
             }
-            setWeights(weights);
+            SetWeights(weights);
             Fitness = reader.ReadDouble();
         }
 
@@ -112,8 +112,8 @@ namespace Algorithms.NeuralNetwork
             {
                 writer.Write(numInputs[x]);
             }
-            double[] weights = getWeights();
-            foreach(double weight in weights)
+            double[] weights = GetWeights();
+            foreach (double weight in weights)
             {
                 writer.Write(weight);
             }
@@ -124,7 +124,7 @@ namespace Algorithms.NeuralNetwork
           * @param location- The specified layer that is to be retrieved
           * @return The NeuronLayer at location
           * */
-        public NeuronLayer getNeuronLayer(int location)
+        public NeuronLayer GetNeuronLayer(int location)
         {
             return neuronLayers[location];
         }
@@ -132,7 +132,7 @@ namespace Algorithms.NeuralNetwork
         /**Gets the number of layers within the network
           * @return The number of layers
           * */
-        public int getNumLayers()
+        public int GetNumLayers()
         {
             return numLayers;
         }
@@ -140,7 +140,7 @@ namespace Algorithms.NeuralNetwork
         /**Gets the number of neurons within the network
           * @return an array that describes how many neurons there are in each layer
           * */
-        public int[] getNumNeurons()
+        public int[] GetNumNeurons()
         {
             return numNeurons;
         }
@@ -148,7 +148,7 @@ namespace Algorithms.NeuralNetwork
         /**Gets the number of inputs going into each layer within the network
           * @return an array that describes the number of inputs going into each layer
           * */
-        public int[] getNumInputs()
+        public int[] GetNumInputs()
         {
             return numInputs;
         }
@@ -156,7 +156,7 @@ namespace Algorithms.NeuralNetwork
         /**Gets the total number of weights within the network
           * @return the total number of weights
           * */
-        public int getNumWeights()
+        public int GetNumWeights()
         {
             return totalNumWeightsInNetwork;
         }
@@ -165,14 +165,14 @@ namespace Algorithms.NeuralNetwork
           * to pull out all of the weights and puts them into a single array.
           * @return an array that contains the value of all of the weights
           * */
-        public double[] getWeights()
+        public double[] GetWeights()
         {
             double[] weights = new double[totalNumWeightsInNetwork];
             double[] layerWeights;
             int count = 0;
-            for (int x = 0; x < getNumLayers(); x++)
+            for (int x = 0; x < GetNumLayers(); x++)
             {
-                layerWeights = getNeuronLayer(x).getWeights();
+                layerWeights = GetNeuronLayer(x).GetWeights();
                 for (int y = 0; y < layerWeights.Count(); y++)
                 {
                     weights[count] = layerWeights[y];
@@ -184,9 +184,9 @@ namespace Algorithms.NeuralNetwork
 
         /**Displays all of the current weights in the network
           * */
-        public void displayWeights()
+        public void DisplayWeights()
         {
-            double[] weights = getWeights();
+            double[] weights = GetWeights();
             for (int x = 0; x < weights.Count(); x++)
             {
                 Console.Error.Write(weights[x] + ", ");
@@ -197,16 +197,16 @@ namespace Algorithms.NeuralNetwork
         /**Sets all of the weights within the network going layer by layer
           * @param weights- The weights to be used for the neural network
           * */
-        public void setWeights(double[] weights)
+        public void SetWeights(double[] weights)
         {
             int count = 0;
-            for (int x = 0; x < getNumLayers(); x++)
+            for (int x = 0; x < GetNumLayers(); x++)
             {
-                for (int y = 0; y < neuronLayers[x].getNumNeurons(); y++)
+                for (int y = 0; y < neuronLayers[x].GetNumNeurons(); y++)
                 {
-                    for (int z = 0; z < neuronLayers[x].getNeuron(y).getNumWeights(); z++)
+                    for (int z = 0; z < neuronLayers[x].GetNeuron(y).GetNumWeights(); z++)
                     {
-                        neuronLayers[x].getNeuron(y).setWeight(z, weights[count]);
+                        neuronLayers[x].GetNeuron(y).SetWeight(z, weights[count]);
                         count++;
                     }
                 }
@@ -217,14 +217,14 @@ namespace Algorithms.NeuralNetwork
           * @param inputs- The inputs to the neural network
           * @return The output of the neural network
           * */
-        public double[] output(double[] inputs)
+        public double[] Output(double[] inputs)
         {
             double[] output = inputs;
             //lets each layer handle its own output and the output of the 
             //previous becomes the input of the next layer
-            for (int x = 0; x < getNumLayers(); x++)
+            for (int x = 0; x < GetNumLayers(); x++)
             {
-                output = getNeuronLayer(x).output(output);
+                output = GetNeuronLayer(x).Output(output);
             }
             return output;
         }
@@ -233,41 +233,41 @@ namespace Algorithms.NeuralNetwork
         //creates an individual from two parents 
         public Individual CreateBaby(Individual parent1, Individual parent2, double crossOver)
         {
-            var p1 = (NeuralNetwork)parent1;
-            var p2 = (NeuralNetwork)parent2;
-            double[] weights = new double[p1.getNumWeights()];
-            double[] p1weights = p1.getWeights();
-            double[] p2weights = p2.getWeights();
-            for (int x = 0; x < p1.getNumWeights(); x++)
+            NeuralNetwork p1 = (NeuralNetwork)parent1;
+            NeuralNetwork p2 = (NeuralNetwork)parent2;
+            double[] weights = new double[p1.GetNumWeights()];
+            double[] p1weights = p1.GetWeights();
+            double[] p2weights = p2.GetWeights();
+            for (int x = 0; x < p1.GetNumWeights(); x++)
             {
-                if (p1.getNumWeights() * crossOver < x)
+                if (p1.GetNumWeights() * crossOver < x)
                     weights[x] = p1weights[x];
                 else weights[x] = p2weights[x];
             }
-            
-            setWeights(weights);
+
+            SetWeights(weights);
             return this;
         }
 
         //mutates the individual 
         public void Mutate(double mutationRate)
         {
-            double[] weights = getWeights();
-            for(int i = 0; i < weights.Length; i++)
+            double[] weights = GetWeights();
+            for (int i = 0; i < weights.Length; i++)
             {
-                if(rand.NextDouble() < mutationRate)
+                if (rand.NextDouble() < mutationRate)
                 {
                     weights[i] = (rand.NextDouble() * 2 - 1);
                 }
             }
-            setWeights(weights);
+            SetWeights(weights);
         }
 
         //checks if two individuals are equal
         public bool Equals(Individual i)
         {
-            double[] weights1 = getWeights();
-            double[] weights2 = ((NeuralNetwork)i).getWeights();
+            double[] weights1 = GetWeights();
+            double[] weights2 = ((NeuralNetwork)i).GetWeights();
             for (int x = 0; x < weights1.Count(); x++)
             {
                 if (weights1[x] != weights2[x])

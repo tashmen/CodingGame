@@ -98,21 +98,21 @@ public object GetNextMove(Stopwatch watch, int timeLimit, int maxGeneration = -1
 {
 do
 {
-var counter = 0;
-foreach(Individual i in Population)
+int counter = 0;
+foreach (Individual i in Population)
 {
 if (watch.ElapsedMilliseconds >= timeLimit && counter > 1)
 {
 break;
 }
-if(i.Fitness == double.MinValue)
+if (i.Fitness == double.MinValue)
 i.CalculateFitness();
 counter++;
 }
 GenerateNextGeneration();
 }
 while (watch.ElapsedMilliseconds < timeLimit && GenerationCounter != maxGeneration);
-var bestIndividual = Population.GetBestIndividual();
+Individual bestIndividual = Population.GetBestIndividual();
 return bestIndividual.GetNextMove();
 }
 
@@ -156,7 +156,7 @@ child.Fitness = double.MinValue;
 }
 }
 
-var swap = Population;
+Population swap = Population;
 Population = HiddenPopulation;
 HiddenPopulation = swap;
 return Population;
@@ -895,7 +895,7 @@ for (int x = 0; x < numLayers; x++)
 neuronLayers[x] = new NeuronLayer(numNeurons[x], numInputs[x]);
 totalNumWeightsInNetwork += numNeurons[x] * numInputs[x];
 }
-setWeights(net.getWeights());
+SetWeights(net.GetWeights());
 Fitness = 0;
 }
 public NeuralNetwork(BinaryReader reader)
@@ -912,18 +912,18 @@ for (int x = 0; x < numLayers; x++)
 numInputs[x] = reader.ReadInt32();
 }
 nFirstInputs = numInputs[0];
-neuronLayers=new NeuronLayer[numLayers];
+neuronLayers = new NeuronLayer[numLayers];
 for (int x = 0; x < numLayers; x++)
 {
-neuronLayers[x]=new NeuronLayer(numNeurons[x], numInputs[x]);
+neuronLayers[x] = new NeuronLayer(numNeurons[x], numInputs[x]);
 totalNumWeightsInNetwork += numNeurons[x] * numInputs[x];
 }
-double[] weights = new double[getNumWeights()];
-for(int i = 0; i<weights.Length; i++)
+double[] weights = new double[GetNumWeights()];
+for (int i = 0; i < weights.Length; i++)
 {
 weights[i] = reader.ReadDouble();
 }
-setWeights(weights);
+SetWeights(weights);
 Fitness = reader.ReadDouble();
 }
 public void Save(BinaryWriter writer)
@@ -937,47 +937,47 @@ for (int x = 0; x < numInputs.Count(); x++)
 {
 writer.Write(numInputs[x]);
 }
-double[] weights = getWeights();
-foreach(double weight in weights)
+double[] weights = GetWeights();
+foreach (double weight in weights)
 {
 writer.Write(weight);
 }
 writer.Write(Fitness);
 }
 
-public NeuronLayer getNeuronLayer(int location)
+public NeuronLayer GetNeuronLayer(int location)
 {
 return neuronLayers[location];
 }
 
-public int getNumLayers()
+public int GetNumLayers()
 {
 return numLayers;
 }
 
-public int[] getNumNeurons()
+public int[] GetNumNeurons()
 {
 return numNeurons;
 }
 
-public int[] getNumInputs()
+public int[] GetNumInputs()
 {
 return numInputs;
 }
 
-public int getNumWeights()
+public int GetNumWeights()
 {
 return totalNumWeightsInNetwork;
 }
 
-public double[] getWeights()
+public double[] GetWeights()
 {
 double[] weights = new double[totalNumWeightsInNetwork];
 double[] layerWeights;
 int count = 0;
-for (int x = 0; x < getNumLayers(); x++)
+for (int x = 0; x < GetNumLayers(); x++)
 {
-layerWeights = getNeuronLayer(x).getWeights();
+layerWeights = GetNeuronLayer(x).GetWeights();
 for (int y = 0; y < layerWeights.Count(); y++)
 {
 weights[count] = layerWeights[y];
@@ -987,9 +987,9 @@ count++;
 return weights;
 }
 
-public void displayWeights()
+public void DisplayWeights()
 {
-double[] weights = getWeights();
+double[] weights = GetWeights();
 for (int x = 0; x < weights.Count(); x++)
 {
 Console.Error.Write(weights[x] + ", ");
@@ -997,30 +997,30 @@ Console.Error.Write(weights[x] + ", ");
 Console.Error.WriteLine();
 }
 
-public void setWeights(double[] weights)
+public void SetWeights(double[] weights)
 {
 int count = 0;
-for (int x = 0; x < getNumLayers(); x++)
+for (int x = 0; x < GetNumLayers(); x++)
 {
-for (int y = 0; y < neuronLayers[x].getNumNeurons(); y++)
+for (int y = 0; y < neuronLayers[x].GetNumNeurons(); y++)
 {
-for (int z = 0; z < neuronLayers[x].getNeuron(y).getNumWeights(); z++)
+for (int z = 0; z < neuronLayers[x].GetNeuron(y).GetNumWeights(); z++)
 {
-neuronLayers[x].getNeuron(y).setWeight(z, weights[count]);
+neuronLayers[x].GetNeuron(y).SetWeight(z, weights[count]);
 count++;
 }
 }
 }
 }
 
-public double[] output(double[] inputs)
+public double[] Output(double[] inputs)
 {
 double[] output = inputs;
 
 
-for (int x = 0; x < getNumLayers(); x++)
+for (int x = 0; x < GetNumLayers(); x++)
 {
-output = getNeuronLayer(x).output(output);
+output = GetNeuronLayer(x).Output(output);
 }
 return output;
 }
@@ -1028,38 +1028,38 @@ return output;
 
 public Individual CreateBaby(Individual parent1, Individual parent2, double crossOver)
 {
-var p1 = (NeuralNetwork)parent1;
-var p2 = (NeuralNetwork)parent2;
-double[] weights = new double[p1.getNumWeights()];
-double[] p1weights = p1.getWeights();
-double[] p2weights = p2.getWeights();
-for (int x = 0; x < p1.getNumWeights(); x++)
+NeuralNetwork p1 = (NeuralNetwork)parent1;
+NeuralNetwork p2 = (NeuralNetwork)parent2;
+double[] weights = new double[p1.GetNumWeights()];
+double[] p1weights = p1.GetWeights();
+double[] p2weights = p2.GetWeights();
+for (int x = 0; x < p1.GetNumWeights(); x++)
 {
-if (p1.getNumWeights() * crossOver < x)
+if (p1.GetNumWeights() * crossOver < x)
 weights[x] = p1weights[x];
 else weights[x] = p2weights[x];
 }
-setWeights(weights);
+SetWeights(weights);
 return this;
 }
 
 public void Mutate(double mutationRate)
 {
-double[] weights = getWeights();
-for(int i = 0; i < weights.Length; i++)
+double[] weights = GetWeights();
+for (int i = 0; i < weights.Length; i++)
 {
-if(rand.NextDouble() < mutationRate)
+if (rand.NextDouble() < mutationRate)
 {
 weights[i] = (rand.NextDouble() * 2 - 1);
 }
 }
-setWeights(weights);
+SetWeights(weights);
 }
 
 public bool Equals(Individual i)
 {
-double[] weights1 = getWeights();
-double[] weights2 = ((NeuralNetwork)i).getWeights();
+double[] weights1 = GetWeights();
+double[] weights2 = ((NeuralNetwork)i).GetWeights();
 for (int x = 0; x < weights1.Count(); x++)
 {
 if (weights1[x] != weights2[x])
@@ -1103,17 +1103,17 @@ weights[x] = rand.NextDouble() * 2 - 1;
 }
 }
 
-public double getWeight(int location)
+public double GetWeight(int location)
 {
 return weights[location];
 }
 
-public int getNumWeights()
+public int GetNumWeights()
 {
 return numWeights;
 }
 
-public void setWeight(int location, double weight)
+public void SetWeight(int location, double weight)
 {
 weights[location] = weight;
 }
@@ -1139,55 +1139,55 @@ neurons[x] = new Neuron(numInputs);
 }
 }
 
-public Neuron getNeuron(int location)
+public Neuron GetNeuron(int location)
 {
 return neurons[location];
 }
 
-public int getNumNeurons()
+public int GetNumNeurons()
 {
 return numNeurons;
 }
 
-public double[] getWeights()
+public double[] GetWeights()
 {
-double[] weights = new double[neurons[0].getNumWeights() * numNeurons];
+double[] weights = new double[neurons[0].GetNumWeights() * numNeurons];
 int count = 0;
-for (int x = 0; x < getNumNeurons(); x++)
+for (int x = 0; x < GetNumNeurons(); x++)
 {
-for (int y = 0; y < neurons[x].getNumWeights(); y++)
+for (int y = 0; y < neurons[x].GetNumWeights(); y++)
 {
-weights[count] = neurons[x].getWeight(y);
+weights[count] = neurons[x].GetWeight(y);
 count++;
 }
 }
 return weights;
 }
 
-public int getNumWeights()
+public int GetNumWeights()
 {
-return getNumNeurons() * getNeuron(0).getNumWeights();
+return GetNumNeurons() * GetNeuron(0).GetNumWeights();
 }
 
-public double[] output(double[] inputs)
+public double[] Output(double[] inputs)
 {
-double[] output = new double[getNumNeurons()];
+double[] output = new double[GetNumNeurons()];
 double sum = 0;
 int temp = 0;
-for (int x = 0; x < getNumNeurons(); x++)
+for (int x = 0; x < GetNumNeurons(); x++)
 {
-for (int y = 0; y < getNeuron(x).getNumWeights() - temp; y++)
+for (int y = 0; y < GetNeuron(x).GetNumWeights() - temp; y++)
 {
-sum = sum + inputs[y] * getNeuron(x).getWeight(y);
+sum = sum + inputs[y] * GetNeuron(x).GetWeight(y);
 }
 
-output[x] = sigmoid(sum);
+output[x] = Sigmoid(sum);
 sum = 0;
 }
 return output;
 }
 
-public double sigmoid(double value)
+public double Sigmoid(double value)
 {
 return (1.0 / (1.0 + Math.Exp(-value)));
 }
@@ -1694,8 +1694,6 @@ break;
 }
 object move = SelectMove(selectedNode);
 GameTreeNode childNode = Expand(selectedNode, move);
-if (watch.ElapsedMilliseconds >= timeLimit)
-break;
 double? winner = childNode.GetWinner();
 if (winner.HasValue)
 {
@@ -1707,7 +1705,7 @@ else
 for (int i = 0; i < numRollouts; i++)
 {
 IGameState clonedState = childNode.state.Clone();
-winner = SimulateGame(clonedState, watch, timeLimit, depth, childNode.isMax);
+winner = SimulateGame(clonedState, depth, childNode.isMax);
 if (!winner.HasValue)
 {
 break;
@@ -1748,23 +1746,15 @@ tempNode.ApplyWinner(winner);
 tempNode = tempNode.parent;
 }
 }
-private double? SimulateGame(IGameState state, Stopwatch watch, int timeLimit, int depth, bool isMax)
+private double? SimulateGame(IGameState state, int depth, bool isMax)
 {
 double? winner;
 do
 {
-if (watch.ElapsedMilliseconds >= timeLimit)
-{
-return null;
-}
 object move = SelectMoveAtRandom(state, isMax);
 state.ApplyMove(move, isMax);
 depth--;
 isMax = !isMax;
-if (watch.ElapsedMilliseconds >= timeLimit)
-{
-return null;
-}
 winner = state.GetWinner();
 }
 while (!winner.HasValue && depth != 0);

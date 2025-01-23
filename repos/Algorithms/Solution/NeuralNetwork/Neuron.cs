@@ -33,7 +33,7 @@ namespace Algorithms.NeuralNetwork
           * @param location- The location of the weight within the array
           * @return the value of the weight at index location
           */
-        public double getWeight(int location)
+        public double GetWeight(int location)
         {
             return weights[location];
         }
@@ -41,7 +41,7 @@ namespace Algorithms.NeuralNetwork
         /**Gets the number of weights
           * @return the number of weights
           * */
-        public int getNumWeights()
+        public int GetNumWeights()
         {
             return numWeights;
         }
@@ -50,7 +50,7 @@ namespace Algorithms.NeuralNetwork
           * @param location- The location to put the weight
           * @param weight- The value to put at index location
           * */
-        public void setWeight(int location, double weight)
+        public void SetWeight(int location, double weight)
         {
             weights[location] = weight;
         }

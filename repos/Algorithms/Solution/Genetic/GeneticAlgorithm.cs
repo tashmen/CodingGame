@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 namespace Algorithms.Genetic
 {
@@ -45,22 +40,22 @@ namespace Algorithms.Genetic
         {
             do
             {
-                var counter = 0;
-                foreach(Individual i in Population)
+                int counter = 0;
+                foreach (Individual i in Population)
                 {
                     if (watch.ElapsedMilliseconds >= timeLimit && counter > 1)
                     {
                         break;
                     }
-                    if(i.Fitness == double.MinValue)
+                    if (i.Fitness == double.MinValue)
                         i.CalculateFitness();
                     counter++;
                 }
                 GenerateNextGeneration();
             }
             while (watch.ElapsedMilliseconds < timeLimit && GenerationCounter != maxGeneration);
-            
-            var bestIndividual = Population.GetBestIndividual();
+
+            Individual bestIndividual = Population.GetBestIndividual();
             return bestIndividual.GetNextMove();
         }
 
@@ -106,7 +101,7 @@ namespace Algorithms.Genetic
                 }
             }
             //5) Set the old population to the new one
-            var swap = Population;
+            Population swap = Population;
             Population = HiddenPopulation;
             HiddenPopulation = swap;
             return Population;

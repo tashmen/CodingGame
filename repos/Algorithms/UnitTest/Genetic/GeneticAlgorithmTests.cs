@@ -13,22 +13,22 @@ namespace UnitTest.Algorithms
     {
         public GeneticAlgorithmTests(ITestOutputHelper output)
         {
-            var converter = new TestOutputFixture(output);
+            TestOutputFixture converter = new TestOutputFixture(output);
             Console.SetError(converter);
         }
-        
+
         [Fact]
         public void Test_Play_21_Game_Neural()
         {
-            
+
             Population population = new Population();
-            for(int i =0; i<100; i++)
+            for (int i = 0; i < 100; i++)
             {
                 population.Add(new NeuralNetwork(4, new int[] { 1, 16, 16, 3, 1 }, 1));
             }
 
             GeneticAlgorithm genetic = new GeneticAlgorithm(population, 0.01, 0.05, 0.7);
-            
+
             do
             {
                 population = genetic.GenerateNextGeneration();
@@ -38,7 +38,7 @@ namespace UnitTest.Algorithms
                     for (int g = 0; g < 50; g++)
                     {
                         NeuralNetwork network = (NeuralNetwork)population[p];
-                        if(g == 0)
+                        if (g == 0)
                         {
                             network.Fitness = 0;
                         }
@@ -46,8 +46,8 @@ namespace UnitTest.Algorithms
                         bool isMax = true;
                         do
                         {
-                            var output = network.output(new double[] { 1 });
-                            var addcount = (int)(output[0] * 3) + 1;
+                            double[] output = network.Output(new double[] { state.Total });
+                            int addcount = (int)(output[0] * 3) + 1;
                             //addcount = rand.Next(1, 3);
                             Move move = new Move(addcount);
                             state.ApplyMove(move, isMax);
@@ -87,7 +87,7 @@ namespace UnitTest.Algorithms
         [Fact]
         public void Play_21_Game_Genetic()
         {
-            
+
         }
     }
 }

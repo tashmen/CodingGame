@@ -32,7 +32,7 @@ namespace Algorithms.NeuralNetwork
           * @param location- The location of the neuron
           * @return the neuron at index location
           * */
-        public Neuron getNeuron(int location)
+        public Neuron GetNeuron(int location)
         {
             return neurons[location];
         }
@@ -40,7 +40,7 @@ namespace Algorithms.NeuralNetwork
         /**Gets the number of neurons
           * @return the number of neurons
           * */
-        public int getNumNeurons()
+        public int GetNumNeurons()
         {
             return numNeurons;
         }
@@ -48,15 +48,15 @@ namespace Algorithms.NeuralNetwork
         /**Gets all of the weights for this layer
           * @return the values of the weights in this layer
           * */
-        public double[] getWeights()
+        public double[] GetWeights()
         {
-            double[] weights = new double[neurons[0].getNumWeights() * numNeurons];
+            double[] weights = new double[neurons[0].GetNumWeights() * numNeurons];
             int count = 0;
-            for (int x = 0; x < getNumNeurons(); x++)
+            for (int x = 0; x < GetNumNeurons(); x++)
             {
-                for (int y = 0; y < neurons[x].getNumWeights(); y++)
+                for (int y = 0; y < neurons[x].GetNumWeights(); y++)
                 {
-                    weights[count] = neurons[x].getWeight(y);
+                    weights[count] = neurons[x].GetWeight(y);
                     count++;
                 }
             }
@@ -67,28 +67,28 @@ namespace Algorithms.NeuralNetwork
           * this layer.
           * @returns The number of weights
           * */
-        public int getNumWeights()
+        public int GetNumWeights()
         {
-            return getNumNeurons() * getNeuron(0).getNumWeights();
+            return GetNumNeurons() * GetNeuron(0).GetNumWeights();
         }
 
         /**Calculates the output of this layer based on the given inputs
           * @param inputs- The values of the inputs
           * @return The responses of each neuron within this layer
           * */
-        public double[] output(double[] inputs)
+        public double[] Output(double[] inputs)
         {
-            double[] output = new double[getNumNeurons()];
+            double[] output = new double[GetNumNeurons()];
             double sum = 0;
             int temp = 0;
-            for (int x = 0; x < getNumNeurons(); x++)
+            for (int x = 0; x < GetNumNeurons(); x++)
             {
-                for (int y = 0; y < getNeuron(x).getNumWeights() - temp; y++)
+                for (int y = 0; y < GetNeuron(x).GetNumWeights() - temp; y++)
                 {
-                    sum = sum + inputs[y] * getNeuron(x).getWeight(y);
+                    sum = sum + inputs[y] * GetNeuron(x).GetWeight(y);
                 }
                 //System.out.println(sum);
-                output[x] = sigmoid(sum);
+                output[x] = Sigmoid(sum);
                 sum = 0;
             }
 
@@ -99,7 +99,7 @@ namespace Algorithms.NeuralNetwork
           * is an S-shaped graph with f(x)=1/(1+e^(-x)).
           * value- The x value used to calculate the y value
           * */
-        public double sigmoid(double value)
+        public double Sigmoid(double value)
         {
             return (1.0 / (1.0 + Math.Exp(-value)));
         }
