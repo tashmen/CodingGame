@@ -16,34 +16,55 @@ namespace GameSolution
         {
             Console.Error.WriteLine("Optimized:");
             long counter = 0;
-            long multiplier = 1;
+            long multiplier;
+            long negativeMultiplier;
             List<long> counters = new List<long>();
-            for(int i =0; i < rows; i++)
+            List<long> negativeCounters = new List<long>();
+            for (int i =0; i < rows; i++)
             {
                 if((rows / (long)Math.Pow(divisor, i)) > 0)
                 {
                     counters.Add(1);
+                    negativeCounters.Add(1);
                 }
             }
-            
+
+            long[] valueAtRow = new long[rows];
+
+            long moduloMaxColumn = maxColumn % divisor;
             for (int r = 0; r < rows; r++)
             {
                 multiplier = 1;
-                
                 for (int c = 0; c<counters.Count;c++)
                 {
-                    multiplier *= Math.Min(counters[c], maxColumn);
+                    multiplier *= counters[c];
                     if (c == 0)
                     {
                         counters[c]++;
                     }
-                    if(c >= 1 && counters[c-1] == divisor + 1)
+                    if (c >= 1 && counters[c - 1] == divisor + 1)
                     {
-                        counters[c-1] = 1;
+                        counters[c - 1] = 1;
                         counters[c]++;
+                        negativeCounters[c - 1] = 1;
                     }
                 }
+
+                if (r >= maxColumn)
+                {
+
+                    var moduloDivisor = (r - maxColumn) % divisor;
+                    var difference = r - maxColumn;
+                    if (moduloDivisor <= moduloMaxColumn)
+                        multiplier -= valueAtRow[difference];
+                    else
+                    {
+                        multiplier -= valueAtRow[difference] - (divisor - moduloMaxColumn);
+                    }
+                }
+
                 Console.Error.WriteLine(" " + multiplier);
+                valueAtRow[r] = multiplier;
                 counter += multiplier;
             }
 

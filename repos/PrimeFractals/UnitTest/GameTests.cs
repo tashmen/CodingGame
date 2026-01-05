@@ -48,7 +48,8 @@ namespace UnitTest
         }
 
         [Theory]
-        [InlineData(3, 12, 6, 36)]
+        [InlineData(3, 24, 6, 78)]
+        [InlineData(3, 24, 24, 162)]
         [InlineData(5, 47, 47, 555)]
         [InlineData(5, 114, 114, 2625)]
         [InlineData(13, 13, 13, 91)]
@@ -57,6 +58,7 @@ namespace UnitTest
         [InlineData(13, 61, 25, 724)]
         [InlineData(13, 12, 4, 42)]
         [InlineData(11, 63, 27, 831)]
+        [InlineData(11, 63, 63, 1206)]
         [InlineData(5, 68, 68, 1017)]
         [InlineData(17, 43, 8, 260)]
         [InlineData(5, 136, 136, 3471)]
